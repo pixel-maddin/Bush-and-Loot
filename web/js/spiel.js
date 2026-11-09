@@ -320,8 +320,9 @@ function spielerUpdate(dt, ein, neu) {
     if (p.ziel.haengt > 0.3 && !z) p.ziel = null;
   }
 
-  // Hauen: Tippen = ein Schlag. Halten = ohne Wirbelschlag weiterhauen, mit Wirbelschlag aufladen.
-  if (p.cd <= 0 && (p.puffer > 0 || (ein.angriff && !w.wirbel))) { schlag(false); if (p.puffer > 0) p.ladung = 0; p.puffer = 0; }
+  // Hauen: jeder Druck = genau ein Schlag (Festhalten haut nicht weiter). Ein Druck kurz vor Ende der
+  // Abklingzeit wird 0,18 s gemerkt. Mit Wirbelschlag lädt Festhalten den Rundumschlag auf.
+  if (p.cd <= 0 && p.puffer > 0) { schlag(false); p.ladung = 0; p.puffer = 0; }
   if (w.wirbel) {
     if (ein.angriff) {
       p.ladung += dt;

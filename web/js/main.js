@@ -118,7 +118,8 @@ UI.zeigeTitel(hatSpielstand());
 // Testwege (nur lokal): ?kammer=3 startet sofort in Kammer 3, ?hoehle zeigt das Höhlen-Fenster,
 // ?eingang stellt den Helden vor den Höhleneingang.
 // Ohne Ton, weil niemand getippt hat. Fürs Bild aus Headless-Chrome gedacht (siehe CLAUDE.md).
-if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
+if (lokal && q.has('laden')) { S.phase = 'laden'; UI.zeigeHaus(true); }    // ?laden: Ladenfenster nach dem Tag
+else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
   UI.zeige(null); neuerTag();
   if (q.has('kammer')) betreteKammer(Math.max(1, Math.min(5, parseInt(q.get('kammer'), 10) || 1)));
   else if (q.has('eingang')) {          // ?eingang: vor dem Höhleneingang stehen

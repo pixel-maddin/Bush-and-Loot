@@ -203,3 +203,12 @@ h2 { font-size: 22px; }
 .fundpanel.sieg h2 { font-size: 28px; color: #2a8fb0; }
 /* Solange ein Wächter lebt, rutschen Hinweise unter seine Lebensleiste */
 body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
+
+/* Knopfleiste unten im Laden und in der Höhle: klebt am unteren Rand, auch wenn man scrollen müsste */
+.knoepfe.fussleiste {
+  position: sticky; bottom: calc(-14px - env(safe-area-inset-bottom)); z-index: 2;
+  margin: 14px -18px -18px; padding: 12px 18px calc(14px + env(safe-area-inset-bottom));
+  background: var(--papier); border-top: 3px solid var(--papier-dunkel); border-radius: 0 0 10px 10px;
+  box-shadow: 0 -6px 10px -6px rgba(43, 29, 22, .35);
+}
+.hoehlenpanel .knoepfe.fussleiste { background: #e8dcc4; }

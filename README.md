@@ -40,7 +40,7 @@ Auf dem Handy die IP-Adresse eingeben, die der Server beim Start anzeigt
 | Wirbelschlag (wenn gekauft) | Hauen gedrückt halten, loslassen | Knopf gedrückt halten, loslassen |
 | Pause | Esc oder P | Pause-Knopf oben rechts |
 
-Ohne Wirbelschlag haut man weiter, solange man gedrückt hält.
+Jeder Druck ist genau ein Schlag – Festhalten haut nicht weiter.
 
 Wer lieber mit Daumen-Stick spielt: Pause → „Steuerung: Tippen“ antippen, dann
 wird daraus „Stick“ (linke Hälfte ziehen = laufen, rechte Hälfte tippen = hauen).
