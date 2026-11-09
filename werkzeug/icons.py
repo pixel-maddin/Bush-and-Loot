@@ -27,7 +27,7 @@ def farbe(h):
 # Gleiche Farben wie PAL_KIND in grafik.js, plus ein paar fuers Symbol
 PAL = {
     "k": "#2b1d16", "H": "#c58e4a", "h": "#8c5a2c", "p": "#6d4423", "s": "#f6d0a8",
-    "S": "#dba17a", "y": "#f2c14e", "e": "#1e1b30", "g": "#5aaa46", "G": "#34712f",
+    "S": "#dba17a", "y": "#f2c14e", "e": "#1e1b30", "g": "#3d5fa8", "G": "#233a72",
     "b": "#6b4220",
     # Klinge, Diamant, Gras
     "w": "#f4fbff", "i": "#b9c8d4", "c": "#5ee07a", "d": "#2f9e4f", "q": "#eafff0",

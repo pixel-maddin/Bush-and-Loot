@@ -1,6 +1,6 @@
 // ui.js – Alles, was als HTML über dem Spielbild liegt: Anzeige oben, Titel, Laden, Tagesbilanz, Pause.
 
-import { G, bildURL } from './grafik.js';
+import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
 import { AUFRUESTUNGEN, STEINE, KAMMERN } from './config.js';
 import { S } from './spiel.js';
 import { istStumm, setzeStumm } from './ton.js';
@@ -16,6 +16,7 @@ export function initUI(handler) {
   h = handler;
   $('geldIcon').src = bildURL(G.waehrung);
   $('btnStart').onclick = () => h.start();
+  $('btnFigur').onclick = () => zeigeFigur('titel');
   $('btnNeu').onclick = () => {
     if (confirm('Wirklich von vorn anfangen? Alle Diamanten und Waffen sind dann weg.')) h.neu();
   };
@@ -63,19 +64,48 @@ export function steuerHilfe() {
     : '<b>Laufen:</b> Pfeiltasten oder WASD · <b>Hauen:</b> Leertaste oder J · <b>Pause:</b> Esc';
 }
 
-const SCHICHTEN = ['titel', 'haus', 'bilanz', 'pauseSchicht', 'hoehle', 'fund'];
+const SCHICHTEN = ['titel', 'haus', 'bilanz', 'pauseSchicht', 'hoehle', 'fund', 'figurWahl'];
 export function zeige(id) {
   for (const s of SCHICHTEN) $(s).classList.toggle('versteckt', s !== id);
-  $('hud').classList.toggle('versteckt', id === 'titel');
+  $('hud').classList.toggle('versteckt', id === 'titel' || id === 'figurWahl');
 }
 
 // ---------- Titel ----------
 export function zeigeTitel(hatStand) {
   $('btnStart').textContent = hatStand ? `Weiter – Tag ${S.tag}` : "Los geht's!";
   $('btnNeu').classList.toggle('versteckt', !hatStand);
+  $('btnFigur').classList.toggle('versteckt', !S.figur);
   $('titelHeld').src = bildURL(G.kind.unten[0]);
   steuerHilfe();
   zeige('titel');
+}
+
+// ---------- Figur wählen ----------
+// zweck: 'start' (vor dem ersten Tag) oder 'titel' (über „Figur ändern“)
+export function zeigeFigur(zweck) {
+  let art = S.figur ? S.figur.art : 'junge', farbe = S.figur ? S.figur.farbe : 'blau';
+  const karten = [...document.querySelectorAll('.figur-karte')];
+  const malen = () => {
+    for (const k of karten) {
+      k.querySelector('img').src = bildURL(figurVorschau(k.dataset.art, farbe));
+      k.classList.toggle('gewaehlt', k.dataset.art === art);
+    }
+    for (const b of $('farben').children) b.classList.toggle('gewaehlt', b.dataset.farbe === farbe);
+  };
+  for (const k of karten) k.onclick = () => { art = k.dataset.art; malen(); };
+  $('farben').innerHTML = '';
+  for (const [id, f] of Object.entries(KLEIDER)) {
+    const b = document.createElement('button');
+    b.className = 'farbe'; b.dataset.farbe = id; b.title = f.name; b.setAttribute('aria-label', f.name);
+    b.style.background = f.g;
+    b.onclick = () => { farbe = id; malen(); };
+    $('farben').append(b);
+  }
+  $('btnFigurOk').textContent = zweck === 'start' ? "Los geht's!" : 'Fertig';
+  $('btnFigurOk').onclick = () => h.figurGewaehlt(art, farbe, zweck);
+  malen();
+  zeige('figurWahl');
+  setTimeout(() => $('btnFigurOk').focus({ preventScroll: true }), 50);
 }
 
 // ---------- Anzeige oben ----------

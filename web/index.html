@@ -48,9 +48,24 @@
       <p class="unterzeile">Ein kleiner Held. Ein großer Wald. Sehr viel Gras.</p>
       <div class="knoepfe">
         <button id="btnStart" class="knopf gross">Los geht's!</button>
+        <button id="btnFigur" class="knopf grau klein versteckt">Figur ändern</button>
         <button id="btnNeu" class="knopf grau klein versteckt">Neu anfangen</button>
       </div>
       <p id="steuerHilfe" class="hilfe"></p>
+    </div>
+  </div>
+
+  <!-- Wer spielt? Junge oder Mädchen, Farbe der Kleider -->
+  <div id="figurWahl" class="schicht versteckt">
+    <div class="panel figurpanel">
+      <h2>Wer spielt?</h2>
+      <div class="figuren">
+        <button class="figur-karte" data-art="junge"><img class="px" alt=""><span>Junge</span></button>
+        <button class="figur-karte" data-art="maedchen"><img class="px" alt=""><span>Mädchen</span></button>
+      </div>
+      <p class="hilfe">Farbe der Kleider</p>
+      <div id="farben" class="farben"></div>
+      <div class="knoepfe"><button id="btnFigurOk" class="knopf gross">Los geht's!</button></div>
     </div>
   </div>
 

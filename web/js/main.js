@@ -1,7 +1,7 @@
 // main.js – Startet alles und hält die Schleife am Laufen.
 
 import { KACHEL, SICHT_KACHELN } from './config.js';
-import { initGrafik } from './grafik.js';
+import { initGrafik, setzeFigur } from './grafik.js';
 import { initHoehlenGrafik } from './hoehlengrafik.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
@@ -32,6 +32,7 @@ groesse();
 initGrafik();
 initHoehlenGrafik();
 laden();
+if (S.figur) setzeFigur(S.figur.art, S.figur.farbe);
 // Zum Testen: ?geld=5000 schenkt Diamanten – nur lokal, online soll keiner schummeln
 const q = new URLSearchParams(location.search);
 const lokal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
@@ -86,11 +87,18 @@ setzeHooks({
 UI.initUI({
   start() {
     tonStart();
+    // Noch keine Figur gewählt (neues Spiel oder alter Spielstand): erst fragen, dann geht's los
+    if (!S.figur) { UI.zeigeFigur('start'); return; }
     if (!hatSpielstand()) { UI.zeige(null); neuerTag(); }
     else { S.phase = 'laden'; UI.zeigeHaus(true); }
     steuerung.aktualisiere();
   },
-  neu() { neuAnfangen(); initSpiel(); UI.hudNeu(); UI.zeigeTitel(false); },
+  neu() { neuAnfangen(); setzeFigur(); initSpiel(); UI.hudNeu(); UI.zeigeTitel(false); },
+  figurGewaehlt(art, farbe, zweck) {
+    S.figur = { art, farbe }; setzeFigur(art, farbe); speichern();
+    UI.hudNeu();
+    if (zweck === 'start') this.start(); else UI.zeigeTitel(hatSpielstand());
+  },
   neuerTag() { tonStart(); UI.zeige(null); neuerTag(); },
   weiterMaehen() { UI.zeige(null); weiterMaehen(); steuerung.aktualisiere(); },
   tagBeenden() { tagBeenden(); },
@@ -119,6 +127,7 @@ UI.zeigeTitel(hatSpielstand());
 // ?eingang stellt den Helden vor den Höhleneingang.
 // Ohne Ton, weil niemand getippt hat. Fürs Bild aus Headless-Chrome gedacht (siehe CLAUDE.md).
 if (lokal && q.has('laden')) { S.phase = 'laden'; UI.zeigeHaus(true); }    // ?laden: Ladenfenster nach dem Tag
+else if (lokal && q.has('wahl')) UI.zeigeFigur('start');                    // ?wahl: Figur-Auswahl
 else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
   UI.zeige(null); neuerTag();
   if (q.has('kammer')) betreteKammer(Math.max(1, Math.min(5, parseInt(q.get('kammer'), 10) || 1)));
@@ -126,6 +135,7 @@ else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
     const h = S.welt.hoehle; S.sp.x = h.tuer.x - 20; S.sp.y = h.tuer.y + 36; S.kam.x = S.sp.x; S.kam.y = S.sp.y;
   } else { S.phase = 'hoehle'; UI.zeigeHoehle(); }
   if (q.has('spaet')) S.zeit = S.dauer - 14;      // ?spaet: kurz vor Sonnenuntergang (Heimweg-Pfeil)
+  if (q.has('hauen')) setInterval(() => { S.sp.puffer = 0.18; S.sp.winkel = parseFloat(q.get('hauen')) || 0; }, 600);   // ?hauen=1.57: haut alle 0,6 s in diese Richtung
   steuerung.aktualisiere();
 }
 

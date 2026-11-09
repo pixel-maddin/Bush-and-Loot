@@ -84,11 +84,21 @@ function schattiert(farben, r, rausch = 0.35) {
   };
 }
 
-// ---------- Der Held: Junge mit Eichelhut ----------
-const PAL_KIND = {
-  k: '#2b1d16', H: '#c58e4a', h: '#8c5a2c', p: '#6d4423', s: '#f6d0a8', S: '#dba17a',
-  y: '#f2c14e', e: '#1e1b30', g: '#5aaa46', G: '#34712f', b: '#6b4220',
+// ---------- Die Spielfigur: Junge oder Mädchen mit Eichelhut ----------
+// Kleiderfarbe wählbar: g = hell, G = dunkel. Haarfarbe hängt an der Figur.
+export const KLEIDER = {
+  blau:   { name: 'Dunkelblau', g: '#3d5fa8', G: '#233a72' },
+  gruen:  { name: 'Waldgrün',   g: '#5aaa46', G: '#34712f' },
+  rot:    { name: 'Rot',        g: '#cf4a40', G: '#87282a' },
+  lila:   { name: 'Lila',       g: '#9256c8', G: '#5c2f8a' },
+  orange: { name: 'Orange',     g: '#e8862e', G: '#9c4e18' },
 };
+export const FIGUREN = { junge: 'Junge', maedchen: 'Mädchen' };
+const palKind = (art, farbe) => ({
+  k: '#2b1d16', H: '#c58e4a', h: '#8c5a2c', p: '#6d4423', s: '#f6d0a8', S: '#dba17a',
+  y: art === 'maedchen' ? '#c4602e' : '#f2c14e', Q: '#f2c14e', r: '#f4a0a0', e: '#1e1b30',
+  g: (KLEIDER[farbe] || KLEIDER.blau).g, G: (KLEIDER[farbe] || KLEIDER.blau).G, b: '#6b4220',
+});
 const KOPF_UNTEN = [
   '......kkkk......',
   '....kkHHHHkk....',
@@ -101,7 +111,7 @@ const KOPF_UNTEN = [
   '....kSSSSSSk....',
   '..kGggggggggGk..',
   '.ksGggggggggGsk.',
-  '.kkkbbbyybbbkkk.',
+  '.kkkbbbQQbbbkkk.',
   '...kggggggggk...',
   '...kGGGGGGGGk...',
 ];
@@ -133,9 +143,59 @@ const KOPF_SEITE = [
   '.....kSSSSSk....',
   '....kGgggggk....',
   '....kGggsggk....',
-  '....kbbbybbk....',
+  '....kbbbQbbk....',
   '....kggggggk....',
   '....kGGGGGGk....',
+];
+
+// Mädchen: Pony, Zöpfe links und rechts, Rock statt Hemdsaum
+const M_UNTEN = [
+  '......kkkk......',
+  '....kkHHHHkk....',
+  '...kHHhHHhHHk...',
+  '..khhhhhhhhhhk..',
+  '..kkkkkkkkkkkk..',
+  '.kyyyssssssyyyk.',
+  '.kyssessssessyk.',
+  '.kykrssssssrkyk.',
+  'kyyk.kSSSSk.kyyk',
+  'kyykGggggggGkyyk',
+  '.kksGggggggGskk.',
+  '.kkkbbbQQbbbkkk.',
+  '..kggggggggggk..',
+  '.kGGGGGGGGGGGGk.',
+];
+const M_OBEN = [
+  '......kkkk......',
+  '....kkHHHHkk....',
+  '...kHHhHHhHHk...',
+  '..khhhhhhhhhhk..',
+  '..kkkkkkkkkkkk..',
+  '.kyyyyyyyyyyyyk.',
+  '.kyyyyyyyyyyyyk.',
+  '.kyyyyyyyyyyyyk.',
+  'kyyk.kSSSSk.kyyk',
+  'kyykGggggggGkyyk',
+  '.kksGggggggGskk.',
+  '.kkkbbbbbbbbkkk.',
+  '..kggggggggggk..',
+  '.kGGGGGGGGGGGGk.',
+];
+const M_SEITE = [
+  '.......kkkk.....',
+  '.....kkHHHHkk...',
+  '....kHHhHHhHHk..',
+  '...khhhhhhhhhhk.',
+  '...kkkkkkkkkkkkk',
+  '...kyyyyssssk...',
+  '..kyyyysssesk...',
+  '.kyykyyssssrsk..',
+  '.kyk.kSSSSSk....',
+  '...kkGgggggk....',
+  '....kGggsggk....',
+  '....kbbbQbbk....',
+  '...kggggggggk...',
+  '...kGGGGGGGGk...',
 ];
 const BEINE_V = [
   ['....kpk..kpk....', '....kkk..kkk....'],
@@ -147,14 +207,30 @@ const BEINE_S = [
   ['....kpk..kpk....', '....kkk..kkk....'],
 ];
 
-function kindBilder() {
-  const v = (kopf, beine) => ausText([...kopf, ...beine], PAL_KIND).bild();
+// Breiter Ausfallschritt beim Hauen
+const BEINE_HAU_V = ['...kpk....kpk...', '...kkk....kkk...'];
+const BEINE_HAU_S = ['...kpk....kpk...', '...kkk....kkk...'];
+
+// Baut alle Bilder der Spielfigur neu – beim Start und wenn im Auswahl-Fenster etwas geändert wird
+export function setzeFigur(art = 'junge', farbe = 'blau') {
+  G.figur = { art, farbe };
+  const pal = palKind(art, farbe), m = art === 'maedchen';
+  const v = (kopf, beine) => ausText([...kopf, ...beine], pal).bild();
+  const KU = m ? M_UNTEN : KOPF_UNTEN, KO = m ? M_OBEN : KOPF_OBEN, KS = m ? M_SEITE : KOPF_SEITE;
   G.kind = {
-    unten: [0, 1, 0, 2].map(i => v(KOPF_UNTEN, BEINE_V[i])),
-    oben: [0, 2, 0, 1].map(i => v(KOPF_OBEN, BEINE_V[i])),
-    rechts: [0, 1, 0, 1].map(i => v(KOPF_SEITE, BEINE_S[i])),
+    unten: [0, 1, 0, 2].map(i => v(KU, BEINE_V[i])),
+    oben: [0, 2, 0, 1].map(i => v(KO, BEINE_V[i])),
+    rechts: [0, 1, 0, 1].map(i => v(KS, BEINE_S[i])),
   };
   G.kind.links = G.kind.rechts.map(spiegeln);
+  G.kindHau = { unten: v(KU, BEINE_HAU_V), oben: v(KO, BEINE_HAU_V), rechts: v(KS, BEINE_HAU_S) };
+  G.kindHau.links = spiegeln(G.kindHau.rechts);
+  G.hautFarbe = pal.s;
+}
+function kindBilder() { setzeFigur(); }
+// Vorschau für das Auswahl-Fenster (ohne die laufende Figur zu ändern)
+export function figurVorschau(art, farbe) {
+  return ausText([...(art === 'maedchen' ? M_UNTEN : KOPF_UNTEN), ...BEINE_V[0]], palKind(art, farbe)).bild();
 }
 
 // ---------- Klingen, waagerecht nach rechts; Griff links ----------

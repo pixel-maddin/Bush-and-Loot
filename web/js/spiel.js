@@ -27,6 +27,7 @@ export const S = {
   kam: { x: 0, y: 0 },
   wackeln: 0, stopp: 0, blende: 0, spawnT: 3, rauchT: 0, t: 0,
   endeGrund: null,
+  figur: null,                // { art: 'junge' | 'maedchen', farbe: 'blau' | … } – null = noch nicht gewählt
   // Glitzerhöhle: ort = 'wald' oder 'kammer'; wald = weggelegter Wald, solange man in einer Kammer ist
   ort: 'wald', wald: null, boss: null, geschosse: [], wellen: [], warn: [], belohnungsDing: null, kammerFertig: false,
 };
@@ -49,6 +50,7 @@ export function laden() {
       S.geld = d.geld; S.tag = d.tag || 1; S.st = d.st || {};
       S.gesamt = Object.assign({ gemaeht: 0, besiegt: 0, wert: 0 }, d.gesamt);
       S.hinweise = d.hinweise || {};
+      S.figur = d.figur || null;
       return true;
     }
   } catch (e) { /* kein Spielstand */ }
@@ -56,11 +58,12 @@ export function laden() {
 }
 export function speichern() {
   try {
-    localStorage.setItem(SPEICHER, JSON.stringify({ geld: S.geld, tag: S.tag, st: S.st, gesamt: S.gesamt, hinweise: S.hinweise }));
+    localStorage.setItem(SPEICHER, JSON.stringify({ geld: S.geld, tag: S.tag, st: S.st, gesamt: S.gesamt, hinweise: S.hinweise, figur: S.figur }));
   } catch (e) { /* privat-Modus o. ä. */ }
 }
 export function neuAnfangen() {
   S.geld = 0; S.tag = 1; S.st = {}; S.gesamt = { gemaeht: 0, besiegt: 0, wert: 0 }; S.hinweise = {};
+  S.figur = null;             // beim nächsten Start wird wieder gefragt
   speichern();
 }
 export const hatSpielstand = () => S.tag > 1 || S.geld > 0;
@@ -816,12 +819,30 @@ function zeichneSpieler(ctx) {
   const p = S.sp;
   const blinkt = p.unverw > 0 && Math.floor(p.unverw * 14) % 2 === 0;
   const f = p.bewegt ? Math.floor(p.laufT * 8) % 4 : 0;
-  const img = G.kind[p.blick][f];
-  const hoch = p.bewegt && (f === 1 || f === 3) ? -1 : 0;
+  let img = G.kind[p.blick][f], hoch = p.bewegt && (f === 1 || f === 3) ? -1 : 0;
+  // Hau-Animation: Ausfallschritt in Schlagrichtung (breite Beine), kurz in die Knie, dann strecken.
+  // Beim Wirbelschlag dreht sich der Körper mit der Klinge.
+  let ox = 0, oy = 0, sy = 1;
+  if (p.schlagT > 0) {
+    const q = 1 - p.schlagT / p.schlagDauer;
+    const blick = p.schlagRund ? blickAus(Math.atan2(Math.sin(aktuellerSchwertWinkel()), Math.cos(aktuellerSchwertWinkel()))) : p.blick;
+    img = G.kindHau[blick]; hoch = 0;
+    if (!p.schlagRund) {
+      const l = Math.sin(Math.min(1, q * 1.5) * Math.PI) * 2.5;
+      ox = Math.cos(p.schlagWinkel) * l; oy = Math.sin(p.schlagWinkel) * l * 0.6;
+    }
+    sy = q < 0.22 ? 0.9 : 1 + 0.07 * Math.sin((q - 0.22) / 0.78 * Math.PI);
+  }
   const hinten = p.schlagT > 0 && Math.sin(aktuellerSchwertWinkel()) < -0.2;
-  if (hinten) zeichneSchwert(ctx);
-  if (!blinkt) ctx.drawImage(img, Math.round(p.x - 8), Math.round(p.y - 15 + hoch));
-  if (!hinten) zeichneSchwert(ctx);
+  if (hinten) zeichneSchwert(ctx, ox, oy);
+  if (!blinkt) {
+    ctx.save();
+    ctx.translate(Math.round(p.x + ox), Math.round(p.y + oy));
+    if (sy !== 1) ctx.scale(1, sy);
+    ctx.drawImage(img, -8, -15 + hoch);
+    ctx.restore();
+  }
+  if (!hinten) zeichneSchwert(ctx, ox, oy);
   // Aufladen für den Wirbelschlag
   if (p.ladung > 0.15) {
     const voll = p.ladung >= LADEZEIT;
@@ -841,27 +862,35 @@ function aktuellerSchwertWinkel() {
   return p.schlagWinkel - w.bogen / 2 + w.bogen * e;
 }
 
-function zeichneSchwert(ctx) {
+function zeichneSchwert(ctx, ox = 0, oy = 0) {
   const p = S.sp, w = S.w;
   if (p.schlagT <= 0) return;
   const q = 1 - p.schlagT / p.schlagDauer;
   const reich = w.reichweite * (p.schlagRund ? 1.25 : 1);
   const a = aktuellerSchwertWinkel();
   const a0 = p.schlagRund ? Math.max(p.schlagWinkel, a - 2.2) : Math.max(p.schlagWinkel - w.bogen / 2, a - 1.6);
-  const cx = p.x, cy = p.y - 6;
+  const cx = p.x + ox, cy = p.y - 6 + oy;
   // Schwungspur
   ctx.fillStyle = (S.st.bosse | 0) >= 4 ? `rgba(255, 214, 80, ${0.6 * (1 - q)})` : `rgba(255, 255, 235, ${0.5 * (1 - q)})`;   // Goldener Schliff
   ctx.beginPath();
   ctx.arc(cx, cy, reich, a0, a);
   ctx.arc(cx, cy, reich * 0.45, a, a0, true);
   ctx.closePath(); ctx.fill();
-  // Klinge
+  // Klinge mit zwei blassen Nachbildern (Bewegungsunschärfe), danach die Hand am Griff
   const img = G.klinge[S.st.klinge | 0];
-  ctx.save();
-  ctx.translate(Math.round(cx), Math.round(cy));
-  ctx.rotate(a);
-  ctx.drawImage(img, 1, -4);
-  ctx.restore();
+  const zurueck = p.schlagRund ? -1 : (a >= p.schlagWinkel - w.bogen / 2 ? -1 : 1);
+  for (const [d, al] of [[0.5, 0.18], [0.25, 0.35], [0, 1]]) {
+    ctx.save();
+    ctx.globalAlpha = al * (d ? 1 - q : 1);
+    ctx.translate(Math.round(cx), Math.round(cy));
+    ctx.rotate(a + zurueck * d);
+    ctx.drawImage(img, 1, -4);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  const hx = Math.round(cx + Math.cos(a) * 3), hy = Math.round(cy + Math.sin(a) * 3);
+  ctx.fillStyle = '#2b1d16'; ctx.fillRect(hx - 2, hy - 2, 4, 4);
+  ctx.fillStyle = G.hautFarbe; ctx.fillRect(hx - 1, hy - 1, 2, 2);
 }
 
 function zeichneGegner(ctx, g) {

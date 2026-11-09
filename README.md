@@ -1,7 +1,7 @@
 # Halmhauer
 
-Kleines Pixel-Actionspiel fürs Handy und den PC. Du bist ein kleiner Junge mit
-Eichelhut und hast jeden Tag bis Sonnenuntergang Zeit, so viel Gras wie möglich
+Kleines Pixel-Actionspiel fürs Handy und den PC. Du bist ein kleiner Junge oder
+ein kleines Mädchen mit Eichelhut und hast jeden Tag bis Sonnenuntergang Zeit, so viel Gras wie möglich
 umzuhauen. Manchmal steckt ein Diamant drin. Mit den Diamanten kaufst du im
 alten Baumstumpf, in dem du wohnst, bessere Sachen.
 
@@ -30,6 +30,12 @@ Auf dem Handy die IP-Adresse eingeben, die der Server beim Start anzeigt
 - Am PC (Chrome/Edge) über `http://localhost:8080`: Symbol „Installieren“ rechts
   in der Adressleiste.
 - Im Browser bietet das Pause-Menü einen **Vollbild**-Knopf (nicht auf dem iPhone).
+
+## Wer spielt?
+
+Beim ersten Start fragt das Spiel: Junge oder Mädchen, und welche Farbe die
+Kleider haben sollen (Dunkelblau, Waldgrün, Rot, Lila, Orange). Ändern geht
+jederzeit auf dem Titelbild unter „Figur ändern“.
 
 ## Steuerung
 
