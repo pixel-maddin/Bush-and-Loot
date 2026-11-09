@@ -96,6 +96,9 @@ Manchmal springt einer direkt aus einem Grasbüschel. Jeden Tag werden es mehr.
 
 ## Die Glitzerhöhle – das Ziel
 
+> **Achtung, verrät alles!** Im Spiel bleibt offen, was hinter den Türen und am
+> Ende der Höhle wartet. Wer es selbst herausfinden will, liest hier nicht weiter.
+
 Oben im Fels am Waldrand liegt die Glitzerhöhle. Darin sind fünf Kammern hinter
 verschlossenen Türen, und hinter jeder wartet ein Wächter. Eine Tür öffnet sich
 für Diamanten, aber erst, wenn der Wächter davor besiegt ist. Wer alle fünf

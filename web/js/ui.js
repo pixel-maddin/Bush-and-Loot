@@ -292,7 +292,7 @@ export function zeigeHoehle() {
       <div class="ware-text">
         <div class="ware-name">${nr}. ${k.name}</div>
         <div class="ware-unter">${offen || dran || besiegt ? 'Wächter: ' + k.boss : 'Noch verschlossen'}</div>
-        <div class="beute">${besiegt ? '✓ Besiegt – ' + k.beute : 'Belohnung: ' + k.beute}</div>
+        <div class="beute">${besiegt ? '✓ Besiegt – ' + k.beute : 'Belohnung: ???'}</div>
       </div>`;
     const b = document.createElement('button');
     b.className = 'knopf preis';
