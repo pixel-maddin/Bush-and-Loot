@@ -2,11 +2,12 @@
 // Strategie: erst das Netz fragen (damit Änderungen sofort ankommen), nur ohne Netz aus dem Speicher.
 // Bei neuen Dateien die Liste unten ergänzen und STAND hochzählen.
 
-const STAND = 'halmhauer-10';
+const STAND = 'halmhauer-11';
 const DATEIEN = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'js/main.js', 'js/config.js', 'js/hilfe.js', 'js/grafik.js', 'js/welt.js', 'js/spiel.js',
   'js/eingabe.js', 'js/ui.js', 'js/ton.js', 'js/musik.js', 'js/hoehle.js', 'js/hoehlengrafik.js', 'js/begleiter.js',
+  'audio/wald.mp3',
   'icons/icon-32.png', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

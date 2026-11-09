@@ -1,7 +1,8 @@
 // musik.js – Hintergrundmusik, live erzeugt wie die Geräusche (keine Tondatei).
-// Vier eigene kleine Stücke: „tag" (flott, D-Dur), „abend" (ruhig, h-Moll, ab 72 % des Tages),
-// „haus" (Spieluhr-Walzer im Baumstumpf) und „kampf" (a-Moll, in den Kammern der Glitzerhöhle).
-// Alle selbst geschrieben, nichts nachgespielt.
+// Im Wald, im Laden und auf dem Titel läuft die Hintergrundmusik aus web/audio/wald.mp3 („hintergrund“,
+// leise und nahtlos im Takt geloopt, siehe DATEI unten). In den Kammern der Glitzerhöhle spielt das
+// eigene Chip-Stück „kampf“ (a-Moll). Die Chip-Stücke „tag“, „abend“ und „haus“ sind noch da, werden
+// aber gerade nicht gewählt (main.js, stueckFuerPhase) – alle selbst geschrieben, nichts nachgespielt.
 //
 // Schreibweise der Stimmen: ein Takt pro Zeichenkette, ein Eintrag pro Achtel.
 //   'D5' = Ton anschlagen   '-' = vorigen Ton halten   '.' = Pause
@@ -200,8 +201,45 @@ try { an = localStorage.getItem('halmhauer.musik') !== '0'; } catch (e) { /* ega
 // Gemessen (RMS am Hauptregler): Musik bei 0.18 ≈ 0.013, Kauf-Jingle ≈ 0.010 – Geräusche bleiben hörbar
 function lautSoll() { return istStumm() || !an ? 0 : (gedrueckt ? 0.06 : 0.18); }
 
+// ---------- Hintergrundmusik aus Datei ----------
+// „To Adventure“ (SavannaMusic, Pixabay – laut Dateiname), Quelle in halmhauer/Audio/.
+// web/audio/wald.mp3 ist eine kleinere Kopie (128 kbit/s, nur die ersten 60,2 s).
+// Gemessen (Einsatz-Hüllkurve, Autokorrelation): Takt 2,4825 s (≈ 96,7 BPM). Bei 59,585 s beginnt das
+// Stück musikalisch wieder wie bei 0,02 s (Korrelation 0,57, sonst nirgends über 0,3) – nach genau
+// 24 Takten. Darum startet alle 59,565 s eine neue Runde und die alte wird kurz ausgeblendet:
+// dieselbe Musik geht nahtlos weiter, das Ende mit Fade-out wird nie erreicht.
+const DATEI = { url: 'audio/wald.mp3', runde: 59.565, ueberblende: 0.25, laut: 1.25 };
+let dateiPuffer = null, dateiLaedt = false;
+function ladeDatei() {
+  if (dateiLaedt) return;
+  dateiLaedt = true;
+  fetch(DATEI.url)
+    .then(r => r.arrayBuffer())
+    .then(b => new Promise((ok, fehler) => ac.decodeAudioData(b, ok, fehler)))   // Rückruf-Form: geht auch in älterem Safari
+    .then(p => { dateiPuffer = p; planen(); })
+    .catch(() => { dateiLaedt = false; });
+}
+function planeDatei(L) {
+  if (!dateiPuffer) return;
+  if (L.naechste === null || L.naechste < ac.currentTime - 0.05) L.naechste = ac.currentTime + 0.05;
+  while (L.naechste < ac.currentTime + 1.0) {
+    const t0 = L.naechste, ende = t0 + DATEI.runde;
+    const q = ac.createBufferSource(), g = ac.createGain();
+    q.buffer = dateiPuffer;
+    g.gain.setValueAtTime(1, t0);
+    g.gain.setValueAtTime(1, ende);
+    g.gain.linearRampToValueAtTime(0, ende + DATEI.ueberblende);
+    q.connect(g); g.connect(L.gain);
+    q.start(t0); q.stop(ende + DATEI.ueberblende + 0.05);
+    L.quellen.push(q);
+    if (L.quellen.length > 3) L.quellen.shift();
+    L.naechste = ende;
+  }
+}
+
 function planen() {
   if (!laufend || !ac || ac.state !== 'running') return;
+  if (laufend.datei) { planeDatei(laufend); return; }
   const L = laufend, st = L.st, sd = 60 / st.bpm / 2;
   // Hing die Uhr (Tab im Hintergrund), nicht alles nachholen, sondern neu ansetzen
   if (L.naechste < ac.currentTime - 0.05) L.naechste = ac.currentTime + 0.05;
@@ -224,6 +262,7 @@ function bereit() {
   wellen.puls12 = pulsWelle(0.125);
   bus = ac.createGain(); bus.gain.value = lautSoll(); bus.connect(k.haupt);
   uhr = setInterval(planen, 30);
+  ladeDatei();
   return true;
 }
 
@@ -235,15 +274,24 @@ function wechsle(name) {
     g.gain.cancelScheduledValues(t);
     g.gain.setValueAtTime(g.gain.value, t);
     g.gain.linearRampToValueAtTime(0, t + 0.6);
+    // Schon eingeplante Datei-Runden anhalten, sonst liefen sie stumm weiter
+    for (const q of laufend.quellen || []) { try { q.stop(t + 0.7); } catch (e) { /* noch nicht gestartet o. ä. */ } }
     setTimeout(() => g.disconnect(), 1500);
     laufend = null;
   }
   if (!name) return;
-  const st = STUECKE[name];
   const gain = ac.createGain();
+  gain.connect(bus);
+  if (name === 'hintergrund') {
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(DATEI.laut, t + 1.2);
+    laufend = { name, gain, datei: true, naechste: null, quellen: [], takt: 0 };
+    planen();
+    return;
+  }
+  const st = STUECKE[name];
   gain.gain.setValueAtTime(0, t);
   gain.gain.linearRampToValueAtTime(st.laut, t + 0.4);
-  gain.connect(bus);
   laufend = { st, name, gain, takt: 0, schritt: 0, naechste: t + 0.08, runde: 0 };
   planen();
 }

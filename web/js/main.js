@@ -155,7 +155,10 @@ document.addEventListener('visibilitychange', () => {
 
 // Welches Stück passt gerade? Abends (ab 72 % des Tages) wird es ruhiger, im Baumstumpf Spieluhr.
 function stueckFuerPhase() {
-  if (S.ort === 'kammer' && (S.phase === 'tag' || S.phase === 'pause')) return S.boss ? 'kampf' : 'haus';
+  // Überall die Hintergrundmusik (Datei), nur beim Kampf gegen einen Wächter das Kampfstück
+  if (S.ort === 'kammer' && S.boss && (S.phase === 'tag' || S.phase === 'pause')) return 'kampf';
+  return 'hintergrund';
+  // Frühere Zuordnung der Chip-Stücke, falls sie wieder gebraucht wird:
   switch (S.phase) {
     case 'tag': return S.zeit / S.dauer > 0.72 ? 'abend' : 'tag';
     case 'pause': return S.zeit / S.dauer > 0.72 ? 'abend' : 'tag';

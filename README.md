@@ -140,9 +140,9 @@ Wirbelschlag.
 
 ## Musik
 
-Vier eigene kleine Chip-Stücke, live im Browser erzeugt: ein flottes am Tag,
-ein ruhigeres, sobald die Sonne sinkt, eine Spieluhr im Baumstumpf und ein
-treibendes Kampfstück in den Kammern der Glitzerhöhle. In der
+Im Wald, im Laden und auf dem Titel läuft leise „To Adventure“ von
+SavannaMusic (Pixabay, laut Dateiname) in einer nahtlosen Schleife. In den
+Kammern der Glitzerhöhle spielt ein eigenes, live erzeugtes Kampfstück. In der
 Pause wird sie leiser. Musik und Geräusche lassen sich im Pause-Menü getrennt
 abschalten.
 

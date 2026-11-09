@@ -39,6 +39,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         ".css": "text/css",
         ".json": "application/json",
         ".svg": "image/svg+xml",
+        ".mp3": "audio/mpeg",
         # Ohne diesen Eintrag liefert der Server das Manifest als
         # "application/octet-stream" aus, und der Browser ignoriert es
         # kommentarlos - die PWA ist dann einfach keine.

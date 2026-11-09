@@ -6,3 +6,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Original der Hintergrundmusik – im Spiel liegt die kleinere Kopie in web/audio/
+Audio/
