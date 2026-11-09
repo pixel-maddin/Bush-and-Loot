@@ -5,7 +5,7 @@ import { AUFRUESTUNGEN, STEINE } from './config.js';
 import { S } from './spiel.js';
 import { istStumm, setzeStumm } from './ton.js';
 import { istMusikAn, setzeMusik } from './musik.js';
-import { touchGeraet } from './eingabe.js';
+import { touchGeraet, holeSteuerArt, setzeSteuerArt } from './eingabe.js';
 
 const $ = (id) => document.getElementById(id);
 let h = {};
@@ -23,6 +23,10 @@ export function initUI(handler) {
   $('btnWeiter').onclick = () => h.pause();
   $('btnTon').onclick = () => { setzeStumm(!istStumm()); tonKnopf(); };
   $('btnMusik').onclick = () => { setzeMusik(!istMusikAn()); tonKnopf(); };
+  $('btnSteuerung').onclick = () => {
+    setzeSteuerArt(holeSteuerArt() === 'tippen' ? 'stick' : 'tippen');
+    tonKnopf(); steuerHilfe();
+  };
   // Vollbild nur dort anbieten, wo es geht und das Spiel nicht schon als App läuft (iPhone kann es nicht)
   if (document.fullscreenEnabled && !matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches) {
     $('btnVollbild').classList.remove('versteckt');
@@ -44,11 +48,16 @@ function tonKnopf() {
   $('btnTon').textContent = istStumm() ? 'Ton: aus' : 'Ton: an';
   $('btnMusik').textContent = istMusikAn() ? 'Musik: an' : 'Musik: aus';
   $('btnMusik').disabled = istStumm();     // ohne Ton keine Musik
+  // Wahl der Touch-Steuerung nur dort, wo es Touch gibt
+  $('btnSteuerung').classList.toggle('versteckt', !touchGeraet);
+  $('btnSteuerung').textContent = holeSteuerArt() === 'tippen' ? 'Steuerung: Tippen' : 'Steuerung: Stick';
 }
 
 export function steuerHilfe() {
   $('steuerHilfe').innerHTML = touchGeraet
-    ? '<b>Handy:</b> Links ziehen = laufen · rechts tippen = hauen'
+    ? (holeSteuerArt() === 'tippen'
+      ? '<b>Handy:</b> Tippen, wo er hinlaufen soll (halten = folgt dem Finger) · runder Knopf = hauen'
+      : '<b>Handy:</b> Links ziehen = laufen · rechts tippen = hauen')
     : '<b>Laufen:</b> Pfeiltasten oder WASD · <b>Hauen:</b> Leertaste oder J · <b>Pause:</b> Esc';
 }
 
@@ -173,7 +182,7 @@ export function zeigeBilanz({ grund, heute, verlust, tag }) {
   setTimeout(() => $('btnBilanz').focus({ preventScroll: true }), 50);
 }
 
-export function zeigePause() { zeige('pauseSchicht'); }
+export function zeigePause() { tonKnopf(); zeige('pauseSchicht'); }
 
 // ---------- Kurze Hinweise ----------
 let toastT = null;

@@ -35,12 +35,15 @@ Auf dem Handy die IP-Adresse eingeben, die der Server beim Start anzeigt
 
 | | PC | Handy |
 |---|---|---|
-| Laufen | Pfeiltasten oder WASD | linke Bildschirmhälfte: Daumen hinlegen und ziehen |
-| Hauen | Leertaste, J, K oder X (auch linke Maustaste) | rechte Bildschirmhälfte antippen |
-| Wirbelschlag (wenn gekauft) | Hauen gedrückt halten, loslassen | rechts gedrückt halten, loslassen |
+| Laufen | Pfeiltasten oder WASD | dorthin tippen, wo er hinlaufen soll – Finger halten und ziehen, dann folgt er |
+| Hauen | Leertaste, J, K oder X (auch linke Maustaste) | runden HAUEN-Knopf rechts unten drücken |
+| Wirbelschlag (wenn gekauft) | Hauen gedrückt halten, loslassen | Knopf gedrückt halten, loslassen |
 | Pause | Esc oder P | Pause-Knopf oben rechts |
 
 Ohne Wirbelschlag haut man weiter, solange man gedrückt hält.
+
+Wer lieber mit Daumen-Stick spielt: Pause → „Steuerung: Tippen“ antippen, dann
+wird daraus „Stick“ (linke Hälfte ziehen = laufen, rechte Hälfte tippen = hauen).
 
 ## So läuft ein Tag
 

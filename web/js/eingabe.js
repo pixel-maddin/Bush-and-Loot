@@ -1,6 +1,8 @@
-// eingabe.js – Tastatur (Pfeile/WASD + Leertaste) und Touch (Stick links, Hauen rechts).
-// Auf dem Handy gilt: linke Bildschirmhälfte = laufen (der Stick erscheint, wo der Daumen landet),
-// rechte Hälfte = hauen. Der runde Knopf rechts unten ist nur ein Hinweis, getippt werden darf überall rechts.
+// eingabe.js – Tastatur (Pfeile/WASD + Leertaste) und Touch in zwei Arten:
+//  „tippen" (Standard): Wo der Finger hindrückt, läuft der Held hin; Finger halten und ziehen = er folgt.
+//                       Gehauen wird mit dem runden Knopf rechts unten (großzügige Trefferzone).
+//  „stick":  linke Bildschirmhälfte = laufen (der Stick erscheint, wo der Daumen landet),
+//            rechte Hälfte = hauen.
 
 const tasten = new Set();
 const ANGRIFF = ['Space', 'KeyJ', 'KeyK', 'KeyX', 'KeyL'];
@@ -12,6 +14,26 @@ const angriffsFinger = new Set();
 const stick = { id: null, bx: 0, by: 0, x: 0, y: 0 };
 let el = {};
 export let touchGeraet = matchMedia('(pointer: coarse)').matches;
+
+let steuerArt = 'tippen';
+try { if (localStorage.getItem('halmhauer.steuerung') === 'stick') steuerArt = 'stick'; } catch (e) { /* egal */ }
+export function holeSteuerArt() { return steuerArt; }
+export function setzeSteuerArt(a) {
+  steuerArt = a; eingabe.leeren();
+  try { localStorage.setItem('halmhauer.steuerung', a); } catch (e) { /* egal */ }
+}
+
+// Tippen-Ziel in Canvas-Pixeln (nicht CSS-Pixeln), solange der Finger liegt
+const ziel = { id: null, x: 0, y: 0 };
+const KNOPF_ZONE = 78;   // CSS-px um die Mitte des HAUEN-Knopfs, die als Knopf zählt
+function aufKnopf(x, y) {
+  const r = el.btnA.getBoundingClientRect();
+  return Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) < KNOPF_ZONE;
+}
+function setzeZiel(e) {
+  const f = el.flaeche.width / el.flaeche.clientWidth;
+  ziel.x = e.clientX * f; ziel.y = e.clientY * f;
+}
 
 export const eingabe = {
   richtung() {
@@ -28,14 +50,16 @@ export const eingabe = {
     return { x: x / m, y: y / m };
   },
   get angriff() { return angriffsFinger.size > 0 || ANGRIFF.some(k => tasten.has(k)); },
+  // Wohin der Finger gerade drückt (Canvas-Pixel) – null, wenn keiner liegt. Rechnet spiel.js in Weltkoordinaten um.
+  ziel() { return ziel.id !== null ? { x: ziel.x, y: ziel.y } : null; },
   // Einmal pro Bild abholen
   holeNeu() { const n = neuGedrueckt; neuGedrueckt = false; return n; },
-  leeren() { tasten.clear(); angriffsFinger.clear(); stick.id = null; neuGedrueckt = false; zeigeStick(); },
+  leeren() { tasten.clear(); angriffsFinger.clear(); stick.id = null; ziel.id = null; neuGedrueckt = false; zeigeStick(); },
 };
 
 function zeigeStick() {
   if (!el.stick) return;
-  el.stick.classList.toggle('versteckt', !touchGeraet || !el.aktiv());
+  el.stick.classList.toggle('versteckt', !touchGeraet || !el.aktiv() || steuerArt !== 'stick');
   if (stick.id === null) {
     el.stick.classList.add('ruhe');
     el.stick.style.left = ''; el.stick.style.top = '';
@@ -53,7 +77,7 @@ function zeigeStick() {
 }
 
 export function initEingabe({ flaeche, stickEl, knaufEl, btnA, aktiv, onPause }) {
-  el = { stick: stickEl, knauf: knaufEl, btnA, aktiv };
+  el = { flaeche, stick: stickEl, knauf: knaufEl, btnA, aktiv };
 
   addEventListener('keydown', (e) => {
     if (ANGRIFF.includes(e.code) || LAUF.includes(e.code)) {
@@ -78,7 +102,10 @@ export function initEingabe({ flaeche, stickEl, knaufEl, btnA, aktiv, onPause })
     if (!touchGeraet) touchGeraet = true;
     // Kann werfen, wenn der Finger schon wieder weg ist – dann eben ohne Capture
     try { flaeche.setPointerCapture(e.pointerId); } catch (err) { /* egal */ }
-    if (e.clientX < innerWidth * 0.5 && stick.id === null) {
+    if (steuerArt === 'tippen') {
+      if (aufKnopf(e.clientX, e.clientY)) { angriffsFinger.add(e.pointerId); neuGedrueckt = true; }
+      else { ziel.id = e.pointerId; setzeZiel(e); }     // ein zweiter Finger übernimmt das Ziel
+    } else if (e.clientX < innerWidth * 0.5 && stick.id === null) {
       stick.id = e.pointerId; stick.bx = stick.x = e.clientX; stick.by = stick.y = e.clientY;
     } else {
       angriffsFinger.add(e.pointerId); neuGedrueckt = true;
@@ -86,6 +113,7 @@ export function initEingabe({ flaeche, stickEl, knaufEl, btnA, aktiv, onPause })
     zeigeStick();
   });
   flaeche.addEventListener('pointermove', (e) => {
+    if (e.pointerId === ziel.id) { setzeZiel(e); return; }
     if (e.pointerId !== stick.id) return;
     stick.x = e.clientX; stick.y = e.clientY;
     // Stick wandert mit, wenn der Daumen weit über den Rand zieht
@@ -95,6 +123,7 @@ export function initEingabe({ flaeche, stickEl, knaufEl, btnA, aktiv, onPause })
   });
   const los = (e) => {
     if (e.pointerId === stick.id) stick.id = null;
+    if (e.pointerId === ziel.id) ziel.id = null;
     angriffsFinger.delete(e.pointerId);
     zeigeStick();
   };

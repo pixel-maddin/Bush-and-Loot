@@ -119,7 +119,7 @@ export function neuerTag() {
 // Raus aus dem Stumpf, der Tag läuft weiter
 export function weiterMaehen() {
   const st = S.welt.start;
-  S.sp.x = st.x; S.sp.y = st.y; S.sp.tuerSperre = true; S.sp.kx = S.sp.ky = 0;
+  S.sp.x = st.x; S.sp.y = st.y; S.sp.tuerSperre = true; S.sp.kx = S.sp.ky = 0; S.sp.ziel = null;
   S.sp.winkel = Math.PI / 2; S.sp.blick = 'unten';
   S.w = werte(S.st);
   S.sp.hp = Math.min(S.sp.hp, S.w.maxHp);
@@ -227,7 +227,22 @@ function spielerUpdate(dt, ein, neu) {
   if (p.schlagT > 0) p.schlagT -= dt;
   if (neu) p.puffer = 0.18;
 
-  const r = ein.richtung(), m = Math.hypot(r.x, r.y);
+  let r = ein.richtung(), m = Math.hypot(r.x, r.y);
+  // Tippen-Steuerung: Ziel aus Bildschirm- in Weltkoordinaten. Solange der Finger liegt, wandert das
+  // Ziel mit (auch wenn die Kamera nachzieht); losgelassen läuft der Held zum letzten Punkt.
+  const z = ein.ziel ? ein.ziel() : null;
+  if (m > 0.1) p.ziel = null;                        // Tasten/Stick haben Vorrang
+  else {
+    if (z && S.ansicht) {
+      const zx = (z.x + S.ansicht.ox) / S.ansicht.zoom, zy = (z.y + S.ansicht.oy) / S.ansicht.zoom + 6;
+      if (p.ziel) { p.ziel.x = zx; p.ziel.y = zy; } else p.ziel = { x: zx, y: zy, haengt: 0 };
+    }
+    if (p.ziel) {
+      const ddx = p.ziel.x - p.x, ddy = p.ziel.y - p.y, d = Math.hypot(ddx, ddy);
+      if (d < 2.5) p.ziel = null;
+      else { const f = Math.min(1, d / 6); r = { x: ddx / d * f, y: ddy / d * f }; m = f; }
+    }
+  }
   let tempo = w.tempo;
   if (p.ladung > 0.15) tempo *= 0.6;
   let dx = 0, dy = 0;
@@ -237,9 +252,16 @@ function spielerUpdate(dt, ein, neu) {
     if (p.schlagT <= 0) { p.winkel = Math.atan2(r.y, r.x); p.blick = blickAus(p.winkel); }
     p.laufT += dt * f * tempo / 60; p.bewegt = true;
   } else p.bewegt = false;
+  const soll = Math.hypot(dx, dy);
   dx += p.kx * dt; dy += p.ky * dt;
   const ab = Math.exp(-10 * dt); p.kx *= ab; p.ky *= ab;
+  const vx = p.x, vy = p.y;
   bewege(p, dx, dy, 4, 3);
+  // Läuft er gegen einen Baum oder ins Wasser, nach kurzer Zeit aufgeben statt ewig zu drücken
+  if (p.ziel && soll > 0) {
+    p.ziel.haengt = Math.hypot(p.x - vx, p.y - vy) < soll * 0.3 ? p.ziel.haengt + dt : 0;
+    if (p.ziel.haengt > 0.3 && !z) p.ziel = null;
+  }
 
   // Hauen: Tippen = ein Schlag. Halten = ohne Wirbelschlag weiterhauen, mit Wirbelschlag aufladen.
   if (p.cd <= 0 && (p.puffer > 0 || (ein.angriff && !w.wirbel))) { schlag(false); if (p.puffer > 0) p.ladung = 0; p.puffer = 0; }
@@ -258,7 +280,7 @@ function spielerUpdate(dt, ein, neu) {
   const inTuer = Math.abs(p.x - T.x) < 8 && p.y < T.y + 6;
   if (!inTuer) p.tuerSperre = false;
   else if (!p.tuerSperre) {
-    p.tuerSperre = true; S.phase = 'haus'; SFX.tuer();
+    p.tuerSperre = true; p.ziel = null; S.phase = 'haus'; SFX.tuer();
     hooks.haus && hooks.haus(false);
   }
 }
@@ -535,6 +557,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   if (S.wackeln > 0 && S.phase === 'tag') { wx = (Math.random() - 0.5) * 3; wy = (Math.random() - 0.5) * 3; }
   const ox = Math.round((cx - vw / 2 + wx) * zoom), oy = Math.round((cy - vh / 2 + wy) * zoom);
   const L = ox / zoom, T = oy / zoom, R = L + vw, U = T + vh;
+  S.ansicht = { ox, oy, zoom };      // für die Tippen-Steuerung (Bildschirm → Welt)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = '#16301b'; ctx.fillRect(0, 0, cw, ch);
@@ -553,6 +576,12 @@ export function zeichne(ctx, cw, ch, zoom) {
   if (spielt) ellipse(ctx, p.x, p.y, 5, 2);
   for (const g of S.gegner) if (sicht(g.x, g.y, 12, 12, 12)) ellipse(ctx, g.x, g.y, g.art === 'hummel' ? 3 : 5, g.art === 'hummel' ? 1.5 : 2);
   for (const e of S.beute) if (e.z > 1) ellipse(ctx, e.x, e.y + 3, 2.5, 1);
+  // Zielmarke der Tippen-Steuerung: kleiner pulsierender Ring am Boden
+  if (spielt && p.ziel && S.phase === 'tag') {
+    const pr = 4 + Math.sin(S.t * 10) * 0.8;
+    ctx.strokeStyle = 'rgba(255, 248, 214, 0.75)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(Math.round(p.ziel.x) + 0.5, Math.round(p.ziel.y) + 0.5, pr, pr * 0.5, 0, 0, Math.PI * 2); ctx.stroke();
+  }
 
   // Alles, was steht, nach Höhe sortiert
   const liste = [];
