@@ -31,6 +31,8 @@
       <button id="btnPause" aria-label="Pause"><i></i><i></i></button>
     </div>
   </div>
+  <!-- Lebensleiste des Wächters in der Kammer -->
+  <div id="bossLeiste" class="versteckt"><span id="bossName"></span><div class="balken"><div id="bossHp"></div></div></div>
 
   <!-- Touch-Steuerung (nur Anzeige; die Berührung landet auf dem Canvas) -->
   <div id="stick" class="versteckt ruhe"><div id="knauf"></div></div>
@@ -62,6 +64,30 @@
       <p id="hausText" class="hilfe"></p>
       <div id="waren" class="waren"></div>
       <div id="hausKnoepfe" class="knoepfe"></div>
+    </div>
+  </div>
+
+  <!-- Glitzerhöhle: die fünf Türen -->
+  <div id="hoehle" class="schicht versteckt">
+    <div class="panel hoehlenpanel">
+      <div class="kopf">
+        <h2>Die Glitzerhöhle</h2>
+        <div id="hoehleGeld" class="geld-gross"></div>
+      </div>
+      <p class="hilfe">Hinter jeder Tür wartet ein Wächter. Wer alle fünf besiegt, findet den Riesendiamanten.
+        Hier drinnen steht die Sonne still – aber wer im Kampf umkippt, für den ist der Tag vorbei.</p>
+      <div id="kammern" class="waren"></div>
+      <div class="knoepfe"><button id="btnHoehleRaus" class="knopf grau">Wieder raus</button></div>
+    </div>
+  </div>
+
+  <!-- Fund nach einem Wächter (und der große Sieg) -->
+  <div id="fund" class="schicht versteckt">
+    <div class="panel fundpanel">
+      <img id="fundBild" class="px" alt="">
+      <h2 id="fundTitel"></h2>
+      <div id="fundText"></div>
+      <div class="knoepfe"><button id="btnFund" class="knopf gross">Weiter</button></div>
     </div>
   </div>
 

@@ -85,6 +85,30 @@ Die zähen Sorten wachsen weiter weg vom Baumstumpf häufiger.
 
 Manchmal springt einer direkt aus einem Grasbüschel. Jeden Tag werden es mehr.
 
+## Die Glitzerhöhle – das Ziel
+
+Oben im Fels am Waldrand liegt die Glitzerhöhle. Darin sind fünf Kammern hinter
+verschlossenen Türen, und hinter jeder wartet ein Wächter. Eine Tür öffnet sich
+für Diamanten, aber erst, wenn der Wächter davor besiegt ist. Wer alle fünf
+schafft, bekommt den **Riesendiamanten** und hat gewonnen (weiterspielen geht
+trotzdem).
+
+| Kammer | Tür | Wächter | Was er macht | Belohnung |
+|---|---|---|---|---|
+| Moosgrotte | 100 | Riesenschnecke | zittert, dann Ansturm geradeaus – danach benommen | Fackel |
+| Wabenkammer | 350 | Hummelkönigin | kreist hoch oben, ruft Hummeln, stürzt sich auf die rote Stelle – sitzt danach kurz am Boden | ein Herz mehr |
+| Schattenhalle | 900 | Schattenpilz | springt, Druckwelle beim Landen; wird ab und zu fast unsichtbar. Es ist dunkel! | Steigeisen |
+| Frostkammer | 2.000 | Eisigel | rollt als Stachelkugel herum (dann prallt alles ab), ist danach schwindelig, schießt Eisstacheln | Goldener Schliff (+50 % Schaden) |
+| Kristallthron | 4.000 | Steinwächter | Arme hoch = Boden bebt im roten Kreis; danach glüht sein Kern (doppelter Schaden). Wirft Felsbrocken | Riesendiamant |
+
+- Rote Flecken und Kreise am Boden zeigen, wo gleich etwas einschlägt. Weglaufen!
+- In der Höhle steht die Sonne still. Wer im Kampf umkippt, für den ist der Tag
+  vorbei (wie draußen: die Hälfte der heutigen Diamanten ist weg). Die Tür bleibt offen.
+- Der Wächter lässt einen Haufen Diamanten fallen. Wer die Belohnung aufhebt,
+  bekommt die Tür nach draußen auf.
+- Fackel und Steigeisen sind für den Dunkelwald und das Gebirge, die als
+  Nächstes dazukommen.
+
 ## Laden im Baumstumpf
 
 Klinge (Holzschwert → Kurzschwert → Eisenschwert → Breitschwert → Mondsichel →
@@ -94,8 +118,9 @@ Wirbelschlag.
 
 ## Musik
 
-Drei eigene kleine Chip-Stücke, live im Browser erzeugt: ein flottes am Tag,
-ein ruhigeres, sobald die Sonne sinkt, und eine Spieluhr im Baumstumpf. In der
+Vier eigene kleine Chip-Stücke, live im Browser erzeugt: ein flottes am Tag,
+ein ruhigeres, sobald die Sonne sinkt, eine Spieluhr im Baumstumpf und ein
+treibendes Kampfstück in den Kammern der Glitzerhöhle. In der
 Pause wird sie leiser. Musik und Geräusche lassen sich im Pause-Menü getrennt
 abschalten.
 

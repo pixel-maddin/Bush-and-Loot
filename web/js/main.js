@@ -2,10 +2,12 @@
 
 import { KACHEL, SICHT_KACHELN } from './config.js';
 import { initGrafik } from './grafik.js';
+import { initHoehlenGrafik } from './hoehlengrafik.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
-  kaufen, update, zeichne, setzeHooks,
+  kaufen, update, zeichne, setzeHooks, oeffneTuer, betreteKammer, verlasseKammer,
 } from './spiel.js';
+import { KAMMERN } from './config.js';
 import * as UI from './ui.js';
 import { initEingabe, eingabe } from './eingabe.js';
 import { tonStart, tonSchlafen } from './ton.js';
@@ -28,6 +30,7 @@ addEventListener('resize', groesse);
 groesse();
 
 initGrafik();
+initHoehlenGrafik();
 laden();
 // Zum Testen: ?geld=5000 schenkt Diamanten – nur lokal, online soll keiner schummeln
 const q = new URLSearchParams(location.search);
@@ -61,11 +64,19 @@ setzeHooks({
   haus: () => { eingabe.leeren(); UI.zeigeHaus(false); steuerung.aktualisiere(); },
   bilanz: (info) => { eingabe.leeren(); UI.zeigeBilanz(info); steuerung.aktualisiere(); },
   hinweis: (t) => UI.toast(t),
+  hoehle: () => { eingabe.leeren(); UI.zeigeHoehle(); steuerung.aktualisiere(); },
+  bossBesiegt: (k) => UI.toast(`${KAMMERN[k - 1].boss} ist besiegt!`, 2500),
+  belohnung: (k) => { eingabe.leeren(); S.phase = 'fund'; UI.zeigeFund(k); steuerung.aktualisiere(); },
+  kammerVerlassen: () => {
+    verlasseKammer();
+    UI.toast(S.st.bosse >= 5 ? 'Der Riesendiamant funkelt in deiner Tasche.' : 'Zurück im Wald. Die nächste Tür wartet …', 3000);
+    steuerung.aktualisiere();
+  },
   tagBeginnt: () => {
     UI.hudNeu();
     if (S.tag === 1) UI.toast('Hau das Gras weg – manchmal steckt ein Diamant drin!', 4000);
     else if (S.tag === 2) UI.toast('Brummhummeln sind unterwegs. Die nerven!', 3500);
-    else if (S.tag === 3) UI.toast('Blütenbüsche sind zäh, aber da steckt mehr drin.', 3500);
+    else if (S.tag === 3) UI.toast(S.st.tueren ? 'Blütenbüsche sind zäh, aber da steckt mehr drin.' : 'Blütenbüsche sind zäh – und oben im Fels gibt es eine Höhle …', 3800);
     else if (S.tag === 4) UI.toast('Hüpfpilze! Weiter draußen wächst das bessere Zeug.', 3500);
     else if (S.tag === 5) UI.toast('Dornenbüsche: am zähesten, aber oft mit Gold.', 3500);
     steuerung.aktualisiere();
@@ -85,6 +96,14 @@ UI.initUI({
   tagBeenden() { tagBeenden(); },
   kaufen(id, preis) { return kaufen(id, preis); },
   bilanzWeiter() { S.phase = 'laden'; UI.zeigeHaus(true); },
+  tuerOeffnen(k) { return oeffneTuer(k); },
+  kaempfen(k) {
+    UI.zeige(null); betreteKammer(k);
+    UI.toast(`${KAMMERN[k - 1].name}: ${KAMMERN[k - 1].boss}!`, 2200);
+    steuerung.aktualisiere();
+  },
+  hoehleRaus() { UI.zeige(null); S.phase = 'tag'; steuerung.aktualisiere(); },
+  fundWeiter() { UI.zeige(null); S.phase = 'tag'; steuerung.aktualisiere(); },
   pause,
   zumTitel() {
     // Gesammeltes bleibt, der angefangene Tag zählt nicht
@@ -96,6 +115,18 @@ UI.initUI({
 });
 UI.zeigeTitel(hatSpielstand());
 
+// Testwege (nur lokal): ?kammer=3 startet sofort in Kammer 3, ?hoehle zeigt das Höhlen-Fenster,
+// ?eingang stellt den Helden vor den Höhleneingang.
+// Ohne Ton, weil niemand getippt hat. Fürs Bild aus Headless-Chrome gedacht (siehe CLAUDE.md).
+if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
+  UI.zeige(null); neuerTag();
+  if (q.has('kammer')) betreteKammer(Math.max(1, Math.min(5, parseInt(q.get('kammer'), 10) || 1)));
+  else if (q.has('eingang')) {          // ?eingang: vor dem Höhleneingang stehen
+    const h = S.welt.hoehle; S.sp.x = h.tuer.x - 20; S.sp.y = h.tuer.y + 36; S.kam.x = S.sp.x; S.kam.y = S.sp.y;
+  } else { S.phase = 'hoehle'; UI.zeigeHoehle(); }
+  steuerung.aktualisiere();
+}
+
 // Wer die App verlässt, findet sie pausiert wieder
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && S.phase === 'tag') pause();
@@ -104,9 +135,11 @@ document.addEventListener('visibilitychange', () => {
 
 // Welches Stück passt gerade? Abends (ab 72 % des Tages) wird es ruhiger, im Baumstumpf Spieluhr.
 function stueckFuerPhase() {
+  if (S.ort === 'kammer' && (S.phase === 'tag' || S.phase === 'pause')) return S.boss ? 'kampf' : 'haus';
   switch (S.phase) {
     case 'tag': return S.zeit / S.dauer > 0.72 ? 'abend' : 'tag';
     case 'pause': return S.zeit / S.dauer > 0.72 ? 'abend' : 'tag';
+    case 'hoehle': return 'abend';
     case 'haus': case 'laden': case 'titel': return 'haus';
     default: return null;     // Abblende und Bilanz: Stille, da spielt die kleine Abendmelodie
   }
@@ -122,7 +155,8 @@ let warnTag = 0;
 
 let letzte = performance.now();
 function schleife(t) {
-  const dt = Math.min(0.05, (t - letzte) / 1000);
+  // Das erste Bild kann einen Zeitstempel vor "letzte" haben – negativ darf dt nie werden
+  const dt = Math.max(0, Math.min(0.05, (t - letzte) / 1000));
   letzte = t;
   update(dt, eingabe);
   if (S.phase === 'tag' && S.zeit > S.dauer - 12 && warnTag !== S.tag) {

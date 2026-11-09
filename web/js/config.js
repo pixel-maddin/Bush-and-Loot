@@ -70,16 +70,38 @@ export const KLINGE = {
   bogenGrad:  [95, 115, 135, 155, 175, 200],
 };
 
-// Aus den gekauften Stufen die Spielwerte ableiten
+// Die Glitzerhöhle: fünf Kammern hinter verschlossenen Türen, in jeder ein Wächter.
+// preis = Diamantwert fürs Öffnen der Tür, hp = Lebenspunkte des Wächters,
+// schatz = Diamanten, die er fallen lässt (Anzahl je Farbe Grün, Blau, Rot, Lila, Gold).
+// Fortschritt steht in S.st.tueren (geöffnet) und S.st.bosse (besiegt) – also im normalen Spielstand.
+export const KAMMERN = [
+  { name: 'Moosgrotte',    boss: 'Riesenschnecke', art: 'schnecke', preis: 100,  hp: 26,  schaden: 1,
+    schatz: [10, 6, 2, 0, 0],  belohnung: 'fackel',
+    beute: 'Fackel', beuteText: 'Eine Fackel, die nie ausgeht. Mit ihr traust du dich bald in den Dunkelwald.' },
+  { name: 'Wabenkammer',   boss: 'Hummelkönigin',  art: 'koenigin', preis: 350,  hp: 40,  schaden: 1,
+    schatz: [10, 10, 6, 1, 0], belohnung: 'herz',
+    beute: 'Königinnenherz', beuteText: 'Du hast jetzt für immer ein Herz mehr.' },
+  { name: 'Schattenhalle', boss: 'Schattenpilz',   art: 'schatten', preis: 900,  hp: 65,  schaden: 1,
+    schatz: [10, 10, 10, 4, 1], belohnung: 'steigeisen',
+    beute: 'Steigeisen', beuteText: 'Eiserne Zacken für die Stiefel. Damit kommst du bald hoch ins Gebirge.' },
+  { name: 'Frostkammer',   boss: 'Eisigel',        art: 'igel',     preis: 2000, hp: 100, schaden: 2,
+    schatz: [10, 10, 10, 8, 3], belohnung: 'schliff',
+    beute: 'Goldener Schliff', beuteText: 'Deine Klinge glänzt golden und trifft ab jetzt halb so fest noch mal dazu.' },
+  { name: 'Kristallthron', boss: 'Steinwächter',   art: 'waechter', preis: 4000, hp: 220, schaden: 2,
+    schatz: [10, 10, 10, 10, 8], belohnung: 'riesendiamant',
+    beute: 'Der Riesendiamant', beuteText: 'Du hast alle fünf Wächter besiegt!' },
+];
+
+// Aus den gekauften Stufen die Spielwerte ableiten (Boss-Belohnungen stecken mit drin)
 export function werte(st) {
-  const k = st.klinge | 0;
+  const k = st.klinge | 0, bosse = st.bosse | 0;
   return {
-    schaden: KLINGE.schaden[k],
+    schaden: Math.ceil(KLINGE.schaden[k] * (bosse >= 4 ? 1.5 : 1)),
     reichweite: KLINGE.reichweite[k],
     bogen: KLINGE.bogenGrad[k] * Math.PI / 180,
     abklingen: 0.42 - 0.055 * (st.schwung | 0),
     tempo: 62 + 11 * (st.stiefel | 0),
-    maxHp: 3 + (st.herz | 0),
+    maxHp: 3 + (st.herz | 0) + (bosse >= 2 ? 1 : 0),
     magnet: 14 + 14 * (st.magnet | 0),
     tagDauer: 70 + 15 * (st.sonne | 0),
     glueck: st.klee | 0,

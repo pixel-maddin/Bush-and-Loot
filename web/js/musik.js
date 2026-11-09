@@ -1,6 +1,7 @@
 // musik.js – Hintergrundmusik, live erzeugt wie die Geräusche (keine Tondatei).
-// Drei eigene kleine Stücke: „tag" (flott, D-Dur), „abend" (ruhig, h-Moll, ab 72 % des Tages)
-// und „haus" (Spieluhr-Walzer im Baumstumpf). Alle selbst geschrieben, nichts nachgespielt.
+// Vier eigene kleine Stücke: „tag" (flott, D-Dur), „abend" (ruhig, h-Moll, ab 72 % des Tages),
+// „haus" (Spieluhr-Walzer im Baumstumpf) und „kampf" (a-Moll, in den Kammern der Glitzerhöhle).
+// Alle selbst geschrieben, nichts nachgespielt.
 //
 // Schreibweise der Stimmen: ein Takt pro Zeichenkette, ein Eintrag pro Achtel.
 //   'D5' = Ton anschlagen   '-' = vorigen Ton halten   '.' = Pause
@@ -32,6 +33,16 @@ const STUECKE = {
       'A4 - D5 - F#5 - A5 -', 'G5 - F#5 - E5 - - -',
       'F#5 - - - B5 - A5 -',  'G5 - F#5 - D5 - B4 -',
       'E5 - G5 - F#5 - E5 -', 'C#5 - - - A#4 - - -',
+    ],
+  },
+  kampf: {
+    bpm: 150, takt: 8, lead: 'puls25', laut: 1,
+    akkorde: ['A C E', 'A C E', 'F A C', 'G B D', 'A C E', 'A C E', 'E G# B', 'E G# B'],
+    melodie: [
+      'A4 . A4 C5 E5 - D5 C5', 'B4 - A4 - E4 - - .',
+      'F4 A4 C5 - F5 - E5 D5', 'D5 - B4 - G4 - B4 -',
+      'A4 . A4 C5 E5 - A5 -',  'G5 F5 E5 - D5 C5 B4 -',
+      'G#4 - B4 - E5 - D5 -',  'C5 - B4 - G#4 - E4 -',
     ],
   },
   haus: {
@@ -159,6 +170,13 @@ function spieleSchritt(st, ziel, takt, schritt, t, sd, runde) {
     if (schritt % 2 === 1) stimme(ziel, 'puls12', hz(a.toene[(schritt >> 1) % 2 + 1]), t, sd * 0.5, 0.022);
     trommel(ziel, 'hat', t);
     if (schritt === 0 || schritt === 4 || (schritt === 7 && takt % 4 === 3)) trommel(ziel, 'kick', t);
+    if (schritt === 2 || schritt === 6) trommel(ziel, 'snare', t);
+  } else if (st === STUECKE.kampf) {
+    // Treibender Achtelbass, Kick auf 1, 4 und 5, Snare auf 3 und 7
+    stimme(ziel, 'triangle', hz(a.grund + (schritt % 2 ? 12 : 0)), t, sd * 0.85, 0.24);
+    if (schritt % 2 === 1) stimme(ziel, 'puls12', hz(a.toene[2] + 12), t, sd * 0.4, 0.02);
+    trommel(ziel, 'hat', t);
+    if (schritt === 0 || schritt === 3 || schritt === 4) trommel(ziel, 'kick', t);
     if (schritt === 2 || schritt === 6) trommel(ziel, 'snare', t);
   } else if (st === STUECKE.abend) {
     if (schritt === 0) stimme(ziel, 'triangle', hz(a.grund), t, sd * 7.5, 0.2, 0.4);

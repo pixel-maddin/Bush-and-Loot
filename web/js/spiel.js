@@ -3,12 +3,13 @@
 
 import {
   KACHEL as K, KARTE_B as B, KARTE_H as H, STEINE, STEIN_GEWICHT, BUESCHEL, bueschelGewichte,
-  GRAS_DICHTE, GEGNER, gegnerMax, gegnerArten, werte, LADEZEIT,
+  GRAS_DICHTE, GEGNER, gegnerMax, gegnerArten, werte, LADEZEIT, KAMMERN,
 } from './config.js';
 import { G } from './grafik.js';
 import { SFX } from './ton.js';
 import { baueWelt } from './welt.js';
 import { klemme } from './hilfe.js';
+import { baueKammer, neuerBoss, kammerUpdate, bossTreffer, kammerBoden, kammerListe, kammerZeichne, kammerDunkel } from './hoehle.js';
 
 const SPEICHER = 'halmhauer.v1';
 const WELT_SAAT = 20261109;
@@ -26,10 +27,19 @@ export const S = {
   kam: { x: 0, y: 0 },
   wackeln: 0, stopp: 0, blende: 0, spawnT: 3, rauchT: 0, t: 0,
   endeGrund: null,
+  // Glitzerhöhle: ort = 'wald' oder 'kammer'; wald = weggelegter Wald, solange man in einer Kammer ist
+  ort: 'wald', wald: null, boss: null, geschosse: [], wellen: [], warn: [], belohnungsDing: null, kammerFertig: false,
 };
 
 let hooks = {};
 export function setzeHooks(h) { hooks = h; }
+export function ruf(name, ...a) { hooks[name] && hooks[name](...a); }
+// Nach Kauf oder Boss-Belohnung die Spielwerte neu rechnen; ein neues Herz ist gleich voll
+export function neueWerte() {
+  const altMax = S.w ? S.w.maxHp : 0;
+  S.w = werte(S.st);
+  if (S.sp && S.w.maxHp > altMax) S.sp.hp += S.w.maxHp - altMax;
+}
 
 // ---------- Speichern ----------
 export function laden() {
@@ -57,6 +67,7 @@ export const hatSpielstand = () => S.tag > 1 || S.geld > 0;
 
 export function initSpiel() {
   S.welt = baueWelt(WELT_SAAT);
+  S.ort = 'wald'; S.wald = null; S.boss = null; S.geschosse = []; S.wellen = []; S.warn = []; S.belohnungsDing = null;
   S.w = werte(S.st);
   S.sp = neuerSpieler();
   pflanzen();
@@ -102,6 +113,7 @@ function pflanzen() {
 
 // ---------- Tagesablauf ----------
 export function neuerTag() {
+  if (S.ort !== 'wald') zurueckInDenWald();      // in einer Kammer umgekippt
   S.w = werte(S.st);
   S.zeit = 0; S.dauer = S.w.tagDauer;
   S.sp = neuerSpieler();
@@ -129,6 +141,51 @@ export function weiterMaehen() {
 
 export function tagBeenden() { S.endeGrund = 'heim'; tagAbschliessen(); }
 
+// ---------- Glitzerhöhle ----------
+export function oeffneTuer(k) {
+  const d = KAMMERN[k - 1];
+  if ((S.st.tueren | 0) !== k - 1 || (S.st.bosse | 0) < k - 1) return false;
+  if (S.geld < d.preis) { SFX.nein(); return false; }
+  S.geld -= d.preis;
+  S.st.tueren = k;
+  SFX.tuerAuf(); speichern();
+  return true;
+}
+
+export function betreteKammer(k) {
+  if (S.ort !== 'wald') zurueckInDenWald();
+  S.wald = { welt: S.welt, bueschel: S.bueschel, gitter: S.gitter, gegner: S.gegner, beute: S.beute };
+  S.welt = baueKammer(k);
+  S.bueschel = []; S.gitter = new Array(S.welt.b * S.welt.h).fill(null);
+  S.gegner = []; S.beute = []; S.geschosse = []; S.wellen = []; S.warn = [];
+  S.belohnungsDing = null; S.kammerFertig = false;
+  S.boss = neuerBoss(k);
+  const p = S.sp;
+  p.x = S.welt.start.x; p.y = S.welt.start.y; p.ziel = null; p.kx = p.ky = 0;
+  p.winkel = -Math.PI / 2; p.blick = 'oben'; p.unverw = 0; p.ladung = 0;
+  S.kam.x = p.x; S.kam.y = p.y - 40;
+  S.ort = 'kammer'; S.phase = 'tag';
+  SFX.tuerAuf();
+}
+
+function zurueckInDenWald() {
+  const w = S.wald;
+  if (w) { S.welt = w.welt; S.bueschel = w.bueschel; S.gitter = w.gitter; S.gegner = w.gegner; S.beute = w.beute; }
+  S.wald = null; S.boss = null; S.geschosse = []; S.wellen = []; S.warn = []; S.belohnungsDing = null;
+  S.ort = 'wald';
+}
+
+export function verlasseKammer() {
+  for (const e of S.beute) if (!e.herz) einsammeln(e, true);      // was noch herumliegt, kommt mit
+  zurueckInDenWald();
+  const p = S.sp, h = S.welt.hoehle;
+  p.x = h.tuer.x; p.y = h.tuer.y + 14; p.ziel = null; p.kx = p.ky = 0;
+  p.winkel = Math.PI / 2; p.blick = 'unten'; p.hoehleSperre = true;
+  S.kam.x = p.x; S.kam.y = p.y - 8;
+  S.phase = 'tag';
+  SFX.tuer(); speichern();
+}
+
 function beginneAbend(grund) {
   S.endeGrund = grund; S.phase = 'abblende'; S.blende = 0;
   grund === 'ohnmacht' ? SFX.ohnmacht() : SFX.abend();
@@ -147,16 +204,14 @@ function tagAbschliessen() {
   S.tag++;
   S.phase = 'bilanz';
   speichern();
-  hooks.bilanz && hooks.bilanz({ grund: S.endeGrund, heute: S.heute, verlust, tag: fertig, nachgetragen });
+  hooks.bilanz && hooks.bilanz({ grund: S.endeGrund, heute: S.heute, verlust, tag: fertig, nachgetragen, kammer: S.ort === 'kammer' && S.boss ? S.boss.k : 0 });
 }
 
 export function kaufen(id, preis) {
   if (S.geld < preis) { SFX.nein(); return false; }
   S.geld -= preis;
   S.st[id] = (S.st[id] | 0) + 1;
-  const altMax = S.w.maxHp;
-  S.w = werte(S.st);
-  if (S.sp && S.w.maxHp > altMax) S.sp.hp += S.w.maxHp - altMax;   // neues Herz gleich voll
+  neueWerte();
   SFX.kauf(); speichern();
   return true;
 }
@@ -184,20 +239,22 @@ export function update(dt, ein) {
   if (S.phase !== 'tag') return;
   if (S.stopp > 0) { S.stopp -= dt; return; }   // kurzer Treffer-Stopp, fühlt sich wuchtiger an
 
-  S.zeit += dt;
+  const imWald = S.ort === 'wald';
+  if (imWald) S.zeit += dt;                         // in der Höhle steht die Sonne still
   if (S.wackeln > 0) S.wackeln -= dt;
   spielerUpdate(dt, ein, neu);
   if (S.phase !== 'tag') return;                   // Tür erreicht
   gegnerUpdate(dt);
   beuteUpdate(dt);
-  spawner(dt);
+  if (imWald) spawner(dt); else kammerUpdate(dt);
+  if (S.phase !== 'tag') return;
   kamera(dt);
-  if (S.zeit >= S.dauer) beginneAbend('abend');
+  if (imWald && S.zeit >= S.dauer) beginneAbend('abend');
 }
 
 // ---------- Bewegung & Kollision ----------
 function fest(x, y, hw, hh) {
-  const W = S.welt;
+  const W = S.welt, B = W.b, H = W.h;
   const x0 = Math.floor((x - hw) / K), x1 = Math.floor((x + hw - 0.01) / K);
   const y0 = Math.floor((y - hh) / K), y1 = Math.floor((y + hh - 0.01) / K);
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
@@ -276,12 +333,24 @@ function spielerUpdate(dt, ein, neu) {
   }
 
   // Tür des Baumstumpfs
-  const T = S.welt.haus.tuer;
-  const inTuer = Math.abs(p.x - T.x) < 8 && p.y < T.y + 6;
-  if (!inTuer) p.tuerSperre = false;
-  else if (!p.tuerSperre) {
-    p.tuerSperre = true; p.ziel = null; S.phase = 'haus'; SFX.tuer();
-    hooks.haus && hooks.haus(false);
+  if (S.welt.haus) {
+    const T = S.welt.haus.tuer;
+    const inTuer = Math.abs(p.x - T.x) < 8 && p.y < T.y + 6;
+    if (!inTuer) p.tuerSperre = false;
+    else if (!p.tuerSperre) {
+      p.tuerSperre = true; p.ziel = null; S.phase = 'haus'; SFX.tuer();
+      hooks.haus && hooks.haus(false);
+    }
+  }
+  // Eingang der Glitzerhöhle
+  if (S.welt.hoehle) {
+    const T = S.welt.hoehle.tuer;
+    const drin = Math.abs(p.x - T.x) < 10 && p.y < T.y + 6;
+    if (!drin) p.hoehleSperre = false;
+    else if (!p.hoehleSperre) {
+      p.hoehleSperre = true; p.ziel = null; S.phase = 'hoehle'; SFX.tuer();
+      hooks.hoehle && hooks.hoehle();
+    }
   }
 }
 
@@ -303,7 +372,7 @@ function schlag(rund) {
     if (rund || d < 6) return true;
     return winkelAbstand(Math.atan2(dy, dx), p.winkel) <= bogen / 2 + Math.atan2(extra, d) * 0.6;
   };
-  const rr = Math.ceil((reich + 8) / K), gx = Math.floor(cx / K), gy = Math.floor(cy / K);
+  const rr = Math.ceil((reich + 8) / K), gx = Math.floor(cx / K), gy = Math.floor(cy / K), B = S.welt.b, H = S.welt.h;
   let n = 0;
   for (let ty = gy - rr; ty <= gy + rr; ty++) for (let tx = gx - rr; tx <= gx + rr; tx++) {
     if (tx < 0 || ty < 0 || tx >= B || ty >= H) continue;
@@ -312,6 +381,7 @@ function schlag(rund) {
     if (trifft(b.x, b.y - 4, 5)) { haueBueschel(b, schaden); n++; }
   }
   for (const g of S.gegner) if (!g.tot && trifft(g.x, g.y - 4 - g.z, 7)) haueGegner(g, schaden, cx, cy);
+  if (S.boss) bossTreffer(trifft, schaden);
   if (n >= 6) S.wackeln = Math.max(S.wackeln, 0.08);
 }
 
@@ -368,6 +438,12 @@ function beuteUpdate(dt) {
       e.vz -= 260 * dt; e.z += e.vz * dt;
       if (e.z <= 0) { e.z = 0; e.vz = Math.abs(e.vz) > 25 ? -e.vz * 0.4 : 0; e.vx *= 0.6; e.vy *= 0.6; }
       e.x += e.vx * dt; e.y += e.vy * dt;
+      // In der Kammer prallen Diamanten an den Wänden ab, statt darin zu verschwinden
+      if (S.ort === 'kammer') {
+        const x0 = K + 6, x1 = (S.welt.b - 1) * K - 6, y0 = 2 * K + 6, y1 = (S.welt.h - 1) * K - 4;
+        if (e.x < x0 || e.x > x1) { e.x = klemme(e.x, x0, x1); e.vx = -e.vx * 0.5; }
+        if (e.y < y0 || e.y > y1) { e.y = klemme(e.y, y0, y1); e.vy = -e.vy * 0.5; }
+      }
     }
     if (e.t > 0.3 && d < 7) { einsammeln(e, false); e.weg = true; }
   }
@@ -390,7 +466,7 @@ function einsammeln(e, leise) {
 }
 
 // ---------- Gegner ----------
-function spawne(art, x, y, ausGras) {
+export function spawne(art, x, y, ausGras) {
   const d = GEGNER[art];
   S.gegner.push({
     art, x, y, z: 0, hp: d.hp + Math.floor((S.tag - 1) / 6), kx: 0, ky: 0, vx: 0, vy: 0,
@@ -451,8 +527,9 @@ function gegnerUpdate(dt) {
       g.vx += ex / ed * 240 * dt; g.vy += ey / ed * 240 * dt;
       const v = Math.hypot(g.vx, g.vy), vmax = def.tempo;
       if (v > vmax) { g.vx *= vmax / v; g.vy *= vmax / v; }
-      g.x = klemme(g.x + (g.vx + g.kx) * dt, 2.5 * K, (B - 2.5) * K);
-      g.y = klemme(g.y + (g.vy + g.ky) * dt, 2.5 * K, (H - 2.5) * K);
+      const rand = S.ort === 'wald' ? 2.5 * K : 1.5 * K;
+      g.x = klemme(g.x + (g.vx + g.kx) * dt, rand, S.welt.b * K - rand);
+      g.y = klemme(g.y + (g.vy + g.ky) * dt, rand + (S.ort === 'wald' ? 0 : K), S.welt.h * K - rand);
       g.links = g.vx < 0;
     } else {
       g.hopT -= dt;
@@ -486,7 +563,7 @@ function haueGegner(g, schaden, cx, cy) {
   if (Math.random() < GEGNER[g.art].beute) wirfStein(g.x, g.y - 4, waehleStein(Math.min(4, 1 + Math.floor(S.tag / 3)), S.w.glueck));
 }
 
-function aua(g, schaden) {
+export function aua(g, schaden) {
   const p = S.sp;
   p.hp -= schaden; p.unverw = 1.3;
   const dx = p.x - g.x, dy = p.y - g.y, d = Math.hypot(dx, dy) || 1;
@@ -503,21 +580,21 @@ function kamera(dt) {
 }
 
 // ---------- Partikel & schwebende Zahlen ----------
-function splitter(x, y, farben, n) {
+export function splitter(x, y, farben, n) {
   for (let i = 0; i < n; i++) {
     const l = 0.4 + Math.random() * 0.4;
     S.partikel.push({ x, y, z: 2 + Math.random() * 4, vx: (Math.random() - 0.5) * 90, vy: (Math.random() - 0.5) * 50,
       vz: 40 + Math.random() * 70, leben: l, max: l, farbe: farben[i % farben.length], schwer: true, gr: 1 });
   }
 }
-function puff(x, y) {
+export function puff(x, y) {
   for (let i = 0; i < 10; i++) {
     const a = i / 10 * Math.PI * 2, l = 0.4 + Math.random() * 0.2;
     S.partikel.push({ x, y, z: 0, vx: Math.cos(a) * 40, vy: Math.sin(a) * 30, vz: 0, leben: l, max: l,
       farbe: i % 2 ? '#ffffff' : '#d8e8d0', schwer: false, gr: 2 });
   }
 }
-function funkeln(x, y, farbe) {
+export function funkeln(x, y, farbe) {
   for (let i = 0; i < 5; i++) {
     const a = Math.random() * 6.28, l = 0.3 + Math.random() * 0.2;
     S.partikel.push({ x, y, z: 0, vx: Math.cos(a) * 30, vy: Math.sin(a) * 30 - 10, vz: 0, leben: l, max: l, farbe, schwer: false, gr: 1 });
@@ -525,11 +602,12 @@ function funkeln(x, y, farbe) {
 }
 function rauch() {
   const W = S.welt, I = G.hausInfo;
+  if (!W.haus) return;
   const x = W.haus.x - I.w / 2 + I.rauch[0] + 0.5, y = W.haus.y + 2 - I.fussY + I.rauch[1];
   S.partikel.push({ x: x + (Math.random() - 0.5) * 2, y, z: 0, vx: 3 + Math.random() * 3, vy: -10 - Math.random() * 4, vz: 0,
     leben: 2.6, max: 2.6, farbe: '#d8d4cc', schwer: false, gr: 2, rauch: true });
 }
-function text(x, y, t, farbe) { S.texte.push({ x, y, t, farbe, leben: 0.9 }); }
+export function text(x, y, t, farbe) { S.texte.push({ x, y, t, farbe, leben: 0.9 }); }
 
 function partikelUpdate(dt) {
   for (const q of S.partikel) {
@@ -549,8 +627,8 @@ function partikelUpdate(dt) {
 // Zeichnen
 // ======================================================================
 export function zeichne(ctx, cw, ch, zoom) {
-  const W = S.welt, p = S.sp;
-  const vw = cw / zoom, vh = ch / zoom, mw = B * K, mh = H * K;
+  const W = S.welt, p = S.sp, kammer = S.ort === 'kammer';
+  const vw = cw / zoom, vh = ch / zoom, mw = W.b * K, mh = W.h * K;
   const cx = vw >= mw ? mw / 2 : klemme(S.kam.x, vw / 2, mw - vw / 2);
   const cy = vh >= mh ? mh / 2 : klemme(S.kam.y, vh / 2, mh - vh / 2);
   let wx = 0, wy = 0;
@@ -560,7 +638,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   S.ansicht = { ox, oy, zoom };      // für die Tippen-Steuerung (Bildschirm → Welt)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = '#16301b'; ctx.fillRect(0, 0, cw, ch);
+  ctx.fillStyle = kammer ? W.thema.hinter : '#16301b'; ctx.fillRect(0, 0, cw, ch);
   ctx.setTransform(zoom, 0, 0, zoom, -ox, -oy);
   ctx.imageSmoothingEnabled = false;
 
@@ -576,6 +654,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   if (spielt) ellipse(ctx, p.x, p.y, 5, 2);
   for (const g of S.gegner) if (sicht(g.x, g.y, 12, 12, 12)) ellipse(ctx, g.x, g.y, g.art === 'hummel' ? 3 : 5, g.art === 'hummel' ? 1.5 : 2);
   for (const e of S.beute) if (e.z > 1) ellipse(ctx, e.x, e.y + 3, 2.5, 1);
+  if (kammer) kammerBoden(ctx);
   // Zielmarke der Tippen-Steuerung: kleiner pulsierender Ring am Boden
   if (spielt && p.ziel && S.phase === 'tag') {
     const pr = 4 + Math.sin(S.t * 10) * 0.8;
@@ -587,7 +666,9 @@ export function zeichne(ctx, cw, ch, zoom) {
   const liste = [];
   for (const b of S.bueschel) if (!b.weg && sicht(b.x, b.y, 12, 24, 4)) liste.push({ y: b.y, t: 0, o: b });
   for (const b of W.baeume) if (sicht(b.x, b.y, 24, 50, 4)) liste.push({ y: b.y, t: 1, o: b });
-  if (sicht(W.haus.x, W.haus.y, 50, 85, 6)) liste.push({ y: W.haus.y, t: 2, o: W.haus });
+  if (W.haus && sicht(W.haus.x, W.haus.y, 50, 85, 6)) liste.push({ y: W.haus.y, t: 2, o: W.haus });
+  if (W.hoehle && sicht(W.hoehle.x, W.hoehle.y, 50, 70, 6)) liste.push({ y: W.hoehle.y, t: 6, o: W.hoehle });
+  if (kammer) kammerListe(liste);
   if (spielt) liste.push({ y: p.y, t: 3, o: p });
   for (const g of S.gegner) if (sicht(g.x, g.y, 12, 20, 4)) liste.push({ y: g.y, t: 4, o: g });
   for (const e of S.beute) liste.push({ y: e.y + 4, t: 5, o: e });
@@ -600,6 +681,12 @@ export function zeichne(ctx, cw, ch, zoom) {
       case 3: zeichneSpieler(ctx); break;
       case 4: zeichneGegner(ctx, e.o); break;
       case 5: zeichneBeute(ctx, e.o); break;
+      case 6: {
+        const img = (S.st.tueren | 0) > 0 ? G.hoehleOffen : G.hoehleZu, I = G.hoehleInfo;
+        ctx.drawImage(img, Math.round(W.hoehle.x - I.w / 2), Math.round(W.hoehle.y + 2 - I.fussY));
+        break;
+      }
+      default: kammerZeichne(ctx, e);
     }
   }
 
@@ -623,8 +710,9 @@ export function zeichne(ctx, cw, ch, zoom) {
   }
   ctx.globalAlpha = 1;
 
-  // Abendlicht
-  const q = spielt ? S.zeit / S.dauer : 0;
+  if (kammer) kammerDunkel(ctx, L, T, vw, vh);
+  // Abendlicht (nur draußen)
+  const q = spielt && !kammer ? S.zeit / S.dauer : 0;
   const abend = klemme((q - 0.6) / 0.4, 0, 1);
   if (abend > 0) {
     ctx.globalCompositeOperation = 'multiply';
@@ -661,6 +749,7 @@ function leuchten(ctx, x, y, r, a) {
 
 function wasserGlitzer(ctx, L, T, R, U) {
   const w = S.welt.wasser;
+  if (!w.length) return;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
   for (let i = 0; i < w.length; i += 2) {
     const x = w[i] * K, y = w[i + 1] * K;
@@ -736,7 +825,7 @@ function zeichneSchwert(ctx) {
   const a0 = p.schlagRund ? Math.max(p.schlagWinkel, a - 2.2) : Math.max(p.schlagWinkel - w.bogen / 2, a - 1.6);
   const cx = p.x, cy = p.y - 6;
   // Schwungspur
-  ctx.fillStyle = `rgba(255, 255, 235, ${0.5 * (1 - q)})`;
+  ctx.fillStyle = (S.st.bosse | 0) >= 4 ? `rgba(255, 214, 80, ${0.6 * (1 - q)})` : `rgba(255, 255, 235, ${0.5 * (1 - q)})`;   // Goldener Schliff
   ctx.beginPath();
   ctx.arc(cx, cy, reich, a0, a);
   ctx.arc(cx, cy, reich * 0.45, a, a0, true);

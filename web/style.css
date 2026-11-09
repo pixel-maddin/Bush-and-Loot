@@ -180,3 +180,26 @@ h2 { font-size: 22px; }
 .verlust { margin-top: 8px; color: #a01e35; font-weight: 700; }
 
 .pausepanel { max-width: 300px; text-align: center; }
+
+/* ---------- Glitzerhöhle ---------- */
+#bossLeiste {
+  position: fixed; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top) + 64px);
+  width: min(70vw, 360px); text-align: center; pointer-events: none;
+  font-weight: 900; font-size: 14px; text-shadow: 0 2px 0 #000;
+}
+#bossLeiste .balken { margin-top: 3px; height: 12px; border: 2px solid var(--tinte); border-radius: 6px; background: #3a1820; overflow: hidden; }
+#bossHp { height: 100%; width: 100%; background: linear-gradient(#ff7a6a, #d8333f); transition: width .15s; }
+.hoehlenpanel { background: #e8dcc4; }
+.kammer { background: #f6ecd6; }
+.kammer.zu { opacity: .6; }
+.kammer.besiegt { background: #e4f2d4; }
+.kammer .ware-bild img { width: 52px; height: auto; }
+.kammer .beute { font-size: 12px; color: #6a4a20; font-weight: 700; margin-top: 3px; }
+.fundpanel { max-width: 420px; text-align: center; }
+#fundBild { width: 72px; height: auto; margin: 4px auto 8px; display: block; animation: huepfen 1.2s ease-in-out infinite; }
+#fundText { font-size: 15px; line-height: 1.45; margin-top: 8px; }
+#fundText .zahlen { margin-top: 12px; }
+.fundpanel.sieg { background: linear-gradient(#fff8e0, #f3e3bf); }
+.fundpanel.sieg h2 { font-size: 28px; color: #2a8fb0; }
+/* Solange ein Wächter lebt, rutschen Hinweise unter seine Lebensleiste */
+body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }

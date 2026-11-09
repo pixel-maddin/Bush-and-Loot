@@ -98,4 +98,20 @@ export const SFX = {
   plopp() { if (selten('plopp', 60)) ton(500, 900, 0.08, 'sine', 0.15); },
   geladen() { ton(900, 1400, 0.1, 'sine', 0.1); },
   summen() { if (selten('summen', 400)) ton(170, 185, 0.3, 'sawtooth', 0.025); },
+  // Glitzerhöhle
+  warnung() { ton(520, 780, 0.18, 'square', 0.07); ton(520, 780, 0.18, 'square', 0.05, 0.2); },
+  ansturm() { rauschen(0.35, 0.25, 'bandpass', 300, 1400); ton(110, 70, 0.3, 'sawtooth', 0.08); },
+  stampfen() { ton(90, 35, 0.35, 'sine', 0.45); rauschen(0.3, 0.3, 'lowpass', 900, 120); },
+  bossTreffer() { if (selten('bossTreffer', 50)) { ton(260, 110, 0.12, 'square', 0.11); rauschen(0.08, 0.15, 'highpass', 2000, 4000); } },
+  bossWeg() {
+    [440, 392, 330, 262, 196, 131].forEach((f, i) => ton(f, f * 0.9, 0.25, 'square', 0.08, i * 0.16));
+    rauschen(1.2, 0.3, 'lowpass', 2400, 100, 0.2);
+  },
+  kling() { if (selten('kling', 60)) { ton(1600, 1400, 0.12, 'triangle', 0.1); ton(2400, null, 0.08, 'sine', 0.05); } },
+  werfen() { rauschen(0.25, 0.2, 'bandpass', 600, 2000); },
+  tuerAuf() { ton(70, 50, 0.7, 'sawtooth', 0.09); rauschen(0.8, 0.25, 'lowpass', 500, 80); },
+  sieg() {
+    [523, 659, 784, 1047].forEach((f, i) => ton(f, null, 0.14, 'square', 0.08, i * 0.1));
+    [523, 659, 784].forEach(f => ton(f * 2, null, 0.9, 'triangle', 0.08, 0.45));
+  },
 };

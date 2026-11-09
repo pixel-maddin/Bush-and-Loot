@@ -31,6 +31,15 @@ export function baueWelt(saat) {
   haus.tuer = { x: haus.x, y: haus.y };
   const start = { x: haus.x, y: haus.y + 20 };
 
+  // Eingang der Glitzerhöhle: Felswand oben am Waldrand, 5 × 3 Kacheln, Tür unten in der Mitte
+  const hoehle = { tx: 29, ty: 2, tb: 5, th: 3 };
+  for (let y = hoehle.ty; y < hoehle.ty + hoehle.th; y++) for (let x = hoehle.tx; x < hoehle.tx + hoehle.tb; x++) {
+    fest[id(x, y)] = 1; sperr[id(x, y)] = 1;
+  }
+  hoehle.x = (hoehle.tx + hoehle.tb / 2) * K;
+  hoehle.y = (hoehle.ty + hoehle.th) * K;
+  hoehle.tuer = { x: hoehle.x, y: hoehle.y };
+
   // Weg: von der Tür nach unten, dann nach links und rechts
   const weg = (x, y) => { if (x > 2 && y > 2 && x < B - 3 && y < H - 3) { boden[id(x, y)] = BODEN.WEG; sperr[id(x, y)] = 1; } };
   for (let y = haus.ty + haus.th; y < haus.ty + haus.th + 4; y++) { weg(22, y); }
@@ -42,6 +51,8 @@ export function baueWelt(saat) {
       weg(x, y);
     }
   }
+  // Kleiner Pfad vor dem Höhleneingang
+  for (let y = hoehle.ty + hoehle.th; y < hoehle.ty + hoehle.th + 5; y++) { weg(31, y); if (y < hoehle.ty + hoehle.th + 2) { weg(30, y); weg(32, y); } }
   // Pfad, der um den Stumpf herumführt
   for (let x = haus.tx - 1; x <= haus.tx + haus.tb; x++) weg(x, haus.ty + haus.th);
 
@@ -88,7 +99,7 @@ export function baueWelt(saat) {
     gesetzt++;
   }
 
-  const welt = { boden, fest, sperr, baeume, felsen, haus, start, saat };
+  const welt = { b: B, h: H, boden, fest, sperr, baeume, felsen, haus, hoehle, start, saat };
   welt.bodenBild = maleBoden(welt, zufall(saat + 1));
   welt.wasser = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < B; x++) if (boden[id(x, y)] === BODEN.WASSER) welt.wasser.push(x, y);
@@ -162,6 +173,7 @@ function maleBoden(W, r) {
     g.beginPath(); g.ellipse(b.x, b.y - 3, 14, 6, 0, 0, Math.PI * 2); g.fill();
   }
   g.beginPath(); g.ellipse(W.haus.x + 2, W.haus.y - 2, 44, 9, 0, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.ellipse(W.hoehle.x, W.hoehle.y - 2, 46, 8, 0, 0, Math.PI * 2); g.fill();
   // Felsen (flach genug, um im Boden zu liegen)
   for (const f of W.felsen) {
     g.fillStyle = 'rgba(16, 40, 16, 0.3)'; g.beginPath(); g.ellipse(f.x + 8, f.y + 13, 8, 3, 0, 0, Math.PI * 2); g.fill();

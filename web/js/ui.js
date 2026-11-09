@@ -1,7 +1,7 @@
 // ui.js – Alles, was als HTML über dem Spielbild liegt: Anzeige oben, Titel, Laden, Tagesbilanz, Pause.
 
 import { G, bildURL } from './grafik.js';
-import { AUFRUESTUNGEN, STEINE } from './config.js';
+import { AUFRUESTUNGEN, STEINE, KAMMERN } from './config.js';
 import { S } from './spiel.js';
 import { istStumm, setzeStumm } from './ton.js';
 import { istMusikAn, setzeMusik } from './musik.js';
@@ -40,6 +40,8 @@ export function initUI(handler) {
   }
   $('btnTitel').onclick = () => h.zumTitel();
   $('btnBilanz').onclick = () => h.bilanzWeiter();
+  $('btnHoehleRaus').onclick = () => h.hoehleRaus();
+  $('btnFund').onclick = () => h.fundWeiter();
   tonKnopf();
   steuerHilfe();
 }
@@ -61,7 +63,7 @@ export function steuerHilfe() {
     : '<b>Laufen:</b> Pfeiltasten oder WASD · <b>Hauen:</b> Leertaste oder J · <b>Pause:</b> Esc';
 }
 
-const SCHICHTEN = ['titel', 'haus', 'bilanz', 'pauseSchicht'];
+const SCHICHTEN = ['titel', 'haus', 'bilanz', 'pauseSchicht', 'hoehle', 'fund'];
 export function zeige(id) {
   for (const s of SCHICHTEN) $(s).classList.toggle('versteckt', s !== id);
   $('hud').classList.toggle('versteckt', id === 'titel');
@@ -95,6 +97,14 @@ export function hud() {
   const q = Math.min(1, S.zeit / S.dauer);
   $('sonne').style.left = (q * 100).toFixed(1) + '%';
   $('sonnenBahn').classList.toggle('spaet', q > 0.8);
+  // Lebensleiste des Wächters
+  const b = S.boss, bk = b ? b.name + '|' + b.hp : '';
+  if (alt.boss !== bk) {
+    alt.boss = bk;
+    $('bossLeiste').classList.toggle('versteckt', !b);
+    document.body.classList.toggle('kampf', !!b);
+    if (b) { $('bossName').textContent = b.name; $('bossHp').style.width = (b.hp / b.max * 100).toFixed(1) + '%'; }
+  }
 }
 export function hudNeu() { alt = {}; }
 
@@ -159,9 +169,69 @@ function waren() {
   // Was gerade gekauft wurde, kurz aufleuchten lassen
 }
 
+// ---------- Glitzerhöhle ----------
+const BELOHNUNGS_BILD = ['fackel', 'herz', 'steigeisen', 'schliff', 'riesendiamant'];
+export function zeigeHoehle() {
+  $('hoehleGeld').innerHTML = `${px(G.waehrung)}<span>${zahl(S.geld)}</span>`;
+  const box = $('kammern');
+  box.innerHTML = '';
+  const tueren = S.st.tueren | 0, bosse = S.st.bosse | 0;
+  KAMMERN.forEach((k, i) => {
+    const nr = i + 1, besiegt = bosse >= nr, offen = tueren >= nr, dran = !offen && tueren === nr - 1 && bosse >= nr - 1;
+    const d = document.createElement('div');
+    d.className = 'ware kammer' + (besiegt ? ' besiegt' : !offen && !dran ? ' zu' : '');
+    const bild = besiegt ? G.belohnung[BELOHNUNGS_BILD[i]] : offen || dran ? G.boss[k.art].l[0] : G.icons.schloss;
+    d.innerHTML = `
+      <div class="ware-bild">${px(bild)}</div>
+      <div class="ware-text">
+        <div class="ware-name">${nr}. ${k.name}</div>
+        <div class="ware-unter">${offen || dran || besiegt ? 'Wächter: ' + k.boss : 'Noch verschlossen'}</div>
+        <div class="beute">${besiegt ? '✓ Besiegt – ' + k.beute : 'Belohnung: ' + k.beute}</div>
+      </div>`;
+    const b = document.createElement('button');
+    b.className = 'knopf preis';
+    if (besiegt) { b.textContent = 'Besiegt'; b.disabled = true; }
+    else if (offen) { b.textContent = 'Kämpfen!'; b.onclick = () => h.kaempfen(nr); }
+    else if (dran) {
+      b.innerHTML = `Tür öffnen ${px(G.waehrung)}${zahl(k.preis)}`;
+      b.disabled = S.geld < k.preis;
+      b.onclick = () => { if (h.tuerOeffnen(nr)) zeigeHoehle(); };
+    } else { b.textContent = `Erst Kammer ${nr - 1}`; b.disabled = true; }
+    d.append(b);
+    box.append(d);
+  });
+  zeige('hoehle');
+  setTimeout(() => box.querySelector('button:not(:disabled)')?.focus({ preventScroll: true }), 50);
+}
+
+export function zeigeFund(nr) {
+  const k = KAMMERN[nr - 1];
+  $('fundBild').src = bildURL(G.belohnung[BELOHNUNGS_BILD[nr - 1]]);
+  $('fundTitel').textContent = nr === 5 ? 'Gewonnen!' : k.beute;
+  const panel = document.querySelector('.fundpanel');
+  panel.classList.toggle('sieg', nr === 5);
+  if (nr === 5) {
+    const g = S.gesamt;
+    $('fundText').innerHTML = `
+      <p><b>Der Riesendiamant gehört dir!</b> Alle fünf Wächter der Glitzerhöhle sind besiegt.</p>
+      <div class="zahlen">
+        <div><b>${zahl(S.tag)}</b><span>Tage</span></div>
+        <div><b>${zahl(g.gemaeht + (S.heute ? S.heute.gemaeht : 0))}</b><span>Büschel gemäht</span></div>
+      </div>
+      <p class="hilfe">Du kannst einfach weiterspielen – das Gras wächst jeden Morgen neu.</p>`;
+    $('btnFund').textContent = 'Weiterspielen';
+  } else {
+    $('fundText').innerHTML = `<p>${k.boss} ist besiegt!</p><p>${k.beuteText}</p>
+      <p class="hilfe">Sammel die Diamanten ein – dann geht die Tür unten auf.</p>`;
+    $('btnFund').textContent = 'Weiter';
+  }
+  zeige('fund');
+  setTimeout(() => $('btnFund').focus({ preventScroll: true }), 50);
+}
+
 // ---------- Tagesbilanz ----------
-export function zeigeBilanz({ grund, heute, verlust, tag }) {
-  const titel = grund === 'ohnmacht' ? 'Uff … umgekippt!' : grund === 'heim' ? `Tag ${tag}: früh ins Bett` : `Tag ${tag} ist vorbei`;
+export function zeigeBilanz({ grund, heute, verlust, tag, kammer }) {
+  const titel = grund === 'ohnmacht' && kammer ? `${KAMMERN[kammer - 1].boss} war zu stark …` : grund === 'ohnmacht' ? 'Uff … umgekippt!' : grund === 'heim' ? `Tag ${tag}: früh ins Bett` : `Tag ${tag} ist vorbei`;
   $('bilanzTitel').textContent = titel;
   let steine = '';
   STEINE.forEach((s, i) => {
@@ -177,6 +247,7 @@ export function zeigeBilanz({ grund, heute, verlust, tag }) {
     <div class="steine">${steine}</div>
     <div class="summe">Zusammen ${px(G.waehrung)} <b>${zahl(heute.wert)}</b></div>
     ${verlust ? `<p class="verlust">Beim Umkippen ist die Hälfte davon aus der Tasche gekullert: −${zahl(verlust)}</p>` : ''}
+    ${kammer ? '<p class="hilfe">Die Tür bleibt offen – morgen kannst du es noch mal versuchen. Vielleicht mit einer besseren Klinge?</p>' : ''}
   `;
   zeige('bilanz');
   setTimeout(() => $('btnBilanz').focus({ preventScroll: true }), 50);
