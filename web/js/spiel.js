@@ -153,6 +153,13 @@ export function weiterMaehen() {
 }
 
 export function tagBeenden() { S.endeGrund = 'heim'; tagAbschliessen(); }
+// Wie viele Diamanten liegen draußen noch herum? (für den Hinweis im Baumstumpf)
+export function liegenGeblieben() {
+  const beute = S.ort === 'wald' ? S.beute : (S.wald ? S.wald.beute : []);
+  let anzahl = 0, wert = 0;
+  for (const e of beute) if (!e.herz) { anzahl++; wert += STEINE[e.typ].wert; }
+  return { anzahl, wert };
+}
 
 // ---------- Glitzerhöhle ----------
 export function oeffneTuer(k) {
@@ -189,7 +196,7 @@ function zurueckInDenWald() {
 }
 
 export function verlasseKammer() {
-  for (const e of S.beute) if (!e.herz) einsammeln(e, true);      // was noch herumliegt, kommt mit
+  // Was in der Kammer noch herumliegt, bleibt dort – man muss alles selbst einsammeln
   zurueckInDenWald();
   const p = S.sp, h = S.welt.hoehle;
   p.x = h.tuer.x; p.y = h.tuer.y + 14; p.ziel = null; p.kx = p.ky = 0;
@@ -210,8 +217,9 @@ function tagAbschliessen() {
   // heutigen Diamanten ist weg, und was noch herumliegt, findet keiner mehr.
   // Nur wer vor Sonnenuntergang heimgeht („Schlafen gehen“), behält alles.
   const pech = S.endeGrund === 'ohnmacht' || S.endeGrund === 'abend';
-  let nachgetragen = 0;
-  for (const e of S.beute) if (!e.herz && !pech) { einsammeln(e, true); nachgetragen++; }
+  // Was noch am Boden liegt, ist morgen weg – auch wer rechtzeitig schlafen geht, muss vorher alles einsammeln
+  const liegen = { anzahl: 0, wert: 0 };
+  for (const e of S.beute) if (!e.herz) { liegen.anzahl++; liegen.wert += STEINE[e.typ].wert; }
   S.beute = [];
   let verlust = 0;
   if (pech) { verlust = Math.min(S.geld, Math.floor(S.heute.wert / 2)); S.geld -= verlust; }
@@ -220,7 +228,7 @@ function tagAbschliessen() {
   S.tag++;
   S.phase = 'bilanz';
   speichern();
-  hooks.bilanz && hooks.bilanz({ grund: S.endeGrund, heute: S.heute, verlust, tag: fertig, nachgetragen, kammer: S.ort === 'kammer' && S.boss ? S.boss.k : 0 });
+  hooks.bilanz && hooks.bilanz({ grund: S.endeGrund, heute: S.heute, verlust, tag: fertig, liegen, kammer: S.ort === 'kammer' && S.boss ? S.boss.k : 0 });
 }
 
 // Begleiter: nur einmal im Spiel wählbar

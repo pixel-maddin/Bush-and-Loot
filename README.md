@@ -55,8 +55,9 @@ wird daraus „Stick“ (linke Hälfte ziehen = laufen, rechte Hälfte tippen = 
 
 - Die Sonne läuft oben rechts über die Leiste. Am Anfang dauert ein Tag 70 Sekunden.
 - Gegen Abend wird es orange, dann blau. **Vor Sonnenuntergang musst du zurück
-  in den Baumstumpf** und „Schlafen gehen“ – dann behältst du alles, auch was
-  noch herumliegt. Wer es nicht schafft, stolpert im Dunkeln: Die Hälfte der
+  in den Baumstumpf** und „Schlafen gehen“ – dann behältst du alles, was in der
+  Tasche ist. **Diamanten, die noch am Boden liegen, sind morgen weg** – also
+  alles einsammeln! Der Baumstumpf sagt dir, wie viele draußen noch liegen. Wer es nicht schafft, stolpert im Dunkeln: Die Hälfte der
   Diamanten von heute ist weg. 15 Sekunden vorher zeigt ein gelber Pfeil am
   Bildrand den Weg nach Hause.
 - Läufst du in die Tür des Baumstumpfs, kannst du mitten am Tag einkaufen
@@ -116,8 +117,8 @@ trotzdem).
 - Rote Flecken und Kreise am Boden zeigen, wo gleich etwas einschlägt. Weglaufen!
 - In der Höhle steht die Sonne still. Wer im Kampf umkippt, für den ist der Tag
   vorbei (wie draußen: die Hälfte der heutigen Diamanten ist weg). Die Tür bleibt offen.
-- Der Wächter lässt einen Haufen Diamanten fallen. Wer die Belohnung aufhebt,
-  bekommt die Tür nach draußen auf.
+- Der Wächter lässt einen Haufen Diamanten fallen – einsammeln, sonst bleiben
+  sie in der Kammer. Wer die Belohnung aufhebt, bekommt die Tür nach draußen auf.
 - Fackel und Steigeisen sind für den Dunkelwald und das Gebirge, die als
   Nächstes dazukommen.
 
@@ -132,6 +133,9 @@ dreimal am Tag. Mit **Leckerli** (3 Stufen, 150 / 500 / 1.500) buddelt es
 draußen.
 
 ## Laden im Baumstumpf
+
+Der Laden sieht aus wie das Innere des Stamms: oben ein Blick in die
+gemütliche Stube (Kamin, Fenster, Bett – und dein Begleiter auf dem Teppich).
 
 Klinge (Holzschwert → Kurzschwert → Eisenschwert → Breitschwert → Mondsichel →
 Sternenklinge), Schwungkraft, Flinke Stiefel, Herzbeere, Elsternfeder (Diamanten

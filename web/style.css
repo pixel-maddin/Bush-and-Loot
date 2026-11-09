@@ -243,3 +243,56 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 .tier-karte.gewaehlt { background: #fff7a8; outline: 3px solid #ffd23f; outline-offset: 2px; }
 .tier-karte.gewaehlt img { animation: huepfen .8s ease-in-out infinite; }
 .ware.begleiter .ware-bild img { width: 52px; height: auto; }
+
+/* ---------- Laden als langer Baumstamm ---------- */
+.hauspanel {
+  position: relative; max-width: 580px;
+  padding: 16px 32px 18px;
+  border: 0; border-radius: 30px 30px 20px 20px;
+  /* helles Kernholz mit senkrechter Maserung, zur Rinde hin dunkler */
+  background:
+    repeating-linear-gradient(90deg, rgba(110, 60, 20, .10) 0 1px, transparent 1px 7px, rgba(110, 60, 20, .06) 7px 9px, transparent 9px 17px),
+    repeating-linear-gradient(180deg, transparent 0 46px, rgba(110, 60, 20, .07) 46px 48px),
+    linear-gradient(90deg, #b9824c 0%, #e2b67e 14%, #f0cf9c 50%, #e2b67e 86%, #b9824c 100%);
+  box-shadow: 0 6px 0 #2b1d16, inset 0 0 0 3px #2b1d16;
+}
+/* Rinde links und rechts: senkrechte Furchen mit Querrissen */
+.hauspanel::before, .hauspanel::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 20px; pointer-events: none; z-index: 3;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 23px, rgba(20, 10, 4, .55) 23px 25px, transparent 25px 41px, rgba(20, 10, 4, .45) 41px 42px),
+    repeating-linear-gradient(90deg, #3a2410 0 3px, #5a3818 3px 7px, #4a2e14 7px 9px, #6b4220 9px 13px, #3a2410 13px 15px, #5a3818 15px 20px);
+}
+.hauspanel::before { left: 0; border-radius: 30px 0 0 20px; border-right: 2px solid #2b1d16; box-shadow: inset 3px 0 0 #2b1d16; }
+.hauspanel::after { right: 0; border-radius: 0 30px 20px 0; border-left: 2px solid #2b1d16; box-shadow: inset -3px 0 0 #2b1d16; }
+.hauspanel .stube {
+  display: block; width: 100%; height: auto; aspect-ratio: 160 / 84; image-rendering: pixelated;
+  border: 3px solid #2b1d16; border-radius: 40% 40% 10px 10px / 22% 22% 10px 10px;
+  box-shadow: 0 3px 0 #4a2e14, inset 0 0 0 2px #6b4220; margin-bottom: 10px; background: #3a2410;
+}
+/* Kopfzeile wie ein eingebranntes Holzschild */
+.hauspanel .kopf {
+  background: linear-gradient(#8c5a2c, #6b4220); color: #fff3d8; border: 3px solid #2b1d16; border-radius: 10px;
+  padding: 6px 10px; box-shadow: inset 0 2px 0 rgba(255, 220, 160, .35), 0 3px 0 #2b1d16;
+}
+.hauspanel .kopf h2 { text-shadow: 0 2px 0 #2b1d16; font-size: 20px; }
+.hauspanel .hilfe { color: #4a2e14; margin-top: 8px; font-weight: 600; }
+/* Waren wie kleine Holztafeln */
+.hauspanel .ware {
+  background: linear-gradient(#f8e6c2, #efd3a3); border: 3px solid #6b4220; border-radius: 12px;
+  box-shadow: inset 0 0 0 2px #fbefd6, 0 3px 0 #4a2e14;
+}
+.hauspanel .ware.voll { opacity: .75; }
+.hauspanel .ware-unter { color: #6b4220; }
+.hauspanel .punkte i { background: #e2c492; }
+/* Knopfleiste unten: dunkles Brett */
+.hauspanel .knoepfe.fussleiste {
+  margin: 14px -32px -18px; padding: 12px 32px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(#8c5a2c, #6b4220); border-top: 3px solid #2b1d16;
+  box-shadow: 0 -6px 10px -6px rgba(43, 29, 22, .5); border-radius: 0 0 18px 18px;
+}
+@media (max-width: 420px) {
+  .hauspanel { padding: 12px 24px 16px; }
+  .hauspanel::before, .hauspanel::after { width: 14px; }
+  .hauspanel .knoepfe.fussleiste { margin: 14px -24px -16px; padding-left: 24px; padding-right: 24px; }
+}

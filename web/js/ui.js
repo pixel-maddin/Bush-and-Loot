@@ -2,8 +2,9 @@
 
 import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
 import { AUFRUESTUNGEN, STEINE, KAMMERN } from './config.js';
-import { S } from './spiel.js';
+import { S, liegenGeblieben } from './spiel.js';
 import { RASSEN, tierIcon, BEGLEITER_PREIS, LECKERLI_KOSTEN } from './begleiter.js';
+import { stubenBilder } from './stube.js';
 import { istStumm, setzeStumm } from './ton.js';
 import { istMusikAn, setzeMusik } from './musik.js';
 import { touchGeraet, holeSteuerArt, setzeSteuerArt } from './eingabe.js';
@@ -144,11 +145,16 @@ let hausModus = false;   // true = Tag ist vorbei, nächster Knopf startet einen
 export function zeigeHaus(nachTag) {
   hausModus = nachTag;
   const spaet = !nachTag && S.zeit / S.dauer > 0.75;
-  $('hausText').textContent = nachTag
+  const liegt = nachTag ? { anzahl: 0 } : liegenGeblieben();
+  const warnung = liegt.anzahl
+    ? ` Draußen liegen noch ${liegt.anzahl} ${liegt.anzahl === 1 ? 'Diamant' : 'Diamanten'} (Wert ${zahl(liegt.wert)}) – wer jetzt schläft, lässt sie liegen!`
+    : '';
+  $('hausText').textContent = (nachTag
     ? 'Der Tag ist vorbei. Gib deine Diamanten aus – morgen wächst das Gras neu.'
     : spaet
-      ? 'Gerade noch rechtzeitig daheim! Wer jetzt schlafen geht, behält alle Diamanten. Draußen wird es gleich dunkel.'
-      : 'Kurz verschnaufen. Draußen läuft die Zeit weiter, sobald du rausgehst. Vor Sonnenuntergang zurück sein!';
+      ? 'Gerade noch rechtzeitig daheim! Wer jetzt schlafen geht, behält alles in der Tasche. Draußen wird es gleich dunkel.'
+      : 'Kurz verschnaufen. Draußen läuft die Zeit weiter, sobald du rausgehst. Vor Sonnenuntergang zurück sein!') + warnung;
+  stubeStarten(nachTag);
   const k = $('hausKnoepfe');
   k.innerHTML = '';
   if (nachTag) {
@@ -163,6 +169,22 @@ export function zeigeHaus(nachTag) {
   waren();
   zeige('haus');
   setTimeout(() => k.querySelector('button')?.focus({ preventScroll: true }), 50);
+}
+
+// Stubenbild oben im Laden: drei Bilder im Wechsel, damit das Feuer flackert
+let stubeUhr = null;
+function stubeStarten(nacht) {
+  const cv = $('stubeBild'), g = cv.getContext('2d');
+  const tier = S.begleiter ? tierIcon(S.begleiter.art, S.begleiter.rasse) : null;
+  const bilder = stubenBilder(tier, nacht);
+  let i = 0;
+  const malen = () => { g.clearRect(0, 0, cv.width, cv.height); g.drawImage(bilder[i], 0, 0); i = (i + 1) % bilder.length; };
+  malen();
+  clearInterval(stubeUhr);
+  stubeUhr = setInterval(() => {
+    if ($('haus').classList.contains('versteckt')) { clearInterval(stubeUhr); return; }
+    malen();
+  }, 230);
 }
 
 function knopf(text, cls, fn) {
@@ -336,7 +358,7 @@ export function zeigeFund(nr) {
 }
 
 // ---------- Tagesbilanz ----------
-export function zeigeBilanz({ grund, heute, verlust, tag, kammer }) {
+export function zeigeBilanz({ grund, heute, verlust, tag, kammer, liegen }) {
   const titel = grund === 'ohnmacht' && kammer ? `${KAMMERN[kammer - 1].boss} war zu stark …` : grund === 'ohnmacht' ? 'Uff … umgekippt!'
     : grund === 'heim' ? `Tag ${tag}: gut heimgekommen` : 'Zu spät – stockdunkel!';
   $('bilanzTitel').textContent = titel;
@@ -356,6 +378,7 @@ export function zeigeBilanz({ grund, heute, verlust, tag, kammer }) {
     ${verlust ? `<p class="verlust">${grund === 'abend'
       ? 'Im Dunkeln über Wurzeln gestolpert – die Hälfte ist aus der Tasche gekullert'
       : 'Beim Umkippen ist die Hälfte davon aus der Tasche gekullert'}: −${zahl(verlust)}</p>` : ''}
+    ${liegen && liegen.anzahl ? `<p class="verlust">Liegen geblieben: ${liegen.anzahl} ${liegen.anzahl === 1 ? 'Diamant' : 'Diamanten'} (Wert ${zahl(liegen.wert)}) – die findet keiner mehr.</p>` : ''}
     ${grund === 'abend' ? '<p class="hilfe">Nächstes Mal vor Sonnenuntergang in den Baumstumpf und „Schlafen gehen“ – dann bleibt alles.</p>' : ''}
     ${kammer ? '<p class="hilfe">Die Tür bleibt offen – morgen kannst du es noch mal versuchen. Vielleicht mit einer besseren Klinge?</p>' : ''}
   `;
