@@ -5,7 +5,12 @@ Eichelhut und hast jeden Tag bis Sonnenuntergang Zeit, so viel Gras wie möglich
 umzuhauen. Manchmal steckt ein Diamant drin. Mit den Diamanten kaufst du im
 alten Baumstumpf, in dem du wohnst, bessere Sachen.
 
-## Starten
+## Spielen
+
+Online: **https://pixel-maddin.github.io/Halmhauer/** – dort auch als App
+installierbar (siehe unten).
+
+## Lokal starten
 
 ```bash
 python3 halmhauer/server/serve.py      # dann http://localhost:8080
@@ -18,10 +23,10 @@ Auf dem Handy die IP-Adresse eingeben, die der Server beim Start anzeigt
 
 - **iPhone (Safari):** Teilen → „Zum Home-Bildschirm“. Danach startet Halmhauer
   ohne Adressleiste wie eine App. Das geht auch über die WLAN-Adresse vom Server.
-- **Android (Chrome):** Menü ⋮ → „App installieren“ bzw. „Zum Startbildschirm
-  hinzufügen“. Als echte App im Vollbild und **offline** spielbar ist das Spiel
-  aber nur, wenn es über **https** kommt (z. B. GitHub Pages). Über
-  `http://192.168.…` gibt es nur eine Verknüpfung, die im Browser öffnet.
+- **Android (Chrome):** die Online-Adresse oben öffnen, Menü ⋮ → „App
+  installieren“. Dann läuft es im Vollbild und auch **offline**. Über
+  `http://192.168.…` vom eigenen Server gibt es nur eine Verknüpfung, die im
+  Browser öffnet (dafür braucht es https).
 - Am PC (Chrome/Edge) über `http://localhost:8080`: Symbol „Installieren“ rechts
   in der Adressleiste.
 - Im Browser bietet das Pause-Menü einen **Vollbild**-Knopf (nicht auf dem iPhone).
