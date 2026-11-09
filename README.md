@@ -118,6 +118,16 @@ trotzdem).
 - Fackel und Steigeisen sind für den Dunkelwald und das Gebirge, die als
   Nächstes dazukommen.
 
+## Begleiter
+
+Im Laden gibt es für 200 Diamanten einen Begleiter: drei Hunde (Dackel, Spitz,
+Schäferhund) oder drei Katzen (Tigerkatze, Schwarze Katze, Glückskatze).
+**Man kann nur einmal wählen.** Das Tier läuft dir hinterher, setzt sich, wenn
+du stehst, schnüffelt ab und zu („!“) und buddelt einen Diamanten aus – etwa
+dreimal am Tag. Mit **Leckerli** (3 Stufen, 150 / 500 / 1.500) buddelt es
+öfter und findet bessere Farben. In die Höhle kommt es nicht mit, es wartet
+draußen.
+
 ## Laden im Baumstumpf
 
 Klinge (Holzschwert → Kurzschwert → Eisenschwert → Breitschwert → Mondsichel →

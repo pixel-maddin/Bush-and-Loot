@@ -98,6 +98,17 @@ export const SFX = {
   plopp() { if (selten('plopp', 60)) ton(500, 900, 0.08, 'sine', 0.15); },
   geladen() { ton(900, 1400, 0.1, 'sine', 0.1); },
   summen() { if (selten('summen', 400)) ton(170, 185, 0.3, 'sawtooth', 0.025); },
+  // Begleiter
+  schnueffeln() { for (let i = 0; i < 3; i++) rauschen(0.06, 0.12, 'bandpass', 2200, 1600, i * 0.12); },
+  wuff() { ton(260, 150, 0.12, 'sawtooth', 0.12); rauschen(0.1, 0.15, 'bandpass', 900, 500); ton(240, 140, 0.1, 'sawtooth', 0.1, 0.16); },
+  miau() {
+    if (!ac || stumm) return;
+    const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(560, t); o.frequency.linearRampToValueAtTime(880, t + 0.15); o.frequency.linearRampToValueAtTime(520, t + 0.45);
+    g.gain.setValueAtTime(0.001, t); g.gain.linearRampToValueAtTime(0.14, t + 0.05); g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o.connect(g); g.connect(haupt); o.start(t); o.stop(t + 0.52);
+  },
   // Glitzerhöhle
   warnung() { ton(520, 780, 0.18, 'square', 0.07); ton(520, 780, 0.18, 'square', 0.05, 0.2); },
   ansturm() { rauschen(0.35, 0.25, 'bandpass', 300, 1400); ton(110, 70, 0.3, 'sawtooth', 0.08); },

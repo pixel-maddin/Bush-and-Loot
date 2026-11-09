@@ -69,6 +69,23 @@
     </div>
   </div>
 
+  <!-- Begleiter wählen (nur einmal im Spiel) -->
+  <div id="begleiterWahl" class="schicht versteckt">
+    <div class="panel figurpanel begleiterpanel">
+      <h2>Wer soll mitkommen?</h2>
+      <p class="hilfe">Dein Begleiter läuft dir hinterher und buddelt ab und zu einen Diamanten aus.
+        <b>Du kannst nur einmal wählen – das gilt für immer.</b></p>
+      <h3>Hunde</h3>
+      <div id="wahlHunde" class="tiere"></div>
+      <h3>Katzen</h3>
+      <div id="wahlKatzen" class="tiere"></div>
+      <div class="knoepfe">
+        <button id="btnBegleiterOk" class="knopf gross" disabled>Mitnehmen</button>
+        <button id="btnBegleiterZurueck" class="knopf grau">Doch nicht</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Laden im Baumstumpf -->
   <div id="haus" class="schicht versteckt">
     <div class="panel hauspanel">

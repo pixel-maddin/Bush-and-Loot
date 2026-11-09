@@ -5,7 +5,7 @@ import { initGrafik, setzeFigur } from './grafik.js';
 import { initHoehlenGrafik } from './hoehlengrafik.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
-  kaufen, update, zeichne, setzeHooks, oeffneTuer, betreteKammer, verlasseKammer, HEIM_WARNUNG,
+  kaufen, update, zeichne, setzeHooks, oeffneTuer, kaufeBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
 } from './spiel.js';
 import { KAMMERN } from './config.js';
 import * as UI from './ui.js';
@@ -103,6 +103,11 @@ UI.initUI({
   weiterMaehen() { UI.zeige(null); weiterMaehen(); steuerung.aktualisiere(); },
   tagBeenden() { tagBeenden(); },
   kaufen(id, preis) { return kaufen(id, preis); },
+  begleiterKaufen(art, rasse, preis) {
+    const ok = kaufeBegleiter(art, rasse, preis);
+    if (ok) UI.toast(art === 'katze' ? 'Miau! Deine neue Freundin ist dabei.' : 'Wuff! Dein neuer Freund ist dabei.', 3000);
+    return ok;
+  },
   bilanzWeiter() { S.phase = 'laden'; UI.zeigeHaus(true); },
   tuerOeffnen(k) { return oeffneTuer(k); },
   kaempfen(k) {
@@ -126,7 +131,10 @@ UI.zeigeTitel(hatSpielstand());
 // Testwege (nur lokal): ?kammer=3 startet sofort in Kammer 3, ?hoehle zeigt das Höhlen-Fenster,
 // ?eingang stellt den Helden vor den Höhleneingang.
 // Ohne Ton, weil niemand getippt hat. Fürs Bild aus Headless-Chrome gedacht (siehe CLAUDE.md).
-if (lokal && q.has('laden')) { S.phase = 'laden'; UI.zeigeHaus(true); }    // ?laden: Ladenfenster nach dem Tag
+// ?begleiter=katze-tiger: Tier nur für diesen Besuch dabeihaben (wird nicht gespeichert, solange man nichts kauft)
+if (lokal && q.has('begleiter')) { const [art, rasse] = q.get('begleiter').split('-'); S.begleiter = { art, rasse }; }
+if (lokal && q.has('tierwahl')) { S.geld = Math.max(S.geld, 200); UI.zeigeBegleiterWahl(); }
+else if (lokal && q.has('laden')) { S.phase = 'laden'; UI.zeigeHaus(true); }    // ?laden: Ladenfenster nach dem Tag
 else if (lokal && q.has('wahl')) UI.zeigeFigur('start');                    // ?wahl: Figur-Auswahl
 else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
   UI.zeige(null); neuerTag();

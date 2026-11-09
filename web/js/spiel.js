@@ -9,6 +9,7 @@ import { G } from './grafik.js';
 import { SFX } from './ton.js';
 import { baueWelt } from './welt.js';
 import { klemme } from './hilfe.js';
+import { begleiterUpdate, begleiterNeu, zeichneBegleiter, begleiterSchatten } from './begleiter.js';
 import { baueKammer, neuerBoss, kammerUpdate, bossTreffer, kammerBoden, kammerListe, kammerZeichne, kammerDunkel } from './hoehle.js';
 
 const SPEICHER = 'halmhauer.v1';
@@ -28,6 +29,7 @@ export const S = {
   wackeln: 0, stopp: 0, blende: 0, spawnT: 3, rauchT: 0, t: 0,
   endeGrund: null,
   figur: null,                // { art: 'junge' | 'maedchen', farbe: 'blau' | … } – null = noch nicht gewählt
+  begleiter: null, tier: null, // gekauftes Tier { art: 'hund' | 'katze', rasse } und seine Laufzeit-Daten
   // Glitzerhöhle: ort = 'wald' oder 'kammer'; wald = weggelegter Wald, solange man in einer Kammer ist
   ort: 'wald', wald: null, boss: null, geschosse: [], wellen: [], warn: [], belohnungsDing: null, kammerFertig: false,
 };
@@ -51,6 +53,7 @@ export function laden() {
       S.gesamt = Object.assign({ gemaeht: 0, besiegt: 0, wert: 0 }, d.gesamt);
       S.hinweise = d.hinweise || {};
       S.figur = d.figur || null;
+      S.begleiter = d.begleiter || null;
       return true;
     }
   } catch (e) { /* kein Spielstand */ }
@@ -58,12 +61,13 @@ export function laden() {
 }
 export function speichern() {
   try {
-    localStorage.setItem(SPEICHER, JSON.stringify({ geld: S.geld, tag: S.tag, st: S.st, gesamt: S.gesamt, hinweise: S.hinweise, figur: S.figur }));
+    localStorage.setItem(SPEICHER, JSON.stringify({ geld: S.geld, tag: S.tag, st: S.st, gesamt: S.gesamt, hinweise: S.hinweise, figur: S.figur, begleiter: S.begleiter }));
   } catch (e) { /* privat-Modus o. ä. */ }
 }
 export function neuAnfangen() {
   S.geld = 0; S.tag = 1; S.st = {}; S.gesamt = { gemaeht: 0, besiegt: 0, wert: 0 }; S.hinweise = {};
   S.figur = null;             // beim nächsten Start wird wieder gefragt
+  S.begleiter = null; S.tier = null;
   speichern();
 }
 export const hatSpielstand = () => S.tag > 1 || S.geld > 0;
@@ -126,6 +130,7 @@ export function neuerTag() {
   for (let i = 0; i < Math.ceil(gegnerMax(S.tag) / 2); i++) spawneIrgendwo();
   S.spawnT = 4;
   S.kam.x = S.sp.x; S.kam.y = S.sp.y - 8;
+  begleiterNeu();
   S.blende = 0; S.phase = 'tag';
   SFX.morgen();
   hooks.tagBeginnt && hooks.tagBeginnt();
@@ -138,6 +143,7 @@ export function weiterMaehen() {
   S.sp.winkel = Math.PI / 2; S.sp.blick = 'unten';
   S.w = werte(S.st);
   S.sp.hp = Math.min(S.sp.hp, S.w.maxHp);
+  begleiterNeu();
   S.phase = 'tag';
   SFX.tuer();
 }
@@ -185,6 +191,7 @@ export function verlasseKammer() {
   p.x = h.tuer.x; p.y = h.tuer.y + 14; p.ziel = null; p.kx = p.ky = 0;
   p.winkel = Math.PI / 2; p.blick = 'unten'; p.hoehleSperre = true;
   S.kam.x = p.x; S.kam.y = p.y - 8;
+  begleiterNeu();
   S.phase = 'tag';
   SFX.tuer(); speichern();
 }
@@ -210,6 +217,15 @@ function tagAbschliessen() {
   S.phase = 'bilanz';
   speichern();
   hooks.bilanz && hooks.bilanz({ grund: S.endeGrund, heute: S.heute, verlust, tag: fertig, nachgetragen, kammer: S.ort === 'kammer' && S.boss ? S.boss.k : 0 });
+}
+
+// Begleiter: nur einmal im Spiel wählbar
+export function kaufeBegleiter(art, rasse, preis) {
+  if (S.begleiter || S.geld < preis) { SFX.nein(); return false; }
+  S.geld -= preis;
+  S.begleiter = { art, rasse }; S.tier = null;
+  SFX.kauf(); speichern();
+  return true;
 }
 
 export function kaufen(id, preis) {
@@ -251,7 +267,7 @@ export function update(dt, ein) {
   if (S.phase !== 'tag') return;                   // Tür erreicht
   gegnerUpdate(dt);
   beuteUpdate(dt);
-  if (imWald) spawner(dt); else kammerUpdate(dt);
+  if (imWald) { spawner(dt); begleiterUpdate(dt); } else kammerUpdate(dt);
   if (S.phase !== 'tag') return;
   kamera(dt);
   if (imWald && S.zeit >= S.dauer) beginneAbend('abend');
@@ -268,7 +284,7 @@ function fest(x, y, hw, hh) {
   }
   return false;
 }
-function bewege(e, dx, dy, hw, hh) {
+export function bewege(e, dx, dy, hw, hh) {
   const n = Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 4) || 1;
   for (let i = 0; i < n; i++) {
     const nx = e.x + dx / n; if (!fest(nx, e.y, hw, hh)) e.x = nx;
@@ -415,7 +431,7 @@ function haueBueschel(b, schaden) {
   }
 }
 
-function waehleStein(beste, glueck) {
+export function waehleStein(beste, glueck) {
   const g = []; let summe = 0;
   for (let i = 0; i <= beste; i++) { g[i] = STEIN_GEWICHT[i] * Math.pow(1 + 0.45 * glueck, i); summe += g[i]; }
   let z = Math.random() * summe;
@@ -424,7 +440,7 @@ function waehleStein(beste, glueck) {
 }
 
 // ---------- Diamanten & Herzen ----------
-function wirfStein(x, y, typ) {
+export function wirfStein(x, y, typ) {
   S.beute.push({ x, y, z: 2, vz: 70 + Math.random() * 30, vx: (Math.random() - 0.5) * 50, vy: (Math.random() - 0.5) * 30, typ, herz: false, t: 0, zieht: false, sp: 0 });
 }
 function wirfHerz(x, y) {
@@ -658,6 +674,8 @@ export function zeichne(ctx, cw, ch, zoom) {
   for (const b of S.bueschel) if (b.weg && sicht(b.x, b.y, 8, 4, 4)) ctx.drawImage(G.stoppel, Math.round(b.x - 6), Math.round(b.y - 4));
   ctx.fillStyle = 'rgba(16, 40, 16, 0.35)';
   if (spielt) ellipse(ctx, p.x, p.y, 5, 2);
+  const tierDa = spielt && S.tier && !kammer && S.begleiter;
+  if (tierDa) begleiterSchatten(ctx);
   for (const g of S.gegner) if (sicht(g.x, g.y, 12, 12, 12)) ellipse(ctx, g.x, g.y, g.art === 'hummel' ? 3 : 5, g.art === 'hummel' ? 1.5 : 2);
   for (const e of S.beute) if (e.z > 1) ellipse(ctx, e.x, e.y + 3, 2.5, 1);
   if (kammer) kammerBoden(ctx);
@@ -676,6 +694,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   if (W.hoehle && sicht(W.hoehle.x, W.hoehle.y, 50, 70, 6)) liste.push({ y: W.hoehle.y, t: 6, o: W.hoehle });
   if (kammer) kammerListe(liste);
   if (spielt) liste.push({ y: p.y, t: 3, o: p });
+  if (tierDa) liste.push({ y: S.tier.y, t: 7, o: S.tier });
   for (const g of S.gegner) if (sicht(g.x, g.y, 12, 20, 4)) liste.push({ y: g.y, t: 4, o: g });
   for (const e of S.beute) liste.push({ y: e.y + 4, t: 5, o: e });
   liste.sort((a, b) => a.y - b.y);
@@ -692,6 +711,7 @@ export function zeichne(ctx, cw, ch, zoom) {
         ctx.drawImage(img, Math.round(W.hoehle.x - I.w / 2), Math.round(W.hoehle.y + 2 - I.fussY));
         break;
       }
+      case 7: zeichneBegleiter(ctx); break;
       default: kammerZeichne(ctx, e);
     }
   }
