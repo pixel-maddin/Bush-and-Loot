@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#16301b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Halmhauer">
+  <title>Halmhauer</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32" href="icons/icon-32.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="cv"></canvas>
+
+  <!-- Anzeige oben -->
+  <div id="hud" class="versteckt">
+    <div class="hud-links">
+      <div id="herzen"></div>
+      <div id="geld"><img id="geldIcon" class="px" alt=""><span id="geldZahl">0</span><span id="heuteZahl"></span></div>
+    </div>
+    <div class="hud-rechts">
+      <div id="tagBox">
+        <span id="tagText">Tag 1</span>
+        <div id="sonnenBahn"><div id="sonne"></div></div>
+      </div>
+      <button id="btnPause" aria-label="Pause"><i></i><i></i></button>
+    </div>
+  </div>
+
+  <!-- Touch-Steuerung (nur Anzeige; die Berührung landet auf dem Canvas) -->
+  <div id="stick" class="versteckt ruhe"><div id="knauf"></div></div>
+  <div id="btnA" class="versteckt" aria-hidden="true"><span>HAUEN</span></div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Titel -->
+  <div id="titel" class="schicht">
+    <div class="panel titelpanel">
+      <img id="titelHeld" class="px" alt="">
+      <h1>Halmhauer</h1>
+      <p class="unterzeile">Ein kleiner Held. Ein großer Wald. Sehr viel Gras.</p>
+      <div class="knoepfe">
+        <button id="btnStart" class="knopf gross">Los geht's!</button>
+        <button id="btnNeu" class="knopf grau klein versteckt">Neu anfangen</button>
+      </div>
+      <p id="steuerHilfe" class="hilfe"></p>
+    </div>
+  </div>
+
+  <!-- Laden im Baumstumpf -->
+  <div id="haus" class="schicht versteckt">
+    <div class="panel hauspanel">
+      <div class="kopf">
+        <h2>Im alten Baumstumpf</h2>
+        <div id="hausGeld" class="geld-gross"></div>
+      </div>
+      <p id="hausText" class="hilfe"></p>
+      <div id="waren" class="waren"></div>
+      <div id="hausKnoepfe" class="knoepfe"></div>
+    </div>
+  </div>
+
+  <!-- Tagesbilanz -->
+  <div id="bilanz" class="schicht versteckt">
+    <div class="panel bilanzpanel">
+      <h2 id="bilanzTitel">Der Tag ist vorbei</h2>
+      <div id="bilanzInhalt"></div>
+      <div class="knoepfe"><button id="btnBilanz" class="knopf gross">Ab in den Baumstumpf</button></div>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div id="pauseSchicht" class="schicht versteckt">
+    <div class="panel pausepanel">
+      <h2>Pause</h2>
+      <div class="knoepfe senkrecht">
+        <button id="btnWeiter" class="knopf gross">Weiter</button>
+        <button id="btnMusik" class="knopf grau">Musik: an</button>
+        <button id="btnTon" class="knopf grau">Ton: an</button>
+        <button id="btnVollbild" class="knopf grau versteckt">Vollbild</button>
+        <button id="btnTitel" class="knopf grau">Zum Titel</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
