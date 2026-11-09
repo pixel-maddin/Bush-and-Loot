@@ -118,6 +118,10 @@ function pflanzen() {
   }
 }
 
+// Bildwackeln und Treffer-Stopp laufen nur während des Spielens ab. Wer z. B. beim Umkippen
+// getroffen wurde, nähme das Wackeln sonst in den nächsten Morgen mit.
+function ruheImBild() { S.wackeln = 0; S.stopp = 0; }
+
 // ---------- Tagesablauf ----------
 export function neuerTag() {
   if (S.ort !== 'wald') zurueckInDenWald();      // in einer Kammer umgekippt
@@ -131,7 +135,7 @@ export function neuerTag() {
   S.spawnT = 4;
   S.kam.x = S.sp.x; S.kam.y = S.sp.y - 8;
   begleiterNeu();
-  S.blende = 0; S.phase = 'tag';
+  S.blende = 0; S.phase = 'tag'; ruheImBild();
   SFX.morgen();
   hooks.tagBeginnt && hooks.tagBeginnt();
 }
@@ -144,7 +148,7 @@ export function weiterMaehen() {
   S.w = werte(S.st);
   S.sp.hp = Math.min(S.sp.hp, S.w.maxHp);
   begleiterNeu();
-  S.phase = 'tag';
+  S.phase = 'tag'; ruheImBild();
   SFX.tuer();
 }
 
@@ -173,7 +177,7 @@ export function betreteKammer(k) {
   p.x = S.welt.start.x; p.y = S.welt.start.y; p.ziel = null; p.kx = p.ky = 0;
   p.winkel = -Math.PI / 2; p.blick = 'oben'; p.unverw = 0; p.ladung = 0;
   S.kam.x = p.x; S.kam.y = p.y - 40;
-  S.ort = 'kammer'; S.phase = 'tag';
+  S.ort = 'kammer'; S.phase = 'tag'; ruheImBild();
   SFX.tuerAuf();
 }
 
@@ -192,7 +196,7 @@ export function verlasseKammer() {
   p.winkel = Math.PI / 2; p.blick = 'unten'; p.hoehleSperre = true;
   S.kam.x = p.x; S.kam.y = p.y - 8;
   begleiterNeu();
-  S.phase = 'tag';
+  S.phase = 'tag'; ruheImBild();
   SFX.tuer(); speichern();
 }
 
