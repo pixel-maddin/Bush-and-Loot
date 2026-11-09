@@ -192,13 +192,15 @@ function beginneAbend(grund) {
 }
 
 function tagAbschliessen() {
-  const ohnmacht = S.endeGrund === 'ohnmacht';
-  // Was noch herumliegt, bringt der Abendwind mit nach Hause – außer man ist umgekippt
+  // Umgekippt oder nicht rechtzeitig im Baumstumpf (im Dunkeln sieht man nichts): Die Hälfte der
+  // heutigen Diamanten ist weg, und was noch herumliegt, findet keiner mehr.
+  // Nur wer vor Sonnenuntergang heimgeht („Schlafen gehen“), behält alles.
+  const pech = S.endeGrund === 'ohnmacht' || S.endeGrund === 'abend';
   let nachgetragen = 0;
-  for (const e of S.beute) if (!e.herz && !ohnmacht) { einsammeln(e, true); nachgetragen++; }
+  for (const e of S.beute) if (!e.herz && !pech) { einsammeln(e, true); nachgetragen++; }
   S.beute = [];
   let verlust = 0;
-  if (ohnmacht) { verlust = Math.min(S.geld, Math.floor(S.heute.wert / 2)); S.geld -= verlust; }
+  if (pech) { verlust = Math.min(S.geld, Math.floor(S.heute.wert / 2)); S.geld -= verlust; }
   S.gesamt.gemaeht += S.heute.gemaeht; S.gesamt.besiegt += S.heute.besiegt; S.gesamt.wert += S.heute.wert - verlust;
   const fertig = S.tag;
   S.tag++;
@@ -712,6 +714,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   ctx.globalAlpha = 1;
 
   if (kammer) kammerDunkel(ctx, L, T, vw, vh);
+  else if (S.phase === 'tag' && W.haus && S.zeit > S.dauer - HEIM_WARNUNG) heimPfeil(ctx, L, T, vw, vh);
   // Abendlicht (nur draußen)
   const q = spielt && !kammer ? S.zeit / S.dauer : 0;
   const abend = klemme((q - 0.6) / 0.4, 0, 1);
@@ -739,6 +742,27 @@ export function zeichne(ctx, cw, ch, zoom) {
     ctx.fillStyle = `rgba(220, 30, 50, ${(p.unverw - 1.0) * 0.8})`;
     ctx.fillRect(0, 0, cw, ch);
   }
+}
+
+// Kurz vor Sonnenuntergang: Pfeil am Bildrand, der zum Baumstumpf zeigt (wenn er nicht zu sehen ist)
+export const HEIM_WARNUNG = 15;
+function heimPfeil(ctx, L, T, vw, vh) {
+  const ziel = S.welt.haus.tuer, mx = L + vw / 2, my = T + vh / 2;
+  const rand = 16;
+  if (ziel.x > L + rand && ziel.x < L + vw - rand && ziel.y - 30 > T + rand && ziel.y < T + vh - rand) return;
+  const dx = ziel.x - mx, dy = ziel.y - 20 - my, a = Math.atan2(dy, dx);
+  // Schnittpunkt mit dem eingerückten Bildrand
+  const hx = vw / 2 - rand, hy = vh / 2 - rand;
+  const f = Math.min(hx / Math.abs(Math.cos(a) || 1e-6), hy / Math.abs(Math.sin(a) || 1e-6));
+  const x = mx + Math.cos(a) * f, y = my + Math.sin(a) * f;
+  const puls = 1 + Math.sin(S.t * 10) * 0.12;
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(a); ctx.scale(puls, puls);
+  ctx.fillStyle = '#2b1d16';
+  ctx.beginPath(); ctx.moveTo(9, 0); ctx.lineTo(-6, -8); ctx.lineTo(-3, 0); ctx.lineTo(-6, 8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#ffd23f';
+  ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -5); ctx.lineTo(-2, 0); ctx.lineTo(-4, 5); ctx.closePath(); ctx.fill();
+  ctx.restore();
 }
 
 function ellipse(ctx, x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(Math.round(x), Math.round(y), rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }

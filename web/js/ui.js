@@ -112,13 +112,19 @@ export function hudNeu() { alt = {}; }
 let hausModus = false;   // true = Tag ist vorbei, nächster Knopf startet einen neuen Tag
 export function zeigeHaus(nachTag) {
   hausModus = nachTag;
+  const spaet = !nachTag && S.zeit / S.dauer > 0.75;
   $('hausText').textContent = nachTag
     ? 'Der Tag ist vorbei. Gib deine Diamanten aus – morgen wächst das Gras neu.'
-    : 'Kurz verschnaufen. Draußen läuft die Zeit weiter, sobald du rausgehst.';
+    : spaet
+      ? 'Gerade noch rechtzeitig daheim! Wer jetzt schlafen geht, behält alle Diamanten. Draußen wird es gleich dunkel.'
+      : 'Kurz verschnaufen. Draußen läuft die Zeit weiter, sobald du rausgehst. Vor Sonnenuntergang zurück sein!';
   const k = $('hausKnoepfe');
   k.innerHTML = '';
   if (nachTag) {
     k.append(knopf(`Tag ${S.tag} beginnen ☀`, 'knopf gross', () => h.neuerTag()));
+  } else if (spaet) {
+    k.append(knopf('Schlafen gehen ☾', 'knopf gross', () => h.tagBeenden()));
+    k.append(knopf('Noch mal raus', 'knopf grau', () => h.weiterMaehen()));
   } else {
     k.append(knopf('Weiter mähen', 'knopf gross', () => h.weiterMaehen()));
     k.append(knopf('Schlafen gehen', 'knopf grau', () => h.tagBeenden()));
@@ -231,7 +237,8 @@ export function zeigeFund(nr) {
 
 // ---------- Tagesbilanz ----------
 export function zeigeBilanz({ grund, heute, verlust, tag, kammer }) {
-  const titel = grund === 'ohnmacht' && kammer ? `${KAMMERN[kammer - 1].boss} war zu stark …` : grund === 'ohnmacht' ? 'Uff … umgekippt!' : grund === 'heim' ? `Tag ${tag}: früh ins Bett` : `Tag ${tag} ist vorbei`;
+  const titel = grund === 'ohnmacht' && kammer ? `${KAMMERN[kammer - 1].boss} war zu stark …` : grund === 'ohnmacht' ? 'Uff … umgekippt!'
+    : grund === 'heim' ? `Tag ${tag}: gut heimgekommen` : 'Zu spät – stockdunkel!';
   $('bilanzTitel').textContent = titel;
   let steine = '';
   STEINE.forEach((s, i) => {
@@ -246,7 +253,10 @@ export function zeigeBilanz({ grund, heute, verlust, tag, kammer }) {
     </div>
     <div class="steine">${steine}</div>
     <div class="summe">Zusammen ${px(G.waehrung)} <b>${zahl(heute.wert)}</b></div>
-    ${verlust ? `<p class="verlust">Beim Umkippen ist die Hälfte davon aus der Tasche gekullert: −${zahl(verlust)}</p>` : ''}
+    ${verlust ? `<p class="verlust">${grund === 'abend'
+      ? 'Im Dunkeln über Wurzeln gestolpert – die Hälfte ist aus der Tasche gekullert'
+      : 'Beim Umkippen ist die Hälfte davon aus der Tasche gekullert'}: −${zahl(verlust)}</p>` : ''}
+    ${grund === 'abend' ? '<p class="hilfe">Nächstes Mal vor Sonnenuntergang in den Baumstumpf und „Schlafen gehen“ – dann bleibt alles.</p>' : ''}
     ${kammer ? '<p class="hilfe">Die Tür bleibt offen – morgen kannst du es noch mal versuchen. Vielleicht mit einer besseren Klinge?</p>' : ''}
   `;
   zeige('bilanz');

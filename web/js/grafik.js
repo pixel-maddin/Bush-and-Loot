@@ -376,7 +376,7 @@ function gegnerBilder() {
     'kooooooooooook',
     '.kkkkkkkkkkkk.',
   ], { k: '#2a2018', a: '#e7a74f', A: '#b56a2a', m: '#5aa843', o: '#b9d98a' }).bild();
-  const pHum = { k: '#1c1712', Y: '#f5c542', w: '#eaf6ff', W: '#bfe0f5', e: '#ffffff' };
+  const pHum = { k: '#1c1712', Y: '#a24fe0', w: '#eaf6ff', W: '#bfe0f5', e: '#ffffff' };   // lila-schwarz gestreift
   const humA = ausText([
     '..ww...ww..',
     '.wWWw.wWWw.',

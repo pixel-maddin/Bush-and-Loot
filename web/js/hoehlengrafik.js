@@ -95,7 +95,7 @@ function koenigin() {
     // Hinterleib mit Streifen
     pb.kreis(22, 20, 10, (x, y, nx, ny) => {
       if (((x - 14) % 6 + 6) % 6 < 2) return '#1c1712';
-      return licht(['#a87818', '#e0a830', '#f5c542', '#fff0a0'])(x, y, nx, ny);
+      return licht(['#4a1a7a', '#7a30b8', '#a24fe0', '#d8a8ff'])(x, y, nx, ny);
     });
     pb.rechteck(32, 20, 3, 1, '#1c1712'); pb.set(35, 20, '#6a5040'); pb.set(36, 20, '#6a5040');      // Stachel
     // Kopf mit großen Augen

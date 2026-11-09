@@ -5,7 +5,7 @@ import { initGrafik } from './grafik.js';
 import { initHoehlenGrafik } from './hoehlengrafik.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
-  kaufen, update, zeichne, setzeHooks, oeffneTuer, betreteKammer, verlasseKammer,
+  kaufen, update, zeichne, setzeHooks, oeffneTuer, betreteKammer, verlasseKammer, HEIM_WARNUNG,
 } from './spiel.js';
 import { KAMMERN } from './config.js';
 import * as UI from './ui.js';
@@ -125,6 +125,7 @@ else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
   else if (q.has('eingang')) {          // ?eingang: vor dem Höhleneingang stehen
     const h = S.welt.hoehle; S.sp.x = h.tuer.x - 20; S.sp.y = h.tuer.y + 36; S.kam.x = S.sp.x; S.kam.y = S.sp.y;
   } else { S.phase = 'hoehle'; UI.zeigeHoehle(); }
+  if (q.has('spaet')) S.zeit = S.dauer - 14;      // ?spaet: kurz vor Sonnenuntergang (Heimweg-Pfeil)
   steuerung.aktualisiere();
 }
 
@@ -160,9 +161,11 @@ function schleife(t) {
   const dt = Math.max(0, Math.min(0.05, (t - letzte) / 1000));
   letzte = t;
   update(dt, eingabe);
-  if (S.phase === 'tag' && S.zeit > S.dauer - 12 && warnTag !== S.tag) {
+  if (S.phase === 'tag' && S.ort === 'wald' && S.zeit > S.dauer - HEIM_WARNUNG && warnTag !== S.tag) {
     warnTag = S.tag;
-    UI.toast(S.tag === 1 ? 'Die Sonne geht bald unter! Was herumliegt, nimmst du abends mit.' : 'Die Sonne geht bald unter!', 3000);
+    UI.toast(S.tag <= 2
+      ? 'Bald ist es dunkel! Schnell heim in den Baumstumpf – sonst verlierst du die Hälfte der Diamanten von heute.'
+      : 'Bald dunkel – ab nach Hause!', S.tag <= 2 ? 4500 : 3000);
   }
   zeichne(ctx, cv.width, cv.height, zoom);
   if (S.phase !== 'titel') UI.hud();

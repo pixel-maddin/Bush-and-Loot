@@ -48,8 +48,11 @@ wird daraus „Stick“ (linke Hälfte ziehen = laufen, rechte Hälfte tippen = 
 ## So läuft ein Tag
 
 - Die Sonne läuft oben rechts über die Leiste. Am Anfang dauert ein Tag 70 Sekunden.
-- Gegen Abend wird es orange, dann blau. Bei Sonnenuntergang ist der Tag vorbei;
-  Diamanten, die noch herumliegen, nimmst du automatisch mit.
+- Gegen Abend wird es orange, dann blau. **Vor Sonnenuntergang musst du zurück
+  in den Baumstumpf** und „Schlafen gehen“ – dann behältst du alles, auch was
+  noch herumliegt. Wer es nicht schafft, stolpert im Dunkeln: Die Hälfte der
+  Diamanten von heute ist weg. 15 Sekunden vorher zeigt ein gelber Pfeil am
+  Bildrand den Weg nach Hause.
 - Läufst du in die Tür des Baumstumpfs, kannst du mitten am Tag einkaufen
   (die Zeit steht dann still) oder schlafen gehen.
 - Wirst du so oft getroffen, dass alle Herzen weg sind, kippst du um: Die Hälfte
@@ -80,7 +83,7 @@ Die zähen Sorten wachsen weiter weg vom Baumstumpf häufiger.
 ## Plagegeister
 
 - **Moosschnecke** (ab Tag 1): langsam, kommt aber stur hinterher.
-- **Brummhummel** (ab Tag 2): kreist um dich und stürzt sich plötzlich drauf.
+- **Brummhummel** (ab Tag 2, lila-schwarz): kreist um dich und stürzt sich plötzlich drauf.
 - **Hüpfpilz** (ab Tag 4): springt auf dich zu, hält mehr aus.
 
 Manchmal springt einer direkt aus einem Grasbüschel. Jeden Tag werden es mehr.
