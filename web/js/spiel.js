@@ -357,7 +357,9 @@ function spielerUpdate(dt, ein, neu) {
   // Tür des Baumstumpfs
   if (S.welt.haus) {
     const T = S.welt.haus.tuer;
-    const inTuer = Math.abs(p.x - T.x) < 8 && p.y < T.y + 6;
+    // Nur ein schmaler Streifen direkt vor der Tür zählt – sonst öffnet sich der Laden auch,
+    // wenn man oben hinter dem Stumpf vorbeiläuft
+    const inTuer = Math.abs(p.x - T.x) < 8 && p.y < T.y + 6 && p.y > T.y - 2;
     if (!inTuer) p.tuerSperre = false;
     else if (!p.tuerSperre) {
       p.tuerSperre = true; p.ziel = null; S.phase = 'haus'; SFX.tuer();
@@ -367,7 +369,7 @@ function spielerUpdate(dt, ein, neu) {
   // Eingang der Glitzerhöhle
   if (S.welt.hoehle) {
     const T = S.welt.hoehle.tuer;
-    const drin = Math.abs(p.x - T.x) < 10 && p.y < T.y + 6;
+    const drin = Math.abs(p.x - T.x) < 10 && p.y < T.y + 6 && p.y > T.y - 2;
     if (!drin) p.hoehleSperre = false;
     else if (!p.hoehleSperre) {
       p.hoehleSperre = true; p.ziel = null; S.phase = 'hoehle'; SFX.tuer();
