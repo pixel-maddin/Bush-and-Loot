@@ -231,9 +231,10 @@ function tagAbschliessen() {
   hooks.bilanz && hooks.bilanz({ grund: S.endeGrund, heute: S.heute, verlust, tag: fertig, liegen, kammer: S.ort === 'kammer' && S.boss ? S.boss.k : 0 });
 }
 
-// Begleiter: nur einmal im Spiel wählbar
+// Begleiter kaufen oder gegen einen anderen tauschen (Preis kommt aus dem Laden: erster Kauf / Tausch)
 export function kaufeBegleiter(art, rasse, preis) {
-  if (S.begleiter || S.geld < preis) { SFX.nein(); return false; }
+  const gleich = S.begleiter && S.begleiter.art === art && S.begleiter.rasse === rasse;
+  if (gleich || S.geld < preis) { SFX.nein(); return false; }
   S.geld -= preis;
   S.begleiter = { art, rasse }; S.tier = null;
   SFX.kauf(); speichern();

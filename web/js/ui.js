@@ -3,7 +3,7 @@
 import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
 import { AUFRUESTUNGEN, STEINE, KAMMERN } from './config.js';
 import { S, liegenGeblieben } from './spiel.js';
-import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, LECKERLI_KOSTEN } from './begleiter.js';
+import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, TAUSCH_PREIS, LECKERLI_KOSTEN } from './begleiter.js';
 import { stubenBilder } from './stube.js';
 import { istStumm, setzeStumm } from './ton.js';
 import { istMusikAn, setzeMusik } from './musik.js';
@@ -226,6 +226,25 @@ function waren() {
     box.append(d);
   }
   box.append(begleiterKarte());
+  if (S.begleiter) box.append(tauschKarte());
+}
+
+function tauschKarte() {
+  const d = document.createElement('div');
+  d.className = 'ware begleiter';
+  d.innerHTML = `
+    <div class="ware-bild">${px(tierIcon(S.begleiter.art === 'katze' ? 'hund' : 'katze', S.begleiter.art === 'katze' ? 'spitz' : 'tiger'))}</div>
+    <div class="ware-text">
+      <div class="ware-name">Begleiter tauschen</div>
+      <div class="ware-info">Lieber ein anderes Tier? Geht jederzeit – kostet aber jedes Mal. Leckerli bleiben.</div>
+    </div>`;
+  const b = document.createElement('button');
+  b.className = 'knopf preis grau';
+  b.innerHTML = `Tauschen ${px(G.waehrung)}${zahl(TAUSCH_PREIS)}`;
+  b.disabled = S.geld < TAUSCH_PREIS;
+  b.onclick = () => zeigeBegleiterWahl();
+  d.append(b);
+  return d;
 }
 
 // ---------- Begleiter im Laden ----------
@@ -239,7 +258,7 @@ function begleiterKarte() {
       <div class="ware-bild">${px(tierIcon('hund', 'dackel'))}</div>
       <div class="ware-text">
         <div class="ware-name">Begleiter</div>
-        <div class="ware-unter">Hund oder Katze – nur einmal wählbar</div>
+        <div class="ware-unter">Hund oder Katze</div>
         <div class="ware-info">Läuft dir hinterher und buddelt ab und zu einen Diamanten aus.</div>
       </div>`;
     b.innerHTML = `Aussuchen ${px(G.waehrung)}${zahl(BEGLEITER_PREIS)}`;
@@ -273,17 +292,25 @@ export function zeigeBegleiterWahl() {
   let wahl = null;
   const ok = $('btnBegleiterOk');
   const karten = [];
+  const jetzt = S.begleiter, preis = jetzt ? TAUSCH_PREIS : BEGLEITER_PREIS;
+  document.querySelector('.begleiterpanel h2').textContent = jetzt ? 'Wen nimmst du stattdessen mit?' : 'Wer soll mitkommen?';
+  $('begleiterHinweis').innerHTML = jetzt
+    ? `<b>Tauschen kostet ${zahl(TAUSCH_PREIS)} Diamanten.</b> Die Leckerli-Stufe bleibt.`
+    : `Später tauschen geht auch – kostet dann aber jedes Mal ${zahl(TAUSCH_PREIS)} Diamanten.`;
   for (const [art, box] of [['hund', $('wahlHunde')], ['katze', $('wahlKatzen')]]) {
     box.innerHTML = '';
     for (const [id, r] of Object.entries(RASSEN[art])) {
       const k = document.createElement('button');
       k.className = 'tier-karte';
-      k.innerHTML = `${px(tierIcon(art, id))}<span>${r.name}</span>`;
+      const dabei = jetzt && jetzt.art === art && jetzt.rasse === id;
+      k.innerHTML = `${px(tierIcon(art, id))}<span>${r.name}${dabei ? '<br><small>ist dabei</small>' : ''}</span>`;
+      if (dabei) { k.disabled = true; k.classList.add('dabei'); }
       k.onclick = () => {
         wahl = { art, rasse: id };
         karten.forEach(x => x.classList.toggle('gewaehlt', x === k));
         ok.disabled = false;
-        ok.innerHTML = `${r.name} mitnehmen ${px(G.waehrung)}${zahl(BEGLEITER_PREIS)}`;
+        ok.innerHTML = `${r.name} mitnehmen ${px(G.waehrung)}${zahl(preis)}`;
+        ok.disabled = S.geld < preis;
       };
       karten.push(k); box.append(k);
     }
@@ -291,7 +318,7 @@ export function zeigeBegleiterWahl() {
   ok.disabled = true; ok.textContent = 'Erst eins aussuchen';
   ok.onclick = () => {
     if (!wahl) return;
-    if (h.begleiterKaufen(wahl.art, wahl.rasse, BEGLEITER_PREIS)) zeigeHaus(hausModus);
+    if (h.begleiterKaufen(wahl.art, wahl.rasse, preis)) zeigeHaus(hausModus);
   };
   $('btnBegleiterZurueck').onclick = () => zeigeHaus(hausModus);
   zeige('begleiterWahl');

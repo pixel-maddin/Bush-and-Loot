@@ -239,7 +239,7 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
   background: #fbf1d8; border: 3px solid var(--tinte); border-radius: 10px; padding: 8px 4px 6px;
   display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; box-shadow: 0 3px 0 var(--tinte);
 }
-.tier-karte img { width: 60px; height: 45px; }
+.tier-karte img { width: 66px; height: 54px; }   /* Bild 22 × 18, dreifach */
 .tier-karte.gewaehlt { background: #fff7a8; outline: 3px solid #ffd23f; outline-offset: 2px; }
 .tier-karte.gewaehlt img { animation: huepfen .8s ease-in-out infinite; }
 .ware.begleiter .ware-bild img { width: 52px; height: auto; }
@@ -296,3 +296,6 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
   .hauspanel::before, .hauspanel::after { width: 14px; }
   .hauspanel .knoepfe.fussleiste { margin: 14px -24px -16px; padding-left: 24px; padding-right: 24px; }
 }
+
+.tier-karte.dabei { opacity: .55; cursor: default; }
+.tier-karte small { font-size: 11px; color: #6b4220; }
