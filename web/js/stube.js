@@ -130,8 +130,17 @@ function stubeMalen(bild, tier, nacht) {
   rechteck(g, 101, 9, 7, 2, '#2b1d16'); rechteck(g, 101, 11, 7, 7, '#2b1d16'); rechteck(g, 102, 12, 5, 5, '#ffd76a'); rechteck(g, 103, 13, 3, 3, '#fff3c0');
   rechteck(g, 100, 18, 9, 1, '#2b1d16');
 
-  // Begleiter auf dem Teppich
-  if (tier) g.drawImage(tier, 70, 79 - tier.height);
+  // Begleiter schläft auf dem Teppich, kleine „z“ steigen auf
+  if (tier) {
+    const tx = 84 - Math.round(tier.width / 2), ty = 78 - tier.height;
+    g.drawImage(tier, tx, ty);
+    const zs = [[0, 0], [3, -5], [7, -10]];
+    zs.forEach(([zx, zy], i) => {
+      if ((i + bild) % 3 === 2) return;
+      const x = tx + 2 + zx, y = ty - 3 + zy - bild;
+      rechteck(g, x, y, 3, 1, '#fff3d8'); rechteck(g, x + 1, y + 1, 1, 1, '#fff3d8'); rechteck(g, x, y + 2, 3, 1, '#fff3d8');
+    });
+  }
 
   // Rund wie im Stamm: Ecken oben dunkel (Rinde), damit es wie die Höhlung des Stumpfs aussieht
   for (let y = 0; y < 20; y++) for (let x = 0; x < B; x++) {

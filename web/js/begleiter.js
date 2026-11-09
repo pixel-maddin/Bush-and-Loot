@@ -24,8 +24,9 @@ export const RASSEN = {
 };
 
 // ---------- Bilder ----------
-// Blick nach links. Posen: steh, lauf0, lauf1, sitz, buddel0, buddel1
+// Blick nach links. Posen: steh, lauf0, lauf1, sitz, buddel0, buddel1, schlaf
 function tierBild(art, r, pose) {
+  if (pose === 'schlaf') return schlafBild(art, r);
   const pb = new PB(20, 15);
   const katze = art === 'katze';
   const lang = r.lang ? 2 : 0;
@@ -67,7 +68,30 @@ function tierBild(art, r, pose) {
   return pb.umriss('#2b1d16').bild();
 }
 
-const POSEN = ['steh', 'lauf0', 'lauf1', 'sitz', 'buddel0', 'buddel1'];
+// Eingerollt schlafend (für die Stube): flach liegend, Kopf auf den Pfoten, Augen zu, Schwanz um den Körper
+function schlafBild(art, r) {
+  const pb = new PB(20, 11);
+  const katze = art === 'katze', lang = r.lang ? 2 : 0;
+  for (let x = 7; x <= 14 + lang; x++) pb.kreis(x, 6.5, 3.3, (xx, yy, nx, ny) => (ny > 0.45 ? r.w : r.a));
+  if (r.sattel) for (let x = 9; x <= 14; x++) { pb.set(x, 4, r.A); pb.set(x, 5, r.A); }
+  if (r.streifen) for (const x of [9, 12, 15]) for (let y = 4; y <= 6; y++) pb.set(x, y, r.A);
+  if (r.flecken) { pb.kreis(13, 5, 1.8, '#e8913a'); pb.kreis(9, 5, 1.4, '#34313c'); }
+  // Schwanz liegt vorne um den Körper herum
+  for (let x = 6; x <= 16 + lang; x++) pb.set(x, 9, x % 3 === 0 && r.streifen ? r.A : (r.schwanz === 'kurz' && x < 13 ? null : r.a));
+  // Vorderpfoten und Kopf darauf
+  pb.rechteck(1, 8, 5, 2, r.w);
+  const hx = 5, hy = 6;
+  pb.kreis(hx, hy, katze ? 3 : 3.2, (xx, yy, nx, ny) => (ny > 0.4 && nx < 0.2 ? r.w : r.a));
+  if (!katze) { pb.rechteck(hx - 4, hy + 1, 3, 2, r.w); pb.set(hx - 4, hy + 1, '#2b1d16'); }
+  else pb.set(hx - 3, hy + 1, '#e8828a');
+  pb.set(hx - 2, hy, '#1e1b30'); pb.set(hx - 1, hy, '#1e1b30');       // Augen zu: ein Strich
+  if (r.ohr === 'schlapp') { pb.set(hx + 1, hy - 2, r.A); pb.set(hx + 2, hy - 1, r.A); pb.set(hx + 2, hy, r.A); }
+  else if (!katze) { pb.set(hx - 1, hy - 4, r.A); pb.set(hx - 1, hy - 3, r.a); pb.set(hx + 2, hy - 4, r.A); pb.set(hx + 2, hy - 3, r.a); }
+  if (katze) { pb.set(hx - 2, hy - 4, r.A); pb.set(hx - 2, hy - 3, r.a); pb.set(hx - 1, hy - 3, r.a); pb.set(hx + 1, hy - 4, r.A); pb.set(hx + 1, hy - 3, r.a); pb.set(hx + 2, hy - 3, r.a); }
+  return pb.umriss('#2b1d16').bild();
+}
+
+const POSEN = ['steh', 'lauf0', 'lauf1', 'sitz', 'buddel0', 'buddel1', 'schlaf'];
 const cache = {};
 export function tierBilder(art, rasse) {
   const key = art + '-' + rasse;
@@ -92,10 +116,11 @@ function neuesTier() {
   return { x: p.x + 12, y: p.y + 4, links: true, zustand: 'folgen', t: 0, anim: 0, buddelT: 6 + Math.random() * 6, stillT: 0, haengt: 0 };
 }
 
-// Platz schräg hinter und neben dem Helden (direkt dahinter säße das Tier auf seinem Kopf)
+// Platz mit Abstand schräg hinter und neben dem Helden (direkt dahinter säße das Tier auf seinem Kopf)
+const ABSTAND = { hinten: 26, seite: 16 };
 function platz(p) {
   const bx = -Math.cos(p.winkel), by = -Math.sin(p.winkel), sx = -by, sy = bx;
-  return { x: p.x + bx * 14 + sx * 10, y: p.y + by * 6 + sy * 4 + 2 };
+  return { x: p.x + bx * ABSTAND.hinten + sx * ABSTAND.seite, y: p.y + by * 12 + sy * 8 + 2 };
 }
 
 export function begleiterUpdate(dt) {
@@ -112,7 +137,10 @@ export function begleiterUpdate(dt) {
       // Ziel: etwas hinter dem Helden
       const { x: zx, y: zy } = platz(p);
       const ex = zx - b.x, ey = zy - b.y, ed = Math.hypot(ex, ey);
-      if (ed > 5 && d > 9) {
+      // Mit Spiel: Erst loslaufen, wenn der Platz ein Stück weg ist, dann bis ganz hin – so trottet es
+      // versetzt hinterher, statt am Helden zu kleben. Näher als 16 px kommt es nie.
+      if (b.laeuft ? ed < 3 : ed < 14) b.laeuft = false; else b.laeuft = true;
+      if (b.laeuft && d > 16) {
         const v = Math.min(S.w.tempo * 1.25, ed * 5);
         const vx = b.x, vy = b.y;
         bewege(b, ex / ed * v * dt, ey / ed * v * dt, 3, 2);
@@ -170,5 +198,6 @@ export function begleiterSchatten(ctx) {
   ctx.beginPath(); ctx.ellipse(Math.round(b.x), Math.round(b.y), 5, 2, 0, 0, Math.PI * 2); ctx.fill();
 }
 
-// Kleines Bild für Laden und Auswahl
+// Kleines Bild für Laden und Auswahl; schlafend für die Stube
 export function tierIcon(art, rasse) { return tierBilder(art, rasse).l.sitz; }
+export function tierSchlafend(art, rasse) { return tierBilder(art, rasse).r.schlaf; }

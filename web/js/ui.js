@@ -3,7 +3,7 @@
 import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
 import { AUFRUESTUNGEN, STEINE, KAMMERN } from './config.js';
 import { S, liegenGeblieben } from './spiel.js';
-import { RASSEN, tierIcon, BEGLEITER_PREIS, LECKERLI_KOSTEN } from './begleiter.js';
+import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, LECKERLI_KOSTEN } from './begleiter.js';
 import { stubenBilder } from './stube.js';
 import { istStumm, setzeStumm } from './ton.js';
 import { istMusikAn, setzeMusik } from './musik.js';
@@ -175,7 +175,7 @@ export function zeigeHaus(nachTag) {
 let stubeUhr = null;
 function stubeStarten(nacht) {
   const cv = $('stubeBild'), g = cv.getContext('2d');
-  const tier = S.begleiter ? tierIcon(S.begleiter.art, S.begleiter.rasse) : null;
+  const tier = S.begleiter ? tierSchlafend(S.begleiter.art, S.begleiter.rasse) : null;
   const bilder = stubenBilder(tier, nacht);
   let i = 0;
   const malen = () => { g.clearRect(0, 0, cv.width, cv.height); g.drawImage(bilder[i], 0, 0); i = (i + 1) % bilder.length; };
