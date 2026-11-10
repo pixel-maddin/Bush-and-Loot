@@ -112,7 +112,7 @@ trotzdem).
 
 | Kammer | Tür | Wächter | Was er macht | Belohnung |
 |---|---|---|---|---|
-| Moosgrotte | 100 | Riesenschnecke | zittert, dann Ansturm geradeaus – danach benommen | Fackel |
+| Teichgrotte | 100 | Riesenente | flattert, dann Ansturm geradeaus – danach benommen; bläst sich auf (roter Kreis) und schickt eine QUAK-Welle; ab halber Kraft hüpfen Küken herum | Fackel |
 | Wabenkammer | 350 | Hummelkönigin | kreist hoch oben, ruft Hummeln, stürzt sich auf die rote Stelle – sitzt danach kurz am Boden | ein Herz mehr |
 | Schattenhalle | 900 | Schattenpilz | springt, Druckwelle beim Landen; wird ab und zu fast unsichtbar. Es ist dunkel! | Steigeisen |
 | Frostkammer | 2.000 | Eisigel | rollt als Stachelkugel herum (dann prallt alles ab), ist danach schwindelig, schießt Eisstacheln | Goldener Schliff (+50 % Schaden) |

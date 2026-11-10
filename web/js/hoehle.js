@@ -18,7 +18,8 @@ export const KB = 15, KH = 13;
 const X0 = K + 2, X1 = (KB - 1) * K - 2, Y0 = 2 * K + 8, Y1 = (KH - 1) * K - 6;
 
 const MASSE = {            // r = Körperradius am Boden, hoehe = Bildhöhe (für Trefferpunkt und Lebensleiste)
-  schnecke: { r: 14, hoehe: 30 },
+  schnecke: { r: 14, hoehe: 30 },    // nicht mehr im Spiel (war Wächter in Kammer 1 vor der Riesenente)
+  ente:     { r: 13, hoehe: 32 },
   koenigin: { r: 11, hoehe: 28 },
   schatten: { r: 13, hoehe: 36 },
   igel:     { r: 11, hoehe: 26 },
@@ -262,6 +263,54 @@ const VERHALTEN = {
       case 'muede': if (b.t <= 0) zu(b, 'gehen', halb ? 1.4 : 2); break;
     }
   },
+};
+
+// Riesenente (Kammer 1): watschelt hinterher. Flattert sie mit den Flügeln, stürmt sie gleich geradeaus
+// los und prallt benommen gegen die Wand. Bläst sie sich auf (roter Kreis), kommt eine QUAK-Druckwelle.
+// Ab halber Kraft hüpfen Küken herum.
+VERHALTEN.ente = function (b, dt, halb) {
+  const { dx, dy, d } = zumHeld(b);
+  b.pose = 0;
+  switch (b.zustand) {
+    case 'start': if (b.t <= 0) zu(b, 'watscheln', 2); break;
+    case 'watscheln': {
+      const v = halb ? 30 : 22;
+      b.x += dx / d * v * dt; b.y += dy / d * v * dt; b.links = dx < 0;
+      if (b.t <= 0) {
+        b.zahl++;
+        if (b.zahl % 2 === 1) { zu(b, 'flattern', halb ? 0.6 : 0.85); b.dir = Math.atan2(dy, dx); SFX.warnung(); }
+        else { zu(b, 'aufblasen', halb ? 0.6 : 0.8); warn(b.x, b.y, 52, b.t, true); SFX.warnung(); }
+      }
+      break;
+    }
+    case 'flattern':
+      b.pose = Math.floor(b.anim * 12) % 2 ? 2 : 0; b.wx = Math.round((Math.random() - 0.5) * 2);
+      if (b.t <= 0) { b.wx = 0; zu(b, 'ansturm', 2.5); SFX.fluegel(); }
+      break;
+    case 'ansturm': {
+      b.pose = 2;
+      const v = halb ? 190 : 150;
+      const nx = b.x + Math.cos(b.dir) * v * dt, ny = b.y + Math.sin(b.dir) * v * dt;
+      b.links = Math.cos(b.dir) < 0;
+      if (Math.random() < 0.5) splitter(b.x, b.y - 2, ['#fff3a8', '#ffd84a'], 1);
+      if (nx < X0 + b.r || nx > X1 - b.r || ny < Y0 || ny > Y1 || b.t <= 0) {
+        zu(b, 'benommen', halb ? 1.4 : 1.8);
+        S.wackeln = 0.3; SFX.stampfen(); puff(b.x + Math.cos(b.dir) * b.r, b.y - 8);
+        if (halb && kleine('kueken') < 4) { spawne('kueken', b.x - 14, b.y, true); spawne('kueken', b.x + 14, b.y, true); }
+      } else { b.x = nx; b.y = ny; }
+      break;
+    }
+    case 'aufblasen':
+      b.pose = 1; b.wx = Math.round(Math.sin(b.anim * 40));
+      if (b.t <= 0) {
+        b.wx = 0; welle(b.x, b.y, 56, 0.5, 9, 1);
+        S.wackeln = 0.25; SFX.quak(); text(b.x, b.y - b.hoehe - 4, 'QUAK!', '#fff3a8');
+        zu(b, 'nachquaken', 0.5);
+      }
+      break;
+    case 'nachquaken': b.pose = 1; if (b.t <= 0) zu(b, 'watscheln', halb ? 1.4 : 2.2); break;
+    case 'benommen': if (b.t <= 0) zu(b, 'watscheln', halb ? 1.4 : 2.2); break;
+  }
 };
 
 // Riesenmotte (Endboss): flattert hoch oben (nicht zu treffen) und streut Glitzerstaub, der nach
@@ -592,7 +641,10 @@ export function kammerZeichne(ctx, e) {
 function zeichneBoss(ctx, b) {
   const s = G.boss[b.art];
   let img;
-  if (b.art === 'motte') {
+  if (b.art === 'ente') {
+    const f = b.pose || 0;
+    img = (b.blitz > 0 ? (b.links ? s.lw : s.rw) : (b.links ? s.l : s.r))[f];
+  } else if (b.art === 'motte') {
     // Flügelschlag: oben – Mitte – unten – Mitte; beim Lichttrinken langsam
     const f = [0, 1, 2, 1][Math.floor(b.anim * (b.zustand === 'trinken' ? 3 : 12)) % 4];
     img = (b.blitz > 0 ? s.weiss : s.bilder)[f];
@@ -603,6 +655,8 @@ function zeichneBoss(ctx, b) {
   }
   let sx = 1, sy = 1;
   if (b.art === 'schnecke' && b.zustand === 'kriechen') sx = 1 + Math.sin(b.anim * 5) * 0.06;
+  if (b.art === 'ente' && b.zustand === 'watscheln') sy = 1 + Math.abs(Math.sin(b.anim * 8)) * 0.05;
+  if (b.art === 'ente' && b.zustand === 'aufblasen') { sx = 1 + (1 - b.t / b.dauer) * 0.18; sy = sx; }
   if (b.art === 'schatten' && b.zustand === 'ducken') { sx = 1.15; sy = 0.78; }
   if (b.art === 'waechter' && b.zustand === 'gehen') sy = 1 + Math.sin(b.anim * 6) * 0.02;
   ctx.save();

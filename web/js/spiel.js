@@ -936,7 +936,7 @@ function zeichneSchwert(ctx, ox = 0, oy = 0) {
 
 function zeichneGegner(ctx, g) {
   const satz = G.gegner[g.art];
-  const f = g.art === 'hummel' || g.art === 'motte' ? Math.floor(g.t * (g.art === 'motte' ? 12 : 20)) % 2 : g.art === 'pilz' ? (g.hop > 0 ? 0 : 1) : 0;
+  const f = g.art === 'hummel' || g.art === 'motte' ? Math.floor(g.t * (g.art === 'motte' ? 12 : 20)) % 2 : g.art === 'pilz' || g.art === 'kueken' ? (g.hop > 0 ? 0 : 1) : 0;
   const reihe = g.blitz > 0 ? (g.links ? satz.lw : satz.rw) : (g.links ? satz.l : satz.r);
   const img = reihe[f];
   let sx = 1;

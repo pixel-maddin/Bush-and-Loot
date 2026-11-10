@@ -190,6 +190,55 @@ function waechter() {
   return satz([bild(false), bild(true)]);
 }
 
+// Riesenente (Kammer 1): gelb, orangefarbener Schnabel, grimmige Braue. Bilder: steh, quak (Schnabel auf),
+// fluegel (Flügel hoch – vor dem Ansturm). Blick nach links.
+function ente() {
+  const gelb = ['#c08a14', '#eab42a', '#ffd84a', '#fff3a8'];
+  const L = (f) => (x, y, nx, ny) => { const l = -nx * 0.55 - ny * 0.85; return l > 0.55 ? f[3] : l > 0.05 ? f[2] : l > -0.5 ? f[1] : f[0]; };
+  const bild = (pose) => {
+    const pb = new PB(36, 32);
+    // Füße
+    pb.rechteck(11, 29, 6, 2, '#f08a24'); pb.rechteck(20, 29, 6, 2, '#f08a24');
+    pb.set(11, 30, '#b85a10'); pb.set(20, 30, '#b85a10');
+    // Bürzel
+    for (let i = 0; i < 5; i++) pb.rechteck(29 + Math.min(i, 2), 13 - i, 3, 3, gelb[2]);
+    // Körper
+    for (let x = 14; x <= 25; x++) pb.kreis(x, 20.5, 8.5, L(gelb));
+    // Flügel
+    if (pose === 'fluegel') {
+      pb.kreis(22, 9, 5, L(['#a87410', '#d8a024', '#f6cc40', '#fff0a0']));
+      pb.kreis(26, 6, 3.5, L(['#a87410', '#d8a024', '#f6cc40', '#fff0a0']));
+    } else pb.kreis(21, 19, 4.8, L(['#a87410', '#d8a024', '#f6cc40', '#fff0a0']));
+    // Kopf
+    pb.kreis(10, 9.5, 7, L(gelb));
+    // Schnabel (beim Quaken offen)
+    pb.rechteck(0, 9, 6, 3, '#f08a24'); pb.rechteck(0, 9, 6, 1, '#ffb050');
+    if (pose === 'quak') { pb.rechteck(1, 12, 4, 2, '#5a1a10'); pb.rechteck(0, 14, 6, 2, '#d8701c'); }
+    else pb.rechteck(1, 12, 5, 1, '#d8701c');
+    // Auge mit Lichtpunkt, grimmige Braue, Bäckchen
+    pb.rechteck(6, 6, 3, 3, '#1e1b30'); pb.set(6, 6, '#ffffff');
+    pb.set(4, 4, '#5a3a10'); pb.set(5, 4, '#5a3a10'); pb.set(6, 4, '#5a3a10'); pb.set(7, 5, '#5a3a10'); pb.set(8, 5, '#5a3a10');
+    pb.set(10, 12, '#ff9ab4'); pb.set(11, 12, '#ff9ab4');
+    return pb.umriss('#3a2408').bild();
+  };
+  const s = satz([bild('steh'), bild('quak'), bild('fluegel')]);
+  return s;
+}
+
+// Küken (kleiner Gegner der Riesenente): zwei Bilder fürs Hüpfen
+function kueken() {
+  const bild = (hoch) => {
+    const pb = new PB(9, 9);
+    pb.kreis(5, 5.5 - hoch, 3.2, (x, y, nx, ny) => (nx + ny < -0.6 ? '#fff6b0' : '#ffd84a'));
+    pb.kreis(3.5, 3 - hoch, 2.2, '#ffe066');
+    pb.rechteck(0, 3 - hoch, 2, 1, '#f08a24');
+    pb.set(3, 2 - hoch, '#1e1b30');
+    pb.set(4, 8, '#f08a24'); pb.set(6, 8, '#f08a24');
+    return pb.umriss('#3a2408').bild();
+  };
+  return satz([bild(1), bild(0)]);
+}
+
 // Riesenmotte (Endboss): von vorn, symmetrisch. Drei Flügelstellungen (oben, Mitte, unten).
 // Silbrig-lavendel mit gelben Augenflecken, flauschiger Kragen, Federfühler, große Kulleraugen.
 function innen(px, py, punkte) {           // Punkt-in-Vieleck (für die Flügel)
@@ -390,7 +439,8 @@ export function malKammer(W, k) {
 
 export function initHoehlenGrafik() {
   eingang();
-  G.boss = { schnecke: schnecke(), koenigin: koenigin(), schatten: schattenpilz(), igel: igel(), waechter: waechter(), motte: motte() };
+  G.boss = { schnecke: schnecke(), koenigin: koenigin(), schatten: schattenpilz(), igel: igel(), waechter: waechter(), motte: motte(), ente: ente() };
   G.gegner.motte = mottenkind();
+  G.gegner.kueken = kueken();
   belohnungen();
 }

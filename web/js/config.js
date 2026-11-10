@@ -41,6 +41,7 @@ export const GEGNER = {
   hummel:   { name: 'Brummhummel',  hp: 1, tempo: 46, schaden: 1, beute: 0.4 },
   pilz:     { name: 'Hüpfpilz',     hp: 4, tempo: 58, schaden: 1, beute: 0.8 },
   motte:    { name: 'Mottenkind',   hp: 2, tempo: 42, schaden: 1, beute: 0.5 },   // nur bei der Riesenmotte
+  kueken:   { name: 'Küken',        hp: 1, tempo: 50, schaden: 1, beute: 0.4 },   // nur bei der Riesenente (hüpft wie der Pilz)
 };
 export function gegnerMax(tag) { return Math.min(16, 2 + Math.floor(tag * 1.3)); }
 export function gegnerArten(tag) {
@@ -76,7 +77,7 @@ export const KLINGE = {
 // schatz = Diamanten, die er fallen lässt (Anzahl je Farbe Grün, Blau, Rot, Lila, Gold).
 // Fortschritt steht in S.st.tueren (geöffnet) und S.st.bosse (besiegt) – also im normalen Spielstand.
 export const KAMMERN = [
-  { name: 'Moosgrotte',    boss: 'Riesenschnecke', art: 'schnecke', preis: 100,  hp: 26,  schaden: 1,
+  { name: 'Teichgrotte',   boss: 'Riesenente',     art: 'ente',     preis: 100,  hp: 28,  schaden: 1,
     schatz: [10, 6, 2, 0, 0],  belohnung: 'fackel',
     beute: 'Fackel', beuteText: 'Eine Fackel, die nie ausgeht. Mit ihr traust du dich bald in den Dunkelwald.' },
   { name: 'Wabenkammer',   boss: 'Hummelkönigin',  art: 'koenigin', preis: 350,  hp: 40,  schaden: 1,
