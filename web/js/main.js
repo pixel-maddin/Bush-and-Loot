@@ -182,6 +182,11 @@ else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
     const h = S.welt.hoehle; S.sp.x = h.tuer.x - 20; S.sp.y = h.tuer.y + 36; S.kam.x = S.sp.x; S.kam.y = S.sp.y;
   } else { S.phase = 'hoehle'; UI.zeigeHoehle(); }
   if (q.has('spaet')) S.zeit = S.dauer - 14;      // ?spaet: kurz vor Sonnenuntergang (Heimweg-Pfeil)
+  // ?vor=6: so viele Sekunden vorspulen (Held steht still, unverwundbar) – für Bilder mitten im Kampf
+  if (q.has('vor')) {
+    const still = { richtung: () => ({ x: 0, y: 0 }), angriff: false, holeNeu: () => false, ziel: () => null };
+    for (let i = 0; i < (parseFloat(q.get('vor')) || 0) * 60; i++) { S.sp.hp = S.w.maxHp; if (S.phase !== 'tag') break; update(1 / 60, still); }
+  }
   if (q.has('hauen')) setInterval(() => { S.sp.puffer = 0.18; S.sp.winkel = parseFloat(q.get('hauen')) || 0; }, 600);   // ?hauen=1.57: haut alle 0,6 s in diese Richtung
   steuerung.aktualisiere();
 }

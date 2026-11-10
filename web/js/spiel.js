@@ -547,7 +547,7 @@ function gegnerUpdate(dt) {
       }
       bewege(g, (mx + g.kx) * dt, (my + g.ky) * dt, 4, 3);
       g.links = (mx || dx) < 0;
-    } else if (g.art === 'hummel') {
+    } else if (g.art === 'hummel' || g.art === 'motte') {      // Fliegendes: umkreisen und Sturzflug
       g.z = 9 + Math.sin(g.t * 7) * 2;
       let zx, zy;
       if (d < 140) {
@@ -590,9 +590,10 @@ function gegnerUpdate(dt) {
 
 function haueGegner(g, schaden, cx, cy) {
   g.hp -= schaden; g.blitz = 0.15;
-  const dx = g.x - cx, dy = g.y - cy, d = Math.hypot(dx, dy) || 1, kb = g.art === 'hummel' ? 260 : 170;
+  const flieg = g.art === 'hummel' || g.art === 'motte';
+  const dx = g.x - cx, dy = g.y - cy, d = Math.hypot(dx, dy) || 1, kb = flieg ? 260 : 170;
   g.kx = dx / d * kb; g.ky = dy / d * kb;
-  if (g.art === 'hummel') { g.vx = 0; g.vy = 0; }
+  if (flieg) { g.vx = 0; g.vy = 0; }
   S.stopp = 0.04;
   if (g.hp > 0) { SFX.gegnerTreffer(); return; }
   g.tot = true; S.heute.besiegt++;
@@ -691,7 +692,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   if (spielt) ellipse(ctx, p.x, p.y, 5, 2);
   const tierDa = spielt && S.tier && !kammer && S.begleiter;
   if (tierDa) begleiterSchatten(ctx);
-  for (const g of S.gegner) if (sicht(g.x, g.y, 12, 12, 12)) ellipse(ctx, g.x, g.y, g.art === 'hummel' ? 3 : 5, g.art === 'hummel' ? 1.5 : 2);
+  for (const g of S.gegner) if (sicht(g.x, g.y, 12, 12, 12)) ellipse(ctx, g.x, g.y, g.art === 'hummel' || g.art === 'motte' ? 3 : 5, g.art === 'hummel' || g.art === 'motte' ? 1.5 : 2);
   for (const e of S.beute) if (e.z > 1) ellipse(ctx, e.x, e.y + 3, 2.5, 1);
   if (kammer) kammerBoden(ctx);
   // Zielmarke der Tippen-Steuerung: kleiner pulsierender Ring am Boden
@@ -930,7 +931,7 @@ function zeichneSchwert(ctx, ox = 0, oy = 0) {
 
 function zeichneGegner(ctx, g) {
   const satz = G.gegner[g.art];
-  const f = g.art === 'hummel' ? Math.floor(g.t * 20) % 2 : g.art === 'pilz' ? (g.hop > 0 ? 0 : 1) : 0;
+  const f = g.art === 'hummel' || g.art === 'motte' ? Math.floor(g.t * (g.art === 'motte' ? 12 : 20)) % 2 : g.art === 'pilz' ? (g.hop > 0 ? 0 : 1) : 0;
   const reihe = g.blitz > 0 ? (g.links ? satz.lw : satz.rw) : (g.links ? satz.l : satz.r);
   const img = reihe[f];
   let sx = 1;

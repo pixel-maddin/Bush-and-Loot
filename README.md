@@ -114,7 +114,7 @@ trotzdem).
 | Wabenkammer | 350 | Hummelkönigin | kreist hoch oben, ruft Hummeln, stürzt sich auf die rote Stelle – sitzt danach kurz am Boden | ein Herz mehr |
 | Schattenhalle | 900 | Schattenpilz | springt, Druckwelle beim Landen; wird ab und zu fast unsichtbar. Es ist dunkel! | Steigeisen |
 | Frostkammer | 2.000 | Eisigel | rollt als Stachelkugel herum (dann prallt alles ab), ist danach schwindelig, schießt Eisstacheln | Goldener Schliff (+50 % Schaden) |
-| Kristallthron | 4.000 | Steinwächter | Arme hoch = Boden bebt im roten Kreis; danach glüht sein Kern (doppelter Schaden). Wirft Felsbrocken | Riesendiamant |
+| Kristallthron | 4.000 | Riesenmotte | flattert hoch oben und streut Glitzerstaub (rote Flecken, dann eine Wolke, die wehtut); Flügelsturm mit Windstoß und Staubkugeln; landet an einem leuchtenden Kristall, um Licht zu trinken – nur dann zu treffen. Ab halber Kraft mit Mottenkindern | Riesendiamant |
 
 - Rote Flecken und Kreise am Boden zeigen, wo gleich etwas einschlägt. Weglaufen!
 - In der Höhle steht die Sonne still. Wer im Kampf umkippt, für den ist der Tag

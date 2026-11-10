@@ -120,6 +120,7 @@ export const SFX = {
   },
   kling() { if (selten('kling', 60)) { ton(1600, 1400, 0.12, 'triangle', 0.1); ton(2400, null, 0.08, 'sine', 0.05); } },
   werfen() { rauschen(0.25, 0.2, 'bandpass', 600, 2000); },
+  fluegel() { for (let i = 0; i < 3; i++) rauschen(0.12, 0.28, 'lowpass', 700, 150, i * 0.14); ton(90, 60, 0.4, 'sine', 0.2); },
   tuerAuf() { ton(70, 50, 0.7, 'sawtooth', 0.09); rauschen(0.8, 0.25, 'lowpass', 500, 80); },
   sieg() {
     [523, 659, 784, 1047].forEach((f, i) => ton(f, null, 0.14, 'square', 0.08, i * 0.1));

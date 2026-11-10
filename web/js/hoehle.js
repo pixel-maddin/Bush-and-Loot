@@ -22,7 +22,8 @@ const MASSE = {            // r = Körperradius am Boden, hoehe = Bildhöhe (fü
   koenigin: { r: 11, hoehe: 28 },
   schatten: { r: 13, hoehe: 36 },
   igel:     { r: 11, hoehe: 26 },
-  waechter: { r: 16, hoehe: 54 },
+  waechter: { r: 16, hoehe: 54 },    // nicht mehr im Spiel (war Endboss vor der Riesenmotte)
+  motte:    { r: 14, hoehe: 40 },
 };
 
 export function baueKammer(k) {
@@ -50,6 +51,8 @@ export function neuerBoss(k) {
 }
 
 const zu = (b, zustand, t) => { b.zustand = zustand; b.t = t; b.dauer = t; };
+// Vier Lichtkristalle in der Kristallhalle – an ihnen landet die Riesenmotte zum Lichttrinken
+const LICHTER = [[3 * K, 4 * K], [12 * K, 4 * K], [3 * K, 10 * K], [12 * K, 10 * K]];
 const warn = (x, y, r, dauer, ring = false) => S.warn.push({ x, y, r, leben: dauer, max: dauer, ring });
 const welle = (x, y, rmax, dauer, breite, schaden) => S.wellen.push({ x, y, r: 0, rmax, leben: dauer, max: dauer, breite, schaden, traf: false });
 const zumHeld = (b) => { const p = S.sp, dx = p.x - b.x, dy = p.y - b.y, d = Math.hypot(dx, dy) || 1; return { dx, dy, d }; };
@@ -261,6 +264,82 @@ const VERHALTEN = {
   },
 };
 
+// Riesenmotte (Endboss): flattert hoch oben (nicht zu treffen) und streut Glitzerstaub, der nach
+// einer roten Warnmarke kurz liegen bleibt und wehtut. Flügelsturm: Windstoß drückt den Helden weg,
+// dazu ein Fächer Staubkugeln. Dann leuchtet ein Kristall auf, die Motte landet dort und trinkt
+// Licht – das ist der Moment zum Hauen. Ab halber Kraft schneller und mit Mottenkindern.
+VERHALTEN.motte = function (b, dt, halb) {
+  const p = S.sp, HOCH = 28;
+  const fliege = (zx, zy, vmax) => {
+    const ex = zx - b.x, ey = zy - b.y, ed = Math.hypot(ex, ey) || 1, v = Math.min(vmax, ed * 4);
+    b.x += ex / ed * v * dt; b.y += ey / ed * v * dt;
+  };
+  switch (b.zustand) {
+    case 'start': b.z = HOCH; if (b.t <= 0) { zu(b, 'flattern', 3); b.staubT = 1; } break;
+    case 'flattern': {
+      b.z = HOCH + Math.sin(b.anim * 4) * 3;
+      const mx = 7.5 * K, my = 7 * K;
+      fliege(mx + Math.cos(b.anim * 0.9) * 70, my + Math.sin(b.anim * 1.8) * 32, halb ? 110 : 85);
+      b.staubT -= dt;
+      if (b.staubT <= 0) {
+        b.staubT = halb ? 0.75 : 1.15;
+        // Staub fällt dorthin, wo der Held gerade ist – oder dicht daneben
+        const sx = klemme(p.x + (Math.random() - 0.5) * 30, X0 + 8, X1 - 8), sy = klemme(p.y + (Math.random() - 0.5) * 20, Y0, Y1);
+        S.geschosse.push({ art: 'staub', x: sx, y: sy, r: 15, verz: 0.75, leben: 0.75 + 2.2 });
+      }
+      if (b.t <= 0) {
+        b.zahl++;
+        if (b.zahl % 2 === 1) { zu(b, 'sturm', halb ? 1.1 : 1.4); SFX.warnung(); }
+        else {
+          b.kristall = Math.floor(Math.random() * LICHTER.length);
+          const [kx, ky] = LICHTER[b.kristall];
+          warn(kx, ky + 10, 16, 1.3);
+          zu(b, 'anflug', 1.3);
+        }
+      }
+      break;
+    }
+    case 'sturm':
+      b.z = HOCH;
+      fliege(7.5 * K, 3.5 * K, 120);
+      if (b.t <= b.dauer - 0.7 && !b.geblasen) {
+        b.geblasen = true;
+        const n = halb ? 7 : 5, basis = Math.atan2(p.y - 6 - (b.y - b.z), p.x - b.x);
+        for (let i = 0; i < n; i++) {
+          const a = basis + (i - (n - 1) / 2) * 0.28;
+          S.geschosse.push({ art: 'kugel', x: b.x, y: b.y - 4, vx: Math.cos(a) * 95, vy: Math.sin(a) * 95, leben: 3 });
+        }
+        // Windstoß drückt den Helden weg
+        const dx = p.x - b.x, dy = p.y - b.y, d = Math.hypot(dx, dy) || 1;
+        p.kx += dx / d * 170; p.ky += dy / d * 170;
+        S.wackeln = 0.2; SFX.fluegel();
+      }
+      if (b.t <= 0) { b.geblasen = false; zu(b, 'flattern', halb ? 2.2 : 3); }
+      break;
+    case 'anflug': {
+      const [kx, ky] = LICHTER[b.kristall];
+      b.z = HOCH;
+      fliege(kx, ky + 10, 130);
+      if (b.t <= 0) { zu(b, 'landen', 0.35); b.sx = b.x; b.sy = b.y; }
+      break;
+    }
+    case 'landen':
+      b.z = HOCH * Math.max(0, b.t) / b.dauer;
+      if (b.t <= 0) { b.z = 0; zu(b, 'trinken', halb ? 1.7 : 2.3); SFX.stampfen(); puff(b.x, b.y - 2); }
+      break;
+    case 'trinken':
+      if (b.t <= 0) {
+        zu(b, 'steigen', 0.5); b.kristall = -1;
+        if (halb) for (let i = 0; i < 2 && kleine('motte') < 4; i++) spawne('motte', b.x + (i ? 16 : -16), b.y, true);
+      }
+      break;
+    case 'steigen':
+      b.z = HOCH * (1 - Math.max(0, b.t) / b.dauer);
+      if (b.t <= 0) zu(b, 'flattern', halb ? 2.4 : 3.2);
+      break;
+  }
+};
+
 // ======================================================================
 // Ablauf in der Kammer
 // ======================================================================
@@ -304,6 +383,13 @@ function geschosse(dt) {
       g.x += g.vx * dt; g.y += g.vy * dt;
       if (p.unverw <= 0 && Math.hypot(p.x - g.x, p.y - 5 - g.y) < 6) { aua(g, 1); g.weg = true; }
       if (g.x < X0 - 6 || g.x > X1 + 6 || g.y < Y0 - 16 || g.y > Y1 + 6) { g.weg = true; splitter(g.x, g.y, ['#e8fbff', '#7ec4e4'], 3); }
+    } else if (g.art === 'kugel') {
+      g.x += g.vx * dt; g.y += g.vy * dt;
+      if (p.unverw <= 0 && Math.hypot(p.x - g.x, p.y - 5 - g.y) < 6) { aua(g, 1); g.weg = true; }
+      if (g.x < X0 - 6 || g.x > X1 + 6 || g.y < Y0 - 16 || g.y > Y1 + 6) { g.weg = true; splitter(g.x, g.y, ['#e4e0f6', '#b8b0dc', '#ffd23f'], 3); }
+    } else if (g.art === 'staub') {
+      if (g.verz > 0) g.verz -= dt;
+      else if (p.unverw <= 0 && Math.hypot(p.x - g.x, (p.y - g.y) / 0.7) < g.r) aua(g, 1);
     } else if (g.art === 'fels') {
       if (g.verz > 0) { g.verz -= dt; continue; }
       g.z -= 170 * dt;
@@ -383,6 +469,8 @@ function sterben(b, dt) {
 // Flach auf dem Boden: Druckwellen, Warnmarken, Schatten
 export function kammerBoden(ctx) {
   const W = S.welt, t = W.tuer;
+  if (W.kammer === 5) kristalle(ctx);
+  for (const g of S.geschosse) if (g.art === 'staub') staubWolke(ctx, g);
   for (const w of S.warn) {
     const a = 0.35 + 0.35 * Math.sin(S.t * 18);
     ctx.globalAlpha = Math.min(1, w.leben * 4) * a;
@@ -417,12 +505,53 @@ export function kammerBoden(ctx) {
     for (let x = t.x - 8; x <= t.x + 8; x += 4) ctx.fillRect(Math.round(x), t.y - 2, 1, 16);
   }
 }
+// Die vier Lichtkristalle; der, an dem die Motte gleich landet oder trinkt, leuchtet
+function kristalle(ctx) {
+  const b = S.boss;
+  LICHTER.forEach(([x, y], i) => {
+    const an = b && b.art === 'motte' && b.kristall === i;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ell(ctx, x, y + 1, 6, 2);
+    ctx.fillStyle = '#1d3550'; ctx.fillRect(x - 4, y - 9, 8, 10); ctx.fillRect(x - 2, y - 13, 4, 4);
+    ctx.fillStyle = an ? '#e8fbff' : '#7fe3ef'; ctx.fillRect(x - 3, y - 8, 3, 8); ctx.fillRect(x - 1, y - 12, 2, 4);
+    ctx.fillStyle = an ? '#ffffff' : '#2a8fb0'; ctx.fillRect(x, y - 8, 3, 8);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 2, y - 7, 1, 2);
+    if (an) {
+      ctx.globalCompositeOperation = 'lighter';
+      const gr = ctx.createRadialGradient(x, y - 6, 0, x, y - 6, 26);
+      const a = 0.45 + 0.2 * Math.sin(S.t * 10);
+      gr.addColorStop(0, `rgba(170, 240, 255, ${a})`); gr.addColorStop(1, 'rgba(170, 240, 255, 0)');
+      ctx.fillStyle = gr; ctx.fillRect(x - 26, y - 32, 52, 52);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  });
+}
+
+// Glitzerstaub: erst rote Warnmarke, dann eine schimmernde Wolke, die kurz liegen bleibt
+function staubWolke(ctx, g) {
+  if (g.verz > 0) {
+    const q = 1 - g.verz / 0.75, a = 0.35 + 0.35 * Math.sin(S.t * 18);
+    ctx.globalAlpha = a; ctx.fillStyle = '#ff4a3a';
+    ell(ctx, g.x, g.y, g.r * (0.4 + 0.6 * q), g.r * 0.7 * (0.4 + 0.6 * q));
+    ctx.globalAlpha = 1;
+    return;
+  }
+  const a = Math.min(1, g.leben * 1.5);
+  ctx.globalAlpha = 0.45 * a; ctx.fillStyle = '#c8bff0'; ell(ctx, g.x, g.y, g.r, g.r * 0.7);
+  ctx.globalAlpha = 0.5 * a; ctx.fillStyle = '#e8e2ff'; ell(ctx, g.x - 3, g.y - 1, g.r * 0.55, g.r * 0.4);
+  ctx.globalAlpha = a; ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 6; i++) {
+    const w = S.t * 3 + i * 1.7;
+    if (Math.sin(w * 2.3) > 0.2) ctx.fillRect(Math.round(g.x + Math.cos(w) * g.r * 0.7), Math.round(g.y + Math.sin(w * 1.3) * g.r * 0.45 - 2), 1, 1);
+  }
+  ctx.globalAlpha = 1;
+}
+
 function ell(ctx, x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(Math.round(x), Math.round(y), rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
 
 // Was in die nach Höhe sortierte Liste gehört
 export function kammerListe(liste) {
   if (S.boss) liste.push({ y: S.boss.y, t: 'boss', o: S.boss });
-  for (const g of S.geschosse) if (g.art === 'stachel' || g.verz <= 0) liste.push({ y: g.y, t: 'geschoss', o: g });
+  for (const g of S.geschosse) if (g.art === 'stachel' || g.art === 'kugel' || (g.art === 'fels' && g.verz <= 0)) liste.push({ y: g.y, t: 'geschoss', o: g });
   if (S.belohnungsDing) liste.push({ y: S.belohnungsDing.y, t: 'belohnung', o: S.belohnungsDing });
 }
 
@@ -430,7 +559,13 @@ export function kammerZeichne(ctx, e) {
   if (e.t === 'boss') zeichneBoss(ctx, e.o);
   else if (e.t === 'geschoss') {
     const g = e.o;
-    if (g.art === 'stachel') {
+    if (g.art === 'kugel') {
+      const x = Math.round(g.x), y = Math.round(g.y);
+      ctx.fillStyle = '#241c30'; ctx.fillRect(x - 3, y - 2, 6, 4); ctx.fillRect(x - 2, y - 3, 4, 6);
+      ctx.fillStyle = '#c8bff0'; ctx.fillRect(x - 2, y - 2, 4, 4);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 1, y - 2, 1, 1);
+      if (Math.sin(S.t * 20 + x) > 0) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(x + 1, y, 1, 1); }
+    } else if (g.art === 'stachel') {
       ctx.save(); ctx.translate(Math.round(g.x), Math.round(g.y)); ctx.rotate(Math.atan2(g.vy, g.vx));
       ctx.fillStyle = '#1a2a3a'; ctx.fillRect(-5, -2, 9, 4);
       ctx.fillStyle = '#9ad8f2'; ctx.fillRect(-4, -1, 7, 2); ctx.fillStyle = '#ffffff'; ctx.fillRect(1, -1, 3, 1);
@@ -457,7 +592,11 @@ export function kammerZeichne(ctx, e) {
 function zeichneBoss(ctx, b) {
   const s = G.boss[b.art];
   let img;
-  if (b.art === 'igel' && b.ball) img = b.blitz > 0 ? s.kugelW : s.kugel;
+  if (b.art === 'motte') {
+    // Flügelschlag: oben – Mitte – unten – Mitte; beim Lichttrinken langsam
+    const f = [0, 1, 2, 1][Math.floor(b.anim * (b.zustand === 'trinken' ? 3 : 12)) % 4];
+    img = (b.blitz > 0 ? s.weiss : s.bilder)[f];
+  } else if (b.art === 'igel' && b.ball) img = b.blitz > 0 ? s.kugelW : s.kugel;
   else {
     const f = b.art === 'koenigin' ? Math.floor(b.anim * 18) % 2 : b.art === 'waechter' ? (b.arme ? 1 : 0) : 0;
     img = (b.blitz > 0 ? (b.links ? s.lw : s.rw) : (b.links ? s.l : s.r))[f];
@@ -488,7 +627,7 @@ function zeichneBoss(ctx, b) {
     ctx.globalCompositeOperation = 'source-over';
   }
   // Sternchen, wenn er benommen ist
-  if (['benommen', 'sitzt', 'schwindel', 'muede'].includes(b.zustand)) {
+  if (['benommen', 'sitzt', 'schwindel', 'muede', 'trinken'].includes(b.zustand)) {
     ctx.fillStyle = '#ffe680';
     for (let i = 0; i < 3; i++) {
       const a = S.t * 6 + i * 2.1;

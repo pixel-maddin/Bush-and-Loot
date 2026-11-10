@@ -190,6 +190,89 @@ function waechter() {
   return satz([bild(false), bild(true)]);
 }
 
+// Riesenmotte (Endboss): von vorn, symmetrisch. Drei Flügelstellungen (oben, Mitte, unten).
+// Silbrig-lavendel mit gelben Augenflecken, flauschiger Kragen, Federfühler, große Kulleraugen.
+function innen(px, py, punkte) {           // Punkt-in-Vieleck (für die Flügel)
+  let drin = false;
+  for (let i = 0, j = punkte.length - 1; i < punkte.length; j = i++) {
+    const [xi, yi] = punkte[i], [xj, yj] = punkte[j];
+    if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) drin = !drin;
+  }
+  return drin;
+}
+function motte() {
+  const B = 56, H = 42, mx = 28;
+  const bild = (o) => {
+    const pb = new PB(B, H);
+    const fl = ['#5e5486', '#8a80b8', '#b8b0dc', '#e4e0f6'];
+    for (const s of [-1, 1]) {
+      const X = (x) => mx + s * x;
+      const oben = [[3, 16], [26, 6 + o], [24, 28 + o * 0.4], [6, 24]];
+      const unten = [[3, 22], [18, 32 + o * 0.3], [12, 39], [4, 31]];
+      for (let y = 0; y < H; y++) for (let x = 0; x < 28; x++) {
+        const lx = x + 0.5, ly = y + 0.5;
+        const iO = innen(lx, ly, oben), iU = !iO && innen(lx, ly, unten);
+        if (!iO && !iU) continue;
+        // Schattierung: zur Flügelspitze hin heller, am Körper dunkler, mit feinen Adern
+        const t = lx / 26;
+        let f = t > 0.75 ? fl[3] : t > 0.45 ? fl[2] : t > 0.2 ? fl[1] : fl[0];
+        if (iU) f = t > 0.5 ? fl[2] : fl[1];
+        if ((Math.round(lx * 0.9 + ly * 0.4) % 7) === 0 && t > 0.2) f = fl[1];
+        pb.set(X(x) - (s < 0 ? 1 : 0), y, f);
+      }
+      // Augenfleck auf dem Oberflügel
+      const ax = 15, ay = 15 + o * 0.5;
+      pb.kreis(X(ax), ay, 4, '#ffd23f'); pb.kreis(X(ax), ay, 2.6, '#c27512'); pb.kreis(X(ax), ay, 1.4, '#2b1d16');
+      pb.set(X(ax) - s, ay - 1, '#fffbd0');
+      // heller Saum mit Pünktchen
+      for (let i = 0; i < 6; i++) pb.set(X(20 + i), 8 + o + i * 0.15 + (i % 2), '#ffffff');
+    }
+    // Körper: pelziger Leib, Kragen, Kopf
+    for (let y = 16; y <= 36; y++) {
+      const w = y < 22 ? 4 : y < 32 ? 3.5 - (y - 22) * 0.12 : 2.2 - (y - 32) * 0.35;
+      for (let x = Math.round(mx - w); x <= Math.round(mx + w - 1); x++) pb.set(x, y, (y % 3 === 0) ? '#6a5a4a' : '#8a7a68');
+    }
+    pb.kreis(mx - 0.5, 16, 5.2, (x, y, nx, ny) => (ny < -0.2 ? '#fff6e4' : '#e8dcc4'));      // Kragen
+    pb.kreis(mx - 0.5, 12, 4.4, '#9a8a78');                                                  // Kopf
+    for (const s of [-1, 1]) {                                                               // Kulleraugen
+      pb.kreis(mx - 0.5 + s * 2.4, 12, 1.9, '#1e1b30');
+      pb.set(Math.round(mx - 0.5 + s * 2.4) - 1, 11, '#ffffff');
+    }
+    pb.set(mx - 3, 15, '#ff9ab4'); pb.set(mx + 2, 15, '#ff9ab4');                           // Bäckchen
+    for (const s of [-1, 1]) {                                                               // Federfühler
+      for (let i = 0; i < 9; i++) {
+        const x = mx - 0.5 + s * (2 + i * 0.9), y = 8 - i * 0.8 - (i > 5 ? (i - 5) * 0.6 : 0);
+        pb.set(x, y, '#6a5a4a');
+        if (i % 2 && i > 1) { pb.set(x + s, y - 1, '#a89880'); pb.set(x - s * 0.2, y - 1.4, '#a89880'); }
+      }
+    }
+    // Beinchen
+    for (const s of [-1, 1]) for (const yy of [24, 28]) { pb.set(mx - 0.5 + s * 4, yy, '#4a3a2a'); pb.set(mx - 0.5 + s * 5, yy + 1, '#4a3a2a'); }
+    return pb.umriss('#241c30').bild();
+  };
+  const bilder = [bild(-5), bild(0), bild(5)];
+  return { bilder, weiss: bilder.map(weiss), l: bilder, r: bilder };
+}
+
+// Mottenkind (kleiner Gegner der Riesenmotte), zwei Flügelschläge
+function mottenkind() {
+  const bild = (o) => {
+    const pb = new PB(13, 10);
+    for (const s of [-1, 1]) {
+      pb.kreis(6.5 + s * 3.2, 4 + o * 0.6, 2.8, (x, y, nx, ny) => (Math.abs(nx) > 0.5 ? '#e4e0f6' : '#b8b0dc'));
+      pb.kreis(6.5 + s * 2.4, 7, 1.7, '#8a80b8');
+      pb.set(6.5 + s * 3.2, 4 + o * 0.6, '#ffd23f');
+    }
+    pb.rechteck(6, 3, 1, 6, '#8a7a68');
+    pb.kreis(6.5, 3, 1.6, '#fff6e4');
+    pb.set(5, 3, '#1e1b30'); pb.set(7, 3, '#1e1b30');
+    pb.set(5, 0, '#6a5a4a'); pb.set(4, 1, '#6a5a4a'); pb.set(8, 0, '#6a5a4a'); pb.set(9, 1, '#6a5a4a');
+    return pb.umriss('#241c30').bild();
+  };
+  const a = bild(-1), b = bild(1);
+  return { l: [a, b], r: [a, b], lw: [weiss(a), weiss(b)], rw: [weiss(a), weiss(b)] };
+}
+
 // ---------- Belohnungen ----------
 function belohnungen() {
   const b = {};
@@ -296,6 +379,7 @@ export function malKammer(W, k) {
 
 export function initHoehlenGrafik() {
   eingang();
-  G.boss = { schnecke: schnecke(), koenigin: koenigin(), schatten: schattenpilz(), igel: igel(), waechter: waechter() };
+  G.boss = { schnecke: schnecke(), koenigin: koenigin(), schatten: schattenpilz(), igel: igel(), waechter: waechter(), motte: motte() };
+  G.gegner.motte = mottenkind();
   belohnungen();
 }

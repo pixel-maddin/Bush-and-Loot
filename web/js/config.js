@@ -40,6 +40,7 @@ export const GEGNER = {
   schnecke: { name: 'Moosschnecke', hp: 2, tempo: 13, schaden: 1, beute: 0.5 },
   hummel:   { name: 'Brummhummel',  hp: 1, tempo: 46, schaden: 1, beute: 0.4 },
   pilz:     { name: 'Hüpfpilz',     hp: 4, tempo: 58, schaden: 1, beute: 0.8 },
+  motte:    { name: 'Mottenkind',   hp: 2, tempo: 42, schaden: 1, beute: 0.5 },   // nur bei der Riesenmotte
 };
 export function gegnerMax(tag) { return Math.min(16, 2 + Math.floor(tag * 1.3)); }
 export function gegnerArten(tag) {
@@ -87,7 +88,7 @@ export const KAMMERN = [
   { name: 'Frostkammer',   boss: 'Eisigel',        art: 'igel',     preis: 2000, hp: 100, schaden: 2,
     schatz: [10, 10, 10, 8, 3], belohnung: 'schliff',
     beute: 'Goldener Schliff', beuteText: 'Deine Klinge glänzt golden und trifft ab jetzt halb so fest noch mal dazu.' },
-  { name: 'Kristallthron', boss: 'Steinwächter',   art: 'waechter', preis: 4000, hp: 220, schaden: 2,
+  { name: 'Kristallthron', boss: 'Riesenmotte',    art: 'motte',    preis: 4000, hp: 240, schaden: 2,
     schatz: [10, 10, 10, 10, 8], belohnung: 'riesendiamant',
     beute: 'Der Riesendiamant', beuteText: 'Du hast alle fünf Wächter besiegt!' },
 ];
