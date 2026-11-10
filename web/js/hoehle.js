@@ -507,6 +507,7 @@ function sterben(b, dt) {
   puff(b.x, b.y - 10); puff(b.x, b.y - 24);
   S.boss = null;
   S.st.bosse = Math.max(S.st.bosse | 0, b.k);
+  S.st.tueren = Math.max(S.st.tueren | 0, b.k);         // besiegt heißt auch: Tür ist offen (Testweg ?kammer= öffnet keine)
   neueWerte();
   speichern();
   ruf('bossBesiegt', b.k);

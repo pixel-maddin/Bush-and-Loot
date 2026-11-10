@@ -63,6 +63,7 @@ export function laden() {
       // Goldkrone wurde zur Baseballcap (10.11.2026): gekaufte Krone mitnehmen
       if (S.st.hut_krone) { S.st.hut_cap = 1; delete S.st.hut_krone; }
       if (S.st.hut === 'krone') S.st.hut = 'cap';
+      tuerenOrdnen();
       return true;
     }
   } catch (e) { /* kein Spielstand */ }
@@ -210,7 +211,14 @@ export function liegenGeblieben() {
 }
 
 // ---------- Glitzerhöhle ----------
+// Wer einen Wächter besiegt hat, hat dessen Tür auch offen. Über Testwege (?kammer=, ?gebiet=,
+// ?alles) konnte bosse größer als tueren werden – dann blieb die nächste Tür grau („Erst Kammer 1“).
+export function tuerenOrdnen() {
+  if ((S.st.tueren | 0) < (S.st.bosse | 0)) S.st.tueren = S.st.bosse | 0;
+}
+
 export function oeffneTuer(k) {
+  tuerenOrdnen();
   const d = KAMMERN[k - 1];
   if ((S.st.tueren | 0) !== k - 1 || (S.st.bosse | 0) < k - 1) return false;
   if (S.geld < d.preis) { SFX.nein(); return false; }

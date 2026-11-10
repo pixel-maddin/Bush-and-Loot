@@ -2,7 +2,7 @@
 
 import { G, bildURL, KLEIDER, FIGUREN, figurVorschau, titelSzeneMalen, logoBild } from './grafik.js';
 import { AUFRUESTUNGEN, STEINE, KAMMERN, SPEZIAL, EINRICHTUNG, HUETE, KLEIDERSCHRANK_AB, STUBE_AB } from './config.js';
-import { S, liegenGeblieben } from './spiel.js';
+import { S, liegenGeblieben, tuerenOrdnen } from './spiel.js';
 import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, TAUSCH_PREIS, LECKERLI_KOSTEN, NAMEN, tierName, nameSauber } from './begleiter.js';
 import { stubenBilder } from './stube.js';
 import { istStumm, setzeStumm } from './ton.js';
@@ -441,6 +441,7 @@ export function zeigeHoehle() {
   $('hoehleGeld').innerHTML = `${px(G.waehrung)}<span>${zahl(S.geld)}</span>`;
   const box = $('kammern');
   box.innerHTML = '';
+  tuerenOrdnen();
   const tueren = S.st.tueren | 0, bosse = S.st.bosse | 0;
   KAMMERN.forEach((k, i) => {
     const nr = i + 1, besiegt = bosse >= nr, offen = tueren >= nr, dran = !offen && tueren === nr - 1 && bosse >= nr - 1;
