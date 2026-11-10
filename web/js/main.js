@@ -51,7 +51,7 @@ const TIPPS = {
   5: 'Dornenbüsche: am zähesten, aber oft mit Gold.',
 };
 import * as UI from './ui.js';
-import { initEingabe, eingabe } from './eingabe.js';
+import { initEingabe, eingabe, padAbfragen } from './eingabe.js';
 import { tonStart, tonSchlafen, wetterTon } from './ton.js';
 import { musikWaehle } from './musik.js';
 
@@ -259,6 +259,11 @@ else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
   steuerung.aktualisiere();
 }
 
+// Controller verbunden (meldet sich erst nach dem ersten Knopfdruck)
+addEventListener('gamepadconnected', () => {
+  UI.toast('🎮 Controller verbunden! Stick oder Steuerkreuz = laufen · A = hauen · Start = Pause. In Menüs: Stick wählt, A drückt.', 5000);
+});
+
 // Wer die App verlässt, findet sie pausiert wieder
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && S.phase === 'tag') pause();
@@ -293,6 +298,7 @@ function schleife(t) {
   // Das erste Bild kann einen Zeitstempel vor "letzte" haben – negativ darf dt nie werden
   const dt = Math.max(0, Math.min(0.05, (t - letzte) / 1000));
   letzte = t;
+  padAbfragen(dt);
   update(dt, eingabe);
   if (S.phase === 'tag' && S.ort === 'wald' && S.zeit > S.dauer - HEIM_WARNUNG && warnTag !== S.tag) {
     warnTag = S.tag;

@@ -64,6 +64,7 @@ export function steuerHilfe() {
       ? '<b>Handy:</b> Tippen, wo er hinlaufen soll (halten = folgt dem Finger) · runder Knopf = hauen'
       : '<b>Handy:</b> Links ziehen = laufen · rechts tippen = hauen')
     : '<b>Laufen:</b> Pfeiltasten oder WASD · <b>Hauen:</b> Leertaste oder J · <b>Pause:</b> Esc';
+  $('steuerHilfe').innerHTML += '<br><b>Controller:</b> Stick laufen · A hauen · Start Pause';
 }
 
 const SCHICHTEN = ['titel', 'haus', 'bilanz', 'pauseSchicht', 'hoehle', 'fund', 'figurWahl', 'begleiterWahl'];
@@ -502,8 +503,8 @@ export function zeigeBilanz({ grund, heute, verlust, tag, kammer, liegen }) {
   if (!steine) steine = '<p class="leer">Heute keinen einzigen Diamanten gefunden.</p>';
   $('bilanzInhalt').innerHTML = `
     <div class="zahlen">
-      <div><b>${zahl(heute.gemaeht)}</b><span>Büschel gemäht</span></div>
-      <div><b>${zahl(heute.besiegt)}</b><span>Plagegeister verjagt</span></div>
+      <div>${px(G.icons.klinge[Math.min(S.st.klinge | 0, G.icons.klinge.length - 1)])}<b>${zahl(heute.gemaeht)}</b><span>Büschel gemäht</span></div>
+      <div>${px(G.gegner.schnecke.r[0])}<b>${zahl(heute.besiegt)}</b><span>Plagegeister verjagt</span></div>
     </div>
     <div class="steine">${steine}</div>
     <div class="summe">Zusammen ${px(G.waehrung)} <b>${zahl(heute.wert)}</b></div>

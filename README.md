@@ -41,17 +41,23 @@ jederzeit auf dem Titelbild unter „Figur ändern“.
 
 ## Steuerung
 
-| | PC | Handy |
-|---|---|---|
-| Laufen | Pfeiltasten oder WASD | dorthin tippen, wo er hinlaufen soll – Finger halten und ziehen, dann folgt er |
-| Hauen | Leertaste, J, K oder X (auch linke Maustaste) | runden HAUEN-Knopf rechts unten drücken |
-| Wirbelschlag (wenn gekauft) | Hauen gedrückt halten, loslassen | Knopf gedrückt halten, loslassen |
-| Pause | Esc oder P | Pause-Knopf oben rechts |
+| | PC | Handy | Controller |
+|---|---|---|---|
+| Laufen | Pfeiltasten oder WASD | dorthin tippen, wo er hinlaufen soll – Finger halten und ziehen, dann folgt er | linker Stick oder Steuerkreuz |
+| Hauen | Leertaste, J, K oder X (auch linke Maustaste) | runden HAUEN-Knopf rechts unten drücken | A (oder X) |
+| Wirbelschlag (wenn gekauft) | Hauen gedrückt halten, loslassen | Knopf gedrückt halten, loslassen | A gedrückt halten, loslassen |
+| Pause | Esc oder P | Pause-Knopf oben rechts | Start (B oder Start geht weiter) |
 
 Jeder Druck ist genau ein Schlag – Festhalten haut nicht weiter.
 
 Wer lieber mit Daumen-Stick spielt: Pause → „Steuerung: Tippen“ antippen, dann
 wird daraus „Stick“ (linke Hälfte ziehen = laufen, rechte Hälfte tippen = hauen).
+
+**Controller** (z. B. per Bluetooth am Handy, Tablet oder PC): einmal einen Knopf
+drücken, dann meldet er sich. In allen Fenstern (Laden, Bilanz, Höhle, Pause) wählt
+man mit Stick oder Steuerkreuz einen Knopf – er leuchtet golden – und drückt ihn mit A.
+Sobald man wieder den Bildschirm antippt, verschwindet der Rahmen und der HAUEN-Knopf
+ist wieder da.
 
 ## So läuft ein Tag
 

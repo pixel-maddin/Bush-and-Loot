@@ -12,6 +12,8 @@ function rechteck(g, x, y, w, h, f) { g.fillStyle = f; g.fillRect(x, y, w, h); }
 function stubeMalen(bild, tier, nacht, held, m = {}) {
   const c = leinwand(STUBE_B, STUBE_H), g = c.getContext('2d');
   const B = STUBE_B, H = STUBE_H;
+  const leuchten = [];                                  // Feuer, Kerzen, Laterne, Lichter: bleiben nachts hell
+  const glimm = (x, y, w, h, f) => { rechteck(g, x, y, w, h, f); leuchten.push([x, y, w, h, f]); };
 
   // Rückwand: senkrechte Bretter aus dem Stamm, mit Maserung
   for (let x = 0; x < B; x++) {
@@ -62,9 +64,9 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
     [[15, 57, 4, 7], [20, 52, 5, 12], [25, 56, 4, 8], [18, 61, 10, 3]],
     [[17, 56, 4, 8], [21, 55, 4, 9], [24, 54, 5, 10], [18, 61, 10, 3]],
   ][bild];
-  for (const [x, y, w, h] of flammen) rechteck(g, x, y, w, h, '#e8402c');
-  for (const [x, y, w, h] of flammen) rechteck(g, x + 1, y + 2, w - 2, h - 2, '#ff9a2a');
-  for (const [x, y, w, h] of flammen) if (h > 6) rechteck(g, x + 1, y + 4, w - 2, h - 5, '#fff3a0');
+  for (const [x, y, w, h] of flammen) glimm(x, y, w, h, '#e8402c');
+  for (const [x, y, w, h] of flammen) glimm(x + 1, y + 2, w - 2, h - 2, '#ff9a2a');
+  for (const [x, y, w, h] of flammen) if (h > 6) glimm(x + 1, y + 4, w - 2, h - 5, '#fff3a0');
   rechteck(g, 14, 63, 18, 2, '#5a3818'); rechteck(g, 16, 62, 6, 1, '#8c5a2c');
   // Topf überm Feuer
   rechteck(g, 22, 42, 1, 6, '#2b1d16');
@@ -73,7 +75,7 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
   const dampf = [[22, 37], [21, 32], [23, 27]];
   dampf.forEach(([x, y], i) => { if ((i + bild) % 3 !== 2) rechteck(g, x + ((bild + i) % 2), y, 2, 2, 'rgba(240,235,225,0.55)'); });
   // Kaminsims: Kerze, kleiner Pilz, Becher
-  rechteck(g, 8, 29, 2, 5, '#f4ece0'); rechteck(g, 8, 27, 2, 2, bild === 1 ? '#ffd23f' : '#ff9a2a');
+  rechteck(g, 8, 29, 2, 5, '#f4ece0'); glimm(8, 27, 2, 2, bild === 1 ? '#ffd23f' : '#ff9a2a');
   rechteck(g, 30, 30, 5, 2, '#d8443c'); rechteck(g, 31, 30, 1, 1, '#fff3e0'); rechteck(g, 32, 32, 1, 2, '#f3dfc0');
   rechteck(g, 36, 30, 4, 4, '#3d5fa8'); rechteck(g, 40, 31, 1, 2, '#3d5fa8');
 
@@ -88,7 +90,7 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
     if (!nacht && ((x - fx + 12) * (x - fx + 12) + (y - fy + 9) * (y - fy + 9) < 30 || (x - fx - 9) ** 2 + (y - fy + 11) ** 2 < 20)) f = (x + y) % 3 ? '#5aaa46' : '#3f8a37';
     rechteck(g, x, y, 1, 1, f);
   }
-  if (nacht) { rechteck(g, fx + 4, fy - 7, 4, 4, '#fff6c8'); rechteck(g, fx + 5, fy - 6, 2, 2, '#ffffff'); rechteck(g, fx - 7, fy - 3, 1, 1, '#ffffff'); rechteck(g, fx - 3, fy + 5, 1, 1, '#ffffff'); }
+  if (nacht) { glimm(fx + 4, fy - 7, 4, 4, '#fff6c8'); glimm(fx + 5, fy - 6, 2, 2, '#ffffff'); glimm(fx - 7, fy - 3, 1, 1, '#ffffff'); glimm(fx - 3, fy + 5, 1, 1, '#ffffff'); }
   rechteck(g, fx - 1, fy - fr, 2, fr * 2, '#6b4220'); rechteck(g, fx - fr, fy - 1, fr * 2, 2, '#6b4220');
   // Fensterbank mit Blume und Diamantenglas
   rechteck(g, fx - 18, fy + fr + 3, 36, 3, '#6b4220'); rechteck(g, fx - 18, fy + fr + 3, 36, 1, '#a8703c');
@@ -118,21 +120,21 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
   for (let x = 128; x < 154; x += 2) rechteck(g, x, 59, 1, 1, '#f4ece0');
   rechteck(g, 116, 64, 2, 2, '#4a2e14'); rechteck(g, 152, 64, 2, 2, '#4a2e14');
 
-  // Ohrensessel am Kamin, darin die Spielfigur
+  // Ohrensessel am Kamin, darin die Spielfigur. Klein gehalten (Lehne 19 × 16), damit der Held
+  // nicht darin versinkt – der Kopf schaut über die Lehne.
   const stoff = ['#7a2622', '#a83a32', '#c4544a'];
-  for (let y = 36; y < 60; y++) {                               // Rückenlehne, oben gerundet
-    const ein = y === 36 ? 4 : y === 37 ? 2 : y === 38 ? 1 : 0;
-    rechteck(g, 47 + ein, y, 21 - ein * 2, 1, y === 36 + Math.min(ein, 0) ? stoff[0] : stoff[1]);
+  for (let y = 45; y < 60; y++) {                               // Rückenlehne, oben gerundet
+    const ein = y === 45 ? 3 : y === 46 ? 1 : 0;
+    rechteck(g, 48 + ein, y, 19 - ein * 2, 1, y === 45 ? stoff[2] : stoff[1]);
   }
-  rechteck(g, 47, 36, 1, 24, stoff[0]); rechteck(g, 67, 36, 1, 24, stoff[0]);
-  for (let y = 40; y < 56; y += 5) rechteck(g, 52, y, 11, 1, stoff[0]);   // Steppnähte
+  rechteck(g, 48, 47, 1, 13, stoff[0]); rechteck(g, 66, 47, 1, 13, stoff[0]);
   if (held) g.drawImage(held, 0, 0, 16, 12, 49, 41, 16, 12);   // Kopf und Oberkörper, der Rest steckt im Sessel
-  rechteck(g, 49, 53, 17, 6, stoff[2]); rechteck(g, 49, 53, 17, 1, '#e07a6a');      // Sitzkissen
+  rechteck(g, 50, 53, 15, 5, stoff[2]); rechteck(g, 50, 53, 15, 1, '#e07a6a');      // Sitzkissen
   rechteck(g, 53, 55, 3, 4, '#6d4423'); rechteck(g, 59, 55, 3, 4, '#6d4423');       // Beine
   rechteck(g, 53, 59, 3, 2, '#2b1d16'); rechteck(g, 59, 59, 3, 2, '#2b1d16');       // Schuhe baumeln
-  for (const ax of [44, 64]) {                                  // Armlehnen
-    rechteck(g, ax, 47, 7, 14, stoff[1]); rechteck(g, ax, 47, 7, 2, stoff[2]); rechteck(g, ax + 1, 46, 5, 1, stoff[2]);
-    rechteck(g, ax, 60, 7, 1, stoff[0]);
+  for (const ax of [45, 64]) {                                  // Armlehnen
+    rechteck(g, ax, 51, 6, 10, stoff[1]); rechteck(g, ax, 51, 6, 2, stoff[2]); rechteck(g, ax + 1, 50, 4, 1, stoff[2]);
+    rechteck(g, ax, 60, 6, 1, stoff[0]);
   }
   rechteck(g, 46, 61, 2, 5, '#4a2e14'); rechteck(g, 67, 61, 2, 5, '#4a2e14');       // Füße
   // Hocker mit dampfendem Tee neben dem Sessel
@@ -145,11 +147,11 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
     // Goldleuchter mit fünf Kerzen
     rechteck(g, 104, 0, 1, 7, '#8a6a20');
     rechteck(g, 94, 10, 21, 2, '#c8981e'); rechteck(g, 96, 12, 17, 1, '#8a6a20'); rechteck(g, 102, 7, 5, 3, '#ffd23f');
-    for (const x of [94, 99, 104, 109, 114]) { rechteck(g, x, 6, 1, 4, '#f4ece0'); rechteck(g, x, 4 + (bild + x) % 2, 1, 2, '#ffd76a'); }
+    for (const x of [94, 99, 104, 109, 114]) { rechteck(g, x, 6, 1, 4, '#f4ece0'); glimm(x, 4 + (bild + x) % 2, 1, 2, '#ffd76a'); }
   } else {
     // Laterne an der Decke
     rechteck(g, 104, 0, 1, 9, '#2b1d16');
-    rechteck(g, 101, 9, 7, 2, '#2b1d16'); rechteck(g, 101, 11, 7, 7, '#2b1d16'); rechteck(g, 102, 12, 5, 5, '#ffd76a'); rechteck(g, 103, 13, 3, 3, '#fff3c0');
+    rechteck(g, 101, 9, 7, 2, '#2b1d16'); rechteck(g, 101, 11, 7, 7, '#2b1d16'); glimm(102, 12, 5, 5, '#ffd76a'); glimm(103, 13, 3, 3, '#fff3c0');
     rechteck(g, 100, 18, 9, 1, '#2b1d16');
   }
   if (m.uhr) {
@@ -201,23 +203,38 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
       const x = 14 + i * 5.3, dx = Math.abs(x + 0.5 - B / 2) / (B / 2);
       const y = Math.round(20 * (1 - Math.sqrt(Math.max(0, 1 - dx * dx * dx * dx))) + 3 + (i % 2) * 2);
       rechteck(g, Math.round(x), y - 1, 1, 1, '#2b1d16');
-      rechteck(g, Math.round(x), y, 2, 2, (i + bild) % 4 === 0 ? '#ffffff' : farben[i % 5]);
+      glimm(Math.round(x), y, 2, 2, (i + bild) % 4 === 0 ? '#ffffff' : farben[i % 5]);
     }
   }
-  // Warmes Licht von Feuer und Laterne
+  // Nachts: alles in tiefes Blau-Violett tauchen, dann die leuchtenden Dinge wieder hell drüber
+  if (nacht) {
+    g.globalCompositeOperation = 'multiply';            // multiplizieren statt überdecken: Farben bleiben satt
+    g.fillStyle = '#5a4a80'; g.fillRect(0, 0, B, H);
+    g.globalCompositeOperation = 'source-over';
+    for (const [x, y, w, h, f] of leuchten) rechteck(g, x, y, w, h, f);
+  }
+  // Warmes Licht von Feuer und Laterne (nachts kräftiger, damit es nach Kaminabend aussieht)
   g.globalCompositeOperation = 'lighter';
   const licht = (x, y, r, a) => {
     const gr = g.createRadialGradient(x, y, 0, x, y, r);
     gr.addColorStop(0, `rgba(255, 170, 70, ${a})`); gr.addColorStop(1, 'rgba(255, 170, 70, 0)');
     g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
   };
-  licht(23, 56, 46, [0.28, 0.34, 0.24][bild]);
-  licht(104, 15, 30, 0.22);
-  licht(9, 26, 10, 0.25);
+  if (nacht) {
+    licht(23, 56, 70, [0.34, 0.42, 0.3][bild]);                 // Kamin wärmt den ganzen linken Raum
+    licht(23, 56, 26, [0.3, 0.38, 0.26][bild]);
+    licht(104, m.leuchter ? 9 : 15, 34, m.leuchter ? 0.32 : 0.24);
+    licht(9, 26, 14, 0.32);
+    if (m.lichter) licht(B / 2, 8, 60, 0.1);
+  } else {
+    licht(23, 56, 46, [0.28, 0.34, 0.24][bild]);
+    licht(104, 15, 30, 0.22);
+    licht(9, 26, 10, 0.25);
+  }
   g.globalCompositeOperation = 'source-over';
   // Dunklere Ecken für die Gemütlichkeit
   const v = g.createRadialGradient(B / 2, H * 0.6, H * 0.4, B / 2, H * 0.6, B * 0.75);
-  v.addColorStop(0, 'rgba(30, 15, 5, 0)'); v.addColorStop(1, 'rgba(30, 15, 5, 0.45)');
+  v.addColorStop(0, 'rgba(30, 15, 5, 0)'); v.addColorStop(1, nacht ? 'rgba(8, 4, 16, 0.6)' : 'rgba(30, 15, 5, 0.45)');
   g.fillStyle = v; g.fillRect(0, 0, B, H);
   return c;
 }

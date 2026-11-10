@@ -245,7 +245,7 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 .ware.begleiter .ware-bild img { width: 52px; height: auto; }
 
 /* ---------- Laden als langer Baumstamm ---------- */
-.hauspanel {
+.hauspanel, .stamm {
   position: relative; max-width: 580px;
   padding: 16px 32px 18px;
   border: 0; border-radius: 30px 30px 20px 20px;
@@ -257,14 +257,14 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
   box-shadow: 0 6px 0 #2b1d16, inset 0 0 0 3px #2b1d16;
 }
 /* Rinde links und rechts: senkrechte Furchen mit Querrissen */
-.hauspanel::before, .hauspanel::after {
+.hauspanel::before, .hauspanel::after, .stamm::before, .stamm::after {
   content: ''; position: absolute; top: 0; bottom: 0; width: 20px; pointer-events: none; z-index: 3;
   background:
     repeating-linear-gradient(180deg, transparent 0 23px, rgba(20, 10, 4, .55) 23px 25px, transparent 25px 41px, rgba(20, 10, 4, .45) 41px 42px),
     repeating-linear-gradient(90deg, #3a2410 0 3px, #5a3818 3px 7px, #4a2e14 7px 9px, #6b4220 9px 13px, #3a2410 13px 15px, #5a3818 15px 20px);
 }
-.hauspanel::before { left: 0; border-radius: 30px 0 0 20px; border-right: 2px solid #2b1d16; box-shadow: inset 3px 0 0 #2b1d16; }
-.hauspanel::after { right: 0; border-radius: 0 30px 20px 0; border-left: 2px solid #2b1d16; box-shadow: inset -3px 0 0 #2b1d16; }
+.hauspanel::before, .stamm::before { left: 0; border-radius: 30px 0 0 20px; border-right: 2px solid #2b1d16; box-shadow: inset 3px 0 0 #2b1d16; }
+.hauspanel::after, .stamm::after { right: 0; border-radius: 0 30px 20px 0; border-left: 2px solid #2b1d16; box-shadow: inset -3px 0 0 #2b1d16; }
 .hauspanel .stube {
   display: block; width: 100%; height: auto; aspect-ratio: 160 / 84; image-rendering: pixelated;
   border: 3px solid #2b1d16; border-radius: 40% 40% 10px 10px / 22% 22% 10px 10px;
@@ -287,15 +287,15 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 .hauspanel .punkte i { background: #e2c492; }
 .hauspanel .punkte i.an { background: var(--gruen-dunkel); }   /* sonst überdeckt die Zeile darüber die gefüllten Punkte */
 /* Knopfleiste unten: dunkles Brett */
-.hauspanel .knoepfe.fussleiste {
+.hauspanel .knoepfe.fussleiste, .stamm .knoepfe.fussleiste {
   margin: 14px -32px -18px; padding: 12px 32px calc(14px + env(safe-area-inset-bottom));
   background: linear-gradient(#8c5a2c, #6b4220); border-top: 3px solid #2b1d16;
   box-shadow: 0 -6px 10px -6px rgba(43, 29, 22, .5); border-radius: 0 0 18px 18px;
 }
 @media (max-width: 420px) {
-  .hauspanel { padding: 12px 24px 16px; }
-  .hauspanel::before, .hauspanel::after { width: 14px; }
-  .hauspanel .knoepfe.fussleiste { margin: 14px -24px -16px; padding-left: 24px; padding-right: 24px; }
+  .hauspanel, .stamm { padding: 12px 24px 16px; }
+  .hauspanel::before, .hauspanel::after, .stamm::before, .stamm::after { width: 14px; }
+  .hauspanel .knoepfe.fussleiste, .stamm .knoepfe.fussleiste { margin: 14px -24px -16px; padding-left: 24px; padding-right: 24px; }
 }
 
 .tier-karte.dabei { opacity: .55; cursor: default; }
@@ -312,7 +312,7 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 
 /* Bilanz nach dem Schlafengehen: liegt über dem schwarzen Nachtbild */
 #bilanz.nachts { z-index: 57; background: transparent; }
-#bilanz.nachts .panel { box-shadow: 0 6px 0 var(--tinte), 0 0 40px rgba(140, 150, 255, .25); }
+#bilanz.nachts .panel { box-shadow: 0 6px 0 #2b1d16, inset 0 0 0 3px #2b1d16, 0 0 40px rgba(140, 150, 255, .25); }
 
 /* ---------- Laden kompakt: eine Zeile pro Ware (Bild · Text + Stufen · Preis) ---------- */
 .hauspanel .stube { max-width: 420px; margin-left: auto; margin-right: auto; }
@@ -366,3 +366,58 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 
 /* „Neu!“-Schild an frisch freigeschalteten Laden-Abschnitten */
 .abschnitt .neu { font-style: normal; font-size: 11px; background: #ffd23f; color: #2b1d16; border: 2px solid #2b1d16; border-radius: 6px; padding: 0 5px; margin-left: 6px; text-shadow: none; vertical-align: 2px; }
+
+/* Alle Waren im Laden gleich hoch, Preisknöpfe gleich groß – wirkt ruhiger (Wunsch des Nutzers) */
+.hauspanel .ware { min-height: 82px; }
+.hauspanel .knopf.preis { min-width: 100px; min-height: 38px; }
+
+/* Controller: der gewählte Knopf leuchtet golden (nur solange mit dem Controller gespielt wird) */
+body.pad .schicht button:focus { outline: 3px solid #ffd23f; outline-offset: 3px; box-shadow: 0 0 0 6px rgba(255, 210, 63, .35), 0 4px 0 var(--tinte); }
+
+/* ---------- Knöpfe im RPG-Stil: gewölbt, mit Glanzkante oben und Schattenkante unten ---------- */
+.knopf {
+  background: linear-gradient(#a2e786, #6cc452 55%, #58ad40);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55), inset 0 -3px 0 rgba(20, 60, 10, .28), 0 4px 0 var(--tinte);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .4);
+}
+.knopf.grau { background: linear-gradient(#f2e4c4, #d9c49a 60%, #c9b085); }
+.knopf:active:not(:disabled) { box-shadow: inset 0 3px 0 rgba(20, 40, 10, .25), 0 1px 0 var(--tinte); }
+.knopf:disabled { background: #c9b994; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .25), 0 2px 0 var(--tinte); text-shadow: none; }
+.knopf.gross {
+  border-radius: 12px; letter-spacing: .3px;
+  box-shadow: inset 0 0 0 2px rgba(230, 255, 200, .55), inset 0 3px 0 rgba(255, 255, 255, .5), inset 0 -4px 0 rgba(20, 60, 10, .3), 0 5px 0 var(--tinte);
+}
+
+/* ---------- Tagesbilanz im Baumstamm-Look wie der Laden ---------- */
+.panel.bilanzpanel { max-width: 460px; }
+.bilanzpanel h2 {
+  background: linear-gradient(#8c5a2c, #6b4220); color: #fff3d8; border: 3px solid #2b1d16; border-radius: 10px;
+  padding: 8px 12px; font-size: 21px; text-shadow: 0 2px 0 #2b1d16;
+  box-shadow: inset 0 2px 0 rgba(255, 220, 160, .35), 0 3px 0 #2b1d16;
+}
+.bilanzpanel .zahlen div {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: linear-gradient(#f8e6c2, #efd3a3); border: 3px solid #6b4220; border-radius: 12px;
+  box-shadow: inset 0 0 0 2px #fbefd6, 0 3px 0 #4a2e14;
+}
+.bilanzpanel .zahlen img { width: 30px; height: auto; image-rendering: pixelated; }
+.bilanzpanel .zahlen b { color: #4a2e14; line-height: 1.05; }
+.bilanzpanel .zahlen span { color: #6b4220; font-weight: 700; }
+.bilanzpanel .steine {
+  background: linear-gradient(#f8e6c2, #efd3a3); border: 3px solid #6b4220; border-radius: 12px; padding: 4px 12px;
+  box-shadow: inset 0 0 0 2px #fbefd6, 0 3px 0 #4a2e14;
+}
+.bilanzpanel .stein-zeile { border-bottom: 2px dashed rgba(107, 66, 32, .35); }
+.bilanzpanel .stein-zeile:last-child { border-bottom: 0; }
+.bilanzpanel .stein-zeile b { color: #4a2e14; }
+.bilanzpanel .summe {
+  width: fit-content; margin: 14px auto 0; padding: 6px 16px; border-radius: 12px;
+  background: linear-gradient(#4a2e14, #2b1d16); color: #fff3d8; border: 3px solid #2b1d16;
+  box-shadow: inset 0 2px 0 rgba(255, 220, 160, .25), 0 3px 0 #1a100a;
+}
+.bilanzpanel .summe b { color: #ffd23f; font-size: 24px; text-shadow: 0 2px 0 #000; }
+.bilanzpanel .verlust {
+  margin-top: 10px; padding: 6px 10px; border-radius: 10px; color: #7a1a1a;
+  background: linear-gradient(#fbe0d4, #f2c0ae); border: 3px solid #8a2422; box-shadow: 0 3px 0 #5a1414;
+}
+.bilanzpanel .hilfe { margin-top: 10px; padding: 6px 10px; border-radius: 8px; background: rgba(255, 248, 230, .55); border: 2px dashed #a8703c; }
