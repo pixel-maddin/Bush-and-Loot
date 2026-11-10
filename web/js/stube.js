@@ -214,7 +214,7 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
   // Nachts: alles in tiefes Blau-Violett tauchen, dann die leuchtenden Dinge wieder hell drüber
   if (nacht) {
     g.globalCompositeOperation = 'multiply';            // multiplizieren statt überdecken: Farben bleiben satt
-    g.fillStyle = '#5a4a80'; g.fillRect(0, 0, B, H);
+    g.fillStyle = '#8676aa'; g.fillRect(0, 0, B, H);       // heller als zuerst (#5a4a80 war dem Nutzer zu düster)
     g.globalCompositeOperation = 'source-over';
     for (const [x, y, w, h, f] of leuchten) rechteck(g, x, y, w, h, f);
   }
@@ -239,7 +239,7 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
   g.globalCompositeOperation = 'source-over';
   // Dunklere Ecken für die Gemütlichkeit
   const v = g.createRadialGradient(B / 2, H * 0.6, H * 0.4, B / 2, H * 0.6, B * 0.75);
-  v.addColorStop(0, 'rgba(30, 15, 5, 0)'); v.addColorStop(1, nacht ? 'rgba(8, 4, 16, 0.6)' : 'rgba(30, 15, 5, 0.45)');
+  v.addColorStop(0, 'rgba(30, 15, 5, 0)'); v.addColorStop(1, nacht ? 'rgba(8, 4, 16, 0.5)' : 'rgba(30, 15, 5, 0.45)');
   g.fillStyle = v; g.fillRect(0, 0, B, H);
   return c;
 }

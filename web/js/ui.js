@@ -90,17 +90,9 @@ export function zeigeTitel(hatStand) {
   zeige('titel');
 }
 
-// Held im Gras auf dem Startbildschirm; die vorderen Büschel wiegen sich langsam
-let titelUhr = null;
+// Held im Gras auf dem Startbildschirm (einmal gemalt, steht still)
 function titelSzeneStarten() {
-  const g = $('titelSzene').getContext('2d');
-  const malen = () => titelSzeneMalen(g, G.kind.unten[0], performance.now() / 1000);
-  malen();
-  clearInterval(titelUhr);
-  titelUhr = setInterval(() => {
-    if ($('titel').classList.contains('versteckt')) { clearInterval(titelUhr); return; }
-    malen();
-  }, 120);
+  titelSzeneMalen($('titelSzene').getContext('2d'), G.kind.unten[0]);
 }
 
 // ---------- Figur wählen ----------

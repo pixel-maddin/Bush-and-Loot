@@ -595,9 +595,9 @@ export function bildURL(c) {
 }
 
 // ---------- Startbildschirm ----------
-// Kleine Szene: der Held steht bis zu den Knien im Gras, vorne wiegen sich ein paar Büschel.
+// Kleine Szene: der Held steht hinter Grasbüscheln (still, ohne Wiegen – Wunsch des Nutzers).
 export const TITEL_B = 52, TITEL_H = 28;
-export function titelSzeneMalen(g, held, t) {
+export function titelSzeneMalen(g, held) {
   g.imageSmoothingEnabled = false;
   g.clearRect(0, 0, TITEL_B, TITEL_H);
   const [klein, hoch] = G.bueschel;
@@ -606,15 +606,8 @@ export function titelSzeneMalen(g, held, t) {
   g.drawImage(hoch, TITEL_B - hoch.width - 5, TITEL_H - hoch.height - 4);
   g.fillStyle = 'rgba(20, 50, 20, 0.35)'; g.beginPath(); g.ellipse(26, 21.5, 7, 1.6, 0, 0, Math.PI * 2); g.fill();
   g.drawImage(held, 18, 6);
-  // vorn: Büschel über den Beinen, leicht schwankend (Scherung wie im Spiel)
-  const vorn = [[0, 15, 0], [12, 14, 1.7], [24, 15, 3.1], [36, 14, 4.4]];
-  for (const [x, y, ph] of vorn) {
-    const s = Math.sin(t * 1.6 + ph) * 0.12;
-    g.save();
-    g.setTransform(1, 0, s, 1, x - s * (y + klein.height), y);
-    g.drawImage(klein, 0, 0);
-    g.restore();
-  }
+  // vorn: Büschel über den Beinen
+  for (const [x, y] of [[0, 15], [12, 14], [24, 15], [36, 14]]) g.drawImage(klein, x, y);
 }
 
 // ---------- Logo „Bush & Loot“ in Pixelschrift ----------
