@@ -8,6 +8,14 @@ import { SFX } from './ton.js';
 import { S, bewege, wirfStein, waehleStein, splitter, text } from './spiel.js';
 
 export const BEGLEITER_PREIS = 200;
+// Vorschlag für den Namen, bis man selbst einen vergibt
+export const NAMEN = { dackel: 'Waldi', spitz: 'Flocke', schaefer: 'Rex', tiger: 'Karotte', schwarz: 'Luna', glueck: 'Kiki' };
+export function tierName() {
+  const b = S.begleiter;
+  if (!b) return '';
+  return (b.name && b.name.trim()) || NAMEN[b.rasse] || 'Fiffi';
+}
+export function nameSauber(t) { return String(t || '').replace(/[<>&"]/g, '').trim().slice(0, 14); }
 export const TAUSCH_PREIS = 300;
 export const LECKERLI_KOSTEN = [150, 500, 1500];
 
@@ -182,7 +190,7 @@ export function begleiterUpdate(dt) {
         const beste = Math.min(4, 1 + Math.floor(S.tag / 3) + (lv >= 2 ? 1 : 0));
         wirfStein(b.x + (b.links ? -6 : 6), b.y - 3, waehleStein(beste, S.w.glueck + lv));
         S.begleiter.art === 'katze' ? SFX.miau() : SFX.wuff();
-        text(b.x, b.y - 14, S.begleiter.art === 'katze' ? 'Miau!' : 'Wuff!', '#ffffff');
+        text(b.x, b.y - 14, `${tierName()}: ${S.begleiter.art === 'katze' ? 'Miau!' : 'Wuff!'}`, '#ffffff');
         b.zustand = 'folgen'; b.buddelT = naechstesBuddeln();
       }
       break;

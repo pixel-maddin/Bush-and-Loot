@@ -327,3 +327,12 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 .hauspanel .punkte i { width: 11px; height: 7px; }
 .hauspanel .knopf.preis { grid-column: 3; grid-row: 1; justify-self: end; font-size: 14px; padding: 6px 10px; white-space: nowrap; }
 .hauspanel .hilfe { margin: 6px 0 0; }
+
+/* Name des Begleiters */
+.tiername { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; font-weight: 800; }
+.tiername input, .namefeld {
+  font: inherit; font-weight: 800; font-size: 16px; color: var(--tinte); width: 11em; max-width: 60%;
+  padding: 6px 10px; border: 3px solid var(--tinte); border-radius: 8px; background: #fffaf0;
+}
+.namefeld { width: 8em; font-size: 14px; padding: 3px 6px; }
+.knopf.mini { font-size: 12px; padding: 2px 8px; box-shadow: 0 2px 0 var(--tinte); border-width: 2px; border-radius: 7px; }

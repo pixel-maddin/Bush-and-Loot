@@ -231,12 +231,17 @@ function tagAbschliessen() {
   hooks.bilanz && hooks.bilanz({ grund: S.endeGrund, heute: S.heute, verlust, tag: fertig, liegen, kammer: S.ort === 'kammer' && S.boss ? S.boss.k : 0 });
 }
 
+export function benenneBegleiter(name) {
+  if (!S.begleiter) return;
+  S.begleiter.name = name; speichern();
+}
+
 // Begleiter kaufen oder gegen einen anderen tauschen (Preis kommt aus dem Laden: erster Kauf / Tausch)
-export function kaufeBegleiter(art, rasse, preis) {
+export function kaufeBegleiter(art, rasse, preis, name) {
   const gleich = S.begleiter && S.begleiter.art === art && S.begleiter.rasse === rasse;
   if (gleich || S.geld < preis) { SFX.nein(); return false; }
   S.geld -= preis;
-  S.begleiter = { art, rasse }; S.tier = null;
+  S.begleiter = { art, rasse, name }; S.tier = null;
   SFX.kauf(); speichern();
   return true;
 }

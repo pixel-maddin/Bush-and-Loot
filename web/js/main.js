@@ -5,10 +5,10 @@ import { initGrafik, setzeFigur } from './grafik.js';
 import { initHoehlenGrafik } from './hoehlengrafik.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
-  kaufen, update, zeichne, setzeHooks, oeffneTuer, kaufeBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
+  kaufen, update, zeichne, setzeHooks, oeffneTuer, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
 } from './spiel.js';
 import { KAMMERN } from './config.js';
-import { RASSEN } from './begleiter.js';
+import { tierName } from './begleiter.js';
 
 // Morgens nach dem Schlafen: Von Tag 2 bis 6 erzählt der Text eine kleine Geschichte,
 // danach gibt es wechselnde Morgen-Sprüche. Die Spieltipps der ersten Tage stehen darunter.
@@ -32,7 +32,12 @@ function morgenText() {
   if (S.tag >= 2 && S.tag <= 6) return GESCHICHTE[S.tag - 2];
   if (S.tag < 2) return '';
   const pool = MORGEN.slice();
-  if (S.begleiter) pool.push(`${RASSEN[S.begleiter.art][S.begleiter.rasse].name} hat heute Nacht ganz leise geschnarcht.`);
+  if (S.begleiter) {
+    const n = tierName(), katze = S.begleiter.art === 'katze';
+    pool.push(`${n} hat heute Nacht ganz leise geschnarcht.`);
+    pool.push(katze ? `${n} schnurrt dir um die Beine. Auf geht’s!` : `${n} wedelt schon ungeduldig an der Tür.`);
+    pool.push(`${n} hat geträumt, ganz viele Diamanten auszubuddeln.`);
+  }
   let i; do i = Math.floor(Math.random() * pool.length); while (i === letzterSpruch && pool.length > 1);
   letzterSpruch = i;
   return pool[i];
@@ -144,11 +149,12 @@ UI.initUI({
   // Schlafen gehen: schwarz („Gute Nacht“), Bilanz auf dem Nachtbild, „Aufstehen“ startet den Morgen
   tagBeenden() { UI.nachtAn(() => tagBeenden()); },
   kaufen(id, preis) { return kaufen(id, preis); },
-  begleiterKaufen(art, rasse, preis) {
-    const ok = kaufeBegleiter(art, rasse, preis);
-    if (ok) UI.toast(art === 'katze' ? 'Miau! Deine neue Freundin ist dabei.' : 'Wuff! Dein neuer Freund ist dabei.', 3000);
+  begleiterKaufen(art, rasse, preis, name) {
+    const ok = kaufeBegleiter(art, rasse, preis, name);
+    if (ok) UI.toast(art === 'katze' ? `Miau! ${tierName()} ist jetzt dabei.` : `Wuff! ${tierName()} ist jetzt dabei.`, 3000);
     return ok;
   },
+  begleiterBenennen(name) { benenneBegleiter(name); UI.toast(`Ab jetzt heißt dein Begleiter ${tierName()}.`, 2500); },
   bilanzWeiter() {
     if (letzterGrund === 'heim') {
       // Aufstehen: gleich draußen vor dem Baumstumpf, der Morgen blendet ein

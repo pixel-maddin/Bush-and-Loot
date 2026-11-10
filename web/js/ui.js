@@ -3,7 +3,7 @@
 import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
 import { AUFRUESTUNGEN, STEINE, KAMMERN } from './config.js';
 import { S, liegenGeblieben } from './spiel.js';
-import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, TAUSCH_PREIS, LECKERLI_KOSTEN } from './begleiter.js';
+import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, TAUSCH_PREIS, LECKERLI_KOSTEN, NAMEN, tierName, nameSauber } from './begleiter.js';
 import { stubenBilder } from './stube.js';
 import { istStumm, setzeStumm } from './ton.js';
 import { istMusikAn, setzeMusik } from './musik.js';
@@ -280,10 +280,20 @@ function begleiterKarte() {
       <div class="ware-bild">${px(tierIcon(art, rasse))}</div>
       <div class="ware-text">
         <div class="ware-name">Leckerli</div>
-        <div class="ware-unter">für ${art === 'katze' ? 'deine' : 'deinen'} ${RASSEN[art][rasse].name}</div>
+        <div class="ware-unter tiername-zeile">für ${tierName()} <button class="knopf grau mini" data-umbenennen>✎ Name</button></div>
         <div class="ware-info">Buddelt öfter und besser.</div>
         <div class="punkte">${punkte}</div>
       </div>`;
+    // Namen ändern direkt in der Karte
+    d.querySelector('[data-umbenennen]').onclick = () => {
+      const zeile = d.querySelector('.tiername-zeile');
+      zeile.innerHTML = `<input class="namefeld" maxlength="14" value="${tierName()}"> <button class="knopf mini">OK</button>`;
+      const feld = zeile.querySelector('input');
+      const fertig = () => { const n = nameSauber(feld.value); if (n) h.begleiterBenennen(n); waren(); };
+      zeile.querySelector('button').onclick = fertig;
+      feld.onkeydown = (e) => { if (e.key === 'Enter') fertig(); };
+      feld.focus(); feld.select();
+    };
     if (voll) { b.textContent = 'Fertig'; b.disabled = true; }
     else {
       const preis = LECKERLI_KOSTEN[lv];
@@ -301,7 +311,10 @@ export function zeigeBegleiterWahl() {
   const ok = $('btnBegleiterOk');
   const karten = [];
   const jetzt = S.begleiter, preis = jetzt ? TAUSCH_PREIS : BEGLEITER_PREIS;
-  document.querySelector('.begleiterpanel h2').textContent = jetzt ? 'Wen nimmst du stattdessen mit?' : 'Wer soll mitkommen?';
+  document.querySelector('.begleiterpanel h2').textContent = jetzt ? `Wen nimmst du statt ${tierName()} mit?` : 'Wer soll mitkommen?';
+  const feld = $('tierName');
+  let eigenerName = false;           // hat man selbst getippt, bleibt der Name beim Umklicken stehen
+  feld.value = ''; feld.oninput = () => { eigenerName = feld.value.trim() !== ''; };
   $('begleiterHinweis').innerHTML = jetzt
     ? `<b>Tauschen kostet ${zahl(TAUSCH_PREIS)} Diamanten.</b> Die Leckerli-Stufe bleibt.`
     : `Später tauschen geht auch – kostet dann aber jedes Mal ${zahl(TAUSCH_PREIS)} Diamanten.`;
@@ -317,6 +330,7 @@ export function zeigeBegleiterWahl() {
         wahl = { art, rasse: id };
         karten.forEach(x => x.classList.toggle('gewaehlt', x === k));
         ok.disabled = false;
+        if (!eigenerName) feld.value = NAMEN[id] || '';
         ok.innerHTML = `${r.name} mitnehmen ${px(G.waehrung)}${zahl(preis)}`;
         ok.disabled = S.geld < preis;
       };
@@ -326,7 +340,8 @@ export function zeigeBegleiterWahl() {
   ok.disabled = true; ok.textContent = 'Erst eins aussuchen';
   ok.onclick = () => {
     if (!wahl) return;
-    if (h.begleiterKaufen(wahl.art, wahl.rasse, preis)) zeigeHaus(hausModus);
+    const name = nameSauber(feld.value) || NAMEN[wahl.rasse];
+    if (h.begleiterKaufen(wahl.art, wahl.rasse, preis, name)) zeigeHaus(hausModus);
   };
   $('btnBegleiterZurueck').onclick = () => zeigeHaus(hausModus);
   zeige('begleiterWahl');
