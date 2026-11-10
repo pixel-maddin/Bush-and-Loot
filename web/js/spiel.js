@@ -3,11 +3,11 @@
 
 import {
   KACHEL as K, KARTE_B as B, KARTE_H as H, STEINE, STEIN_GEWICHT, BUESCHEL, bueschelGewichte,
-  GRAS_DICHTE, GEGNER, gegnerMax, gegnerArten, werte, LADEZEIT, KAMMERN,
+  GRAS_DICHTE, GEGNER, gegnerMax, gegnerArten, werte, LADEZEIT, KAMMERN, GEBIETE, SPEZIAL,
 } from './config.js';
 import { G } from './grafik.js';
 import { SFX } from './ton.js';
-import { baueWelt } from './welt.js';
+import { baueWelt, baueGebiet } from './welt.js';
 import { klemme } from './hilfe.js';
 import { neuesWetter, windFaktor, wetterUpdate, wetterZeichne } from './wetter.js';
 import { lebenInit, lebenUpdate, lebenBoden, lebenListe, lebenZeichne, lebenUeber, lebenLeuchten } from './leben.js';
@@ -33,6 +33,9 @@ export const S = {
   figur: null,                // { art: 'junge' | 'maedchen', farbe: 'blau' | … } – null = noch nicht gewählt
   begleiter: null, tier: null, // gekauftes Tier { art: 'hund' | 'katze', rasse } und seine Laufzeit-Daten
   // Glitzerhöhle: ort = 'wald' oder 'kammer'; wald = weggelegter Wald, solange man in einer Kammer ist
+  // Gebiete: gebiet = 'wald' | 'dunkel' | 'berg' (draußen, S.ort bleibt dabei 'wald'); weggelegte Gebiete des Tages
+  // in gebiete, einmal gebaute Welten in weltCache. schaetze = besondere Steine (Schlüssel für Höhlentüren).
+  gebiet: 'wald', gebiete: {}, weltCache: {}, waldWelt: null, schaetze: { tuerkis: 0, eis: 0 }, kaelte: 0, frierT: 3,
   ort: 'wald', wald: null, boss: null, geschosse: [], wellen: [], warn: [], belohnungsDing: null, kammerFertig: false,
 };
 
@@ -56,6 +59,7 @@ export function laden() {
       S.hinweise = d.hinweise || {};
       S.figur = d.figur || null;
       S.begleiter = d.begleiter || null;
+      S.schaetze = Object.assign({ tuerkis: 0, eis: 0 }, d.schaetze);
       return true;
     }
   } catch (e) { /* kein Spielstand */ }
@@ -63,19 +67,20 @@ export function laden() {
 }
 export function speichern() {
   try {
-    localStorage.setItem(SPEICHER, JSON.stringify({ geld: S.geld, tag: S.tag, st: S.st, gesamt: S.gesamt, hinweise: S.hinweise, figur: S.figur, begleiter: S.begleiter }));
+    localStorage.setItem(SPEICHER, JSON.stringify({ geld: S.geld, tag: S.tag, st: S.st, gesamt: S.gesamt, hinweise: S.hinweise, figur: S.figur, begleiter: S.begleiter, schaetze: S.schaetze }));
   } catch (e) { /* privat-Modus o. ä. */ }
 }
 export function neuAnfangen() {
   S.geld = 0; S.tag = 1; S.st = {}; S.gesamt = { gemaeht: 0, besiegt: 0, wert: 0 }; S.hinweise = {};
   S.figur = null;             // beim nächsten Start wird wieder gefragt
-  S.begleiter = null; S.tier = null;
+  S.begleiter = null; S.tier = null; S.schaetze = { tuerkis: 0, eis: 0 };
   speichern();
 }
 export const hatSpielstand = () => S.tag > 1 || S.geld > 0;
 
 export function initSpiel() {
   S.welt = baueWelt(WELT_SAAT);
+  S.waldWelt = S.welt; S.gebiet = 'wald'; S.gebiete = {};
   lebenInit(S.welt);
   S.wetter = neuesWetter(1);
   S.ort = 'wald'; S.wald = null; S.boss = null; S.geschosse = []; S.wellen = []; S.warn = []; S.belohnungsDing = null;
@@ -98,11 +103,12 @@ function neuerSpieler() {
 // ---------- Das Gras wächst jeden Morgen neu ----------
 function pflanzen() {
   const W = S.welt;
+  const B = W.b, H = W.h;
   S.bueschel = []; S.gitter = new Array(B * H).fill(null);
-  const gew = bueschelGewichte(S.tag);
+  const gew = S.gebiet === 'wald' ? bueschelGewichte(S.tag) : GEBIETE[S.gebiet].gewichte;
   // Jeden Tag andere dichte und lichte Stellen
   const p1 = Math.random() * 10, p2 = Math.random() * 10;
-  const hx = W.haus.x / K, hy = W.haus.y / K;
+  const mitte = W.haus || W.portal, hx = mitte.x / K, hy = mitte.y / K;
   for (let y = 0; y < H; y++) for (let x = 0; x < B; x++) {
     const i = y * B + x;
     if (W.sperr[i] || W.boden[i] !== 0) continue;
@@ -129,13 +135,15 @@ function ruheImBild() { S.wackeln = 0; S.stopp = 0; }
 // ---------- Tagesablauf ----------
 export function neuerTag() {
   if (S.ort !== 'wald') zurueckInDenWald();      // in einer Kammer umgekippt
+  if (S.gebiet !== 'wald') { S.welt = S.waldWelt; S.gebiet = 'wald'; }
+  S.gebiete = {};                                   // Dunkelwald und Gebirge wachsen über Nacht neu
   S.w = werte(S.st);
   S.wetter = neuesWetter(S.tag, S.wetterTest);
   S.zeit = 0; S.dauer = S.w.tagDauer;
   S.sp = neuerSpieler();
   pflanzen();
   S.gegner = []; S.beute = []; S.partikel = []; S.texte = [];
-  S.heute = { gemaeht: 0, besiegt: 0, steine: [0, 0, 0, 0, 0], wert: 0 };
+  S.heute = { gemaeht: 0, besiegt: 0, steine: [0, 0, 0, 0, 0, 0, 0], wert: 0 };
   for (let i = 0; i < Math.ceil(gegnerMax(S.tag) / 2); i++) spawneIrgendwo();
   S.spawnT = 4;
   S.kam.x = S.sp.x; S.kam.y = S.sp.y - 8;
@@ -158,11 +166,41 @@ export function weiterMaehen() {
 }
 
 export function tagBeenden() { S.endeGrund = 'heim'; tagAbschliessen(); }
+
+// Ist das Portal zu diesem Gebiet schon erwacht?
+export const gebietFrei = (g) => g === 'wald' || (S.st.bosse | 0) >= GEBIETE[g].ab;
+
+// Durch ein Portal: aktuelles Gebiet weglegen, Ziel holen (oder bauen und bepflanzen)
+export function reiseNach(ziel) {
+  const p = S.sp, von = S.gebiet;
+  S.gebiete[von] = { welt: S.welt, bueschel: S.bueschel, gitter: S.gitter, gegner: S.gegner, beute: S.beute };
+  S.gebiet = ziel;
+  const g = S.gebiete[ziel];
+  if (g) { S.welt = g.welt; S.bueschel = g.bueschel; S.gitter = g.gitter; S.gegner = g.gegner; S.beute = g.beute; }
+  else {
+    if (!S.weltCache[ziel]) S.weltCache[ziel] = baueGebiet(ziel, WELT_SAAT + (ziel === 'dunkel' ? 101 : 202));
+    S.welt = S.weltCache[ziel];
+    if (!S.welt.leben) lebenInit(S.welt);
+    pflanzen(); S.gegner = []; S.beute = [];
+    for (let i = 0; i < Math.ceil(gegnerMax(S.tag) / 2); i++) spawneIrgendwo();
+  }
+  if (ziel === 'wald') {
+    const pt = S.welt.portale.find(x => x.gebiet === von);
+    p.x = pt.tuer.x; p.y = pt.tuer.y + 14;
+  } else { p.x = S.welt.start.x; p.y = S.welt.start.y; }
+  p.portalSperre = true; p.ziel = null; p.kx = p.ky = 0; p.winkel = Math.PI / 2; p.blick = 'unten';
+  S.kam.x = p.x; S.kam.y = p.y - 8;
+  if (ziel === 'berg') { S.kaelte = S.w.kaelte; S.frierT = 3; }
+  begleiterNeu(); ruheImBild();
+  S.phase = 'tag';
+  SFX.tuerAuf();
+}
 // Wie viele Diamanten liegen draußen noch herum? (für den Hinweis im Baumstumpf)
 export function liegenGeblieben() {
-  const beute = S.ort === 'wald' ? S.beute : (S.wald ? S.wald.beute : []);
+  const listen = [S.ort === 'wald' ? S.beute : (S.wald ? S.wald.beute : [])];
+  for (const [g, v] of Object.entries(S.gebiete)) if (g !== S.gebiet && v) listen.push(v.beute);
   let anzahl = 0, wert = 0;
-  for (const e of beute) if (!e.herz) { anzahl++; wert += STEINE[e.typ].wert; }
+  for (const beute of listen) for (const e of beute) if (!e.herz) { anzahl++; wert += STEINE[e.typ].wert; }
   return { anzahl, wert };
 }
 
@@ -171,7 +209,10 @@ export function oeffneTuer(k) {
   const d = KAMMERN[k - 1];
   if ((S.st.tueren | 0) !== k - 1 || (S.st.bosse | 0) < k - 1) return false;
   if (S.geld < d.preis) { SFX.nein(); return false; }
+  const br = d.brauche || {};
+  for (const [art, n] of Object.entries(br)) if ((S.schaetze[art] | 0) < n) { SFX.nein(); return false; }
   S.geld -= d.preis;
+  for (const [art, n] of Object.entries(br)) S.schaetze[art] -= n;
   S.st.tueren = k;
   SFX.tuerAuf(); speichern();
   return true;
@@ -223,11 +264,13 @@ function tagAbschliessen() {
   // Nur wer vor Sonnenuntergang heimgeht („Schlafen gehen“), behält alles.
   const pech = S.endeGrund === 'ohnmacht' || S.endeGrund === 'abend';
   // Was noch am Boden liegt, ist morgen weg – auch wer rechtzeitig schlafen geht, muss vorher alles einsammeln
-  const liegen = { anzahl: 0, wert: 0 };
-  for (const e of S.beute) if (!e.herz) { liegen.anzahl++; liegen.wert += STEINE[e.typ].wert; }
+  const liegen = liegenGeblieben();
   S.beute = [];
   let verlust = 0;
-  if (pech) { verlust = Math.min(S.geld, Math.floor(S.heute.wert / 2)); S.geld -= verlust; }
+  if (pech) {
+    verlust = Math.min(S.geld, Math.floor(S.heute.wert / 2)); S.geld -= verlust;
+    for (const [k, i] of Object.entries(SPEZIAL)) S.schaetze[k] = Math.max(0, S.schaetze[k] - Math.floor(S.heute.steine[i] / 2));
+  }
   S.gesamt.gemaeht += S.heute.gemaeht; S.gesamt.besiegt += S.heute.besiegt; S.gesamt.wert += S.heute.wert - verlust;
   const fertig = S.tag;
   S.tag++;
@@ -291,10 +334,29 @@ export function update(dt, ein) {
   if (S.phase !== 'tag') return;                   // Tür erreicht
   gegnerUpdate(dt);
   beuteUpdate(dt);
-  if (imWald) { spawner(dt); begleiterUpdate(dt); } else kammerUpdate(dt);
+  if (imWald) { spawner(dt); begleiterUpdate(dt); if (S.gebiet === 'berg') kaelteUpdate(dt); } else kammerUpdate(dt);
   if (S.phase !== 'tag') return;
   kamera(dt);
   if (imWald && S.zeit >= S.dauer) beginneAbend('abend');
+}
+
+// Gebirge: Die Kälteleiste läuft ab (bei Schnee schneller), am Lagerfeuer füllt sie sich.
+// Ist sie leer, friert alle 3 Sekunden ein Herz ein.
+export const schneit = () => S.gebiet === 'berg' && S.wetter && S.wetter.art === 'regen';
+function kaelteUpdate(dt) {
+  const p = S.sp, F = S.welt.feuer;
+  const amFeuer = F && Math.hypot(p.x - F.x, p.y - F.y) < 36;
+  if (amFeuer) S.kaelte = Math.min(S.w.kaelte, S.kaelte + 12 * dt);
+  else S.kaelte = Math.max(0, S.kaelte - dt * (schneit() ? 1.3 : 1));
+  if (!S.hinweise.kalt && S.kaelte < S.w.kaelte * 0.6) { S.hinweise.kalt = true; hooks.hinweis && hooks.hinweis('Brr, ist das kalt! Am Lagerfeuer beim Portal wird dir wieder warm.'); }
+  if (S.kaelte > 0) { S.frierT = 3; return; }
+  S.frierT -= dt;
+  if (S.frierT > 0) return;
+  S.frierT = 3;
+  p.hp -= 1; p.unverw = Math.max(p.unverw, 0.6);
+  text(p.x, p.y - 18, 'Brrr!', '#bfe9ff'); SFX.aua(); S.wackeln = 0.2;
+  hooks.aua && hooks.aua();
+  if (p.hp <= 0) { p.hp = 0; beginneAbend('ohnmacht'); }
 }
 
 // ---------- Bewegung & Kollision ----------
@@ -348,6 +410,7 @@ function spielerUpdate(dt, ein, neu) {
   let tempo = w.tempo;
   if (p.ladung > 0.15) tempo *= 0.6;
   if (m > 0.1 && S.ort === 'wald') tempo *= windFaktor(S.wetter, r.x / m, r.y / m);   // Sturm: mit dem Wind schneller
+  if (schneit()) tempo *= 0.8;                                                           // im Schnee stapft man langsamer
   let dx = 0, dy = 0;
   if (m > 0.1) {
     const f = Math.min(1, m);
@@ -390,6 +453,17 @@ function spielerUpdate(dt, ein, neu) {
       p.tuerSperre = true; p.ziel = null; S.phase = 'haus'; SFX.tuer();
       hooks.haus && hooks.haus(false);
     }
+  }
+  // Portale: im Wald die erwachten Ruinen, in den Gebieten das Portal zurück
+  const portale = S.welt.portale.filter(pt => gebietFrei(pt.gebiet)).map(pt => ({ ...pt.tuer, ziel: pt.gebiet }));
+  if (S.welt.portal) portale.push({ ...S.welt.portal.tuer, ziel: 'wald' });
+  let amPortal = null;
+  for (const T of portale) if (Math.abs(p.x - T.x) < 9 && p.y < T.y + 6 && p.y > T.y - 2) amPortal = T;
+  if (!amPortal) p.portalSperre = false;
+  else if (!p.portalSperre) {
+    p.portalSperre = true; p.ziel = null; S.phase = 'reise';
+    hooks.reise && hooks.reise(amPortal.ziel);
+    return;
   }
   // Eingang der Glitzerhöhle
   if (S.welt.hoehle) {
@@ -450,7 +524,11 @@ function haueBueschel(b, schaden) {
   b.weg = true; S.heute.gemaeht++;
   SFX.schnitt();
   const w = S.w;
-  if (Math.random() < art.fund * (1 + 0.15 * w.glueck)) wirfStein(b.x, b.y - 3, waehleStein(art.beste, w.glueck));
+  if (Math.random() < art.fund * (1 + 0.15 * w.glueck)) {
+    const gb = GEBIETE[S.gebiet];
+    if (gb.spezial && Math.random() < gb.spezial) wirfStein(b.x, b.y - 3, SPEZIAL[S.gebiet === 'dunkel' ? 'tuerkis' : 'eis']);
+    else wirfStein(b.x, b.y - 3, waehleStein(art.beste, w.glueck));
+  }
   else if (S.sp.hp < w.maxHp && Math.random() < 0.025) wirfHerz(b.x, b.y - 3);
   // Manchmal sitzt einer drin …
   if (S.tag >= 2 && Math.random() < 0.012 && S.gegner.length < gegnerMax(S.tag) + 2) {
@@ -508,6 +586,15 @@ function einsammeln(e, leise) {
     return;
   }
   const s = STEINE[e.typ];
+  if (s.spezial) {
+    S.schaetze[s.spezial]++; S.heute.steine[e.typ]++;
+    if (!leise) {
+      SFX.stein(4); text(e.x, e.y - 6, '+1 ' + s.name, s.farben[1]); funkeln(e.x, e.y, s.farben[0]);
+      const k = 'spezial_' + s.spezial;
+      if (!S.hinweise[k]) { S.hinweise[k] = true; hooks.hinweis && hooks.hinweis(`${s.name}! Solche Steine brauchst du für eine Tür in der Glitzerhöhle.`); }
+    }
+    return;
+  }
   S.geld += s.wert; S.heute.wert += s.wert; S.heute.steine[e.typ]++;
   if (!leise) {
     SFX.stein(e.typ);
@@ -528,7 +615,7 @@ export function spawne(art, x, y, ausGras) {
   if (ausGras) { SFX.plopp(); puff(x, y - 4); }
 }
 function spawneIrgendwo() {
-  const W = S.welt, p = S.sp, a = arten();
+  const W = S.welt, p = S.sp, a = arten(), B = W.b, H = W.h;
   for (let n = 0; n < 30; n++) {
     const tx = 3 + Math.floor(Math.random() * (B - 6)), ty = 3 + Math.floor(Math.random() * (H - 6));
     if (W.fest[ty * B + tx]) continue;
@@ -540,15 +627,18 @@ function spawneIrgendwo() {
 }
 // Welche Plagegeister heute unterwegs sind – bei Regen kommen Riesenblobs dazu
 function arten() {
+  const regen = S.wetter && S.wetter.art === 'regen';
+  if (S.gebiet === 'dunkel') return ['fledermaus', 'fledermaus', 'pilz', 'schnecke'].concat(regen ? ['blob'] : []);
+  if (S.gebiet === 'berg') return ['schneekugel', 'schneekugel', 'hummel'].concat(regen ? ['schneekugel', 'schneekugel'] : []);
   const a = gegnerArten(S.tag);
-  if (S.wetter && S.wetter.art === 'regen') a.push('blob', 'blob');
+  if (regen) a.push('blob', 'blob');
   return a;
 }
 function spawner(dt) {
   S.spawnT -= dt;
   if (S.spawnT > 0) return;
   S.spawnT = Math.max(2.5, 7 - S.tag * 0.4);
-  if (S.gegner.length < gegnerMax(S.tag) + (S.wetter && S.wetter.art === 'regen' ? 2 : 0)) spawneIrgendwo();
+  if (S.gegner.length < gegnerMax(S.tag) + (S.wetter && S.wetter.art === 'regen' ? 2 : 0) + (S.gebiet === 'wald' ? 0 : 1)) spawneIrgendwo();
 }
 
 function gegnerUpdate(dt) {
@@ -568,7 +658,7 @@ function gegnerUpdate(dt) {
       }
       bewege(g, (mx + g.kx) * dt, (my + g.ky) * dt, 4, 3);
       g.links = (mx || dx) < 0;
-    } else if (g.art === 'hummel' || g.art === 'motte') {      // Fliegendes: umkreisen und Sturzflug
+    } else if (g.art === 'hummel' || g.art === 'motte' || g.art === 'fledermaus') {      // Fliegendes: umkreisen und Sturzflug
       g.z = 9 + Math.sin(g.t * 7) * 2;
       let zx, zy;
       if (d < 140) {
@@ -611,7 +701,7 @@ function gegnerUpdate(dt) {
 
 function haueGegner(g, schaden, cx, cy) {
   g.hp -= schaden; g.blitz = 0.15;
-  const flieg = g.art === 'hummel' || g.art === 'motte';
+  const flieg = g.art === 'hummel' || g.art === 'motte' || g.art === 'fledermaus';
   const dx = g.x - cx, dy = g.y - cy, d = Math.hypot(dx, dy) || 1, kb = flieg ? 260 : 170;
   g.kx = dx / d * kb; g.ky = dy / d * kb;
   if (flieg) { g.vx = 0; g.vy = 0; }
@@ -710,12 +800,14 @@ export function zeichne(ctx, cw, ch, zoom) {
   const spielt = S.phase !== 'titel';
 
   // Stoppeln und Schatten liegen flach auf dem Boden
-  for (const b of S.bueschel) if (b.weg && sicht(b.x, b.y, 8, 4, 4)) ctx.drawImage(G.stoppel, Math.round(b.x - 6), Math.round(b.y - 4));
+  const stoppel = (G.stoppelGebiet && G.stoppelGebiet[W.gebiet]) || G.stoppel;
+  for (const b of S.bueschel) if (b.weg && sicht(b.x, b.y, 8, 4, 4)) ctx.drawImage(stoppel, Math.round(b.x - 6), Math.round(b.y - 4));
+  if (W.pilze) for (const m of W.pilze) if (sicht(m.x, m.y, 6, 8, 2)) ctx.drawImage(G.leuchtpilz[m.v], Math.round(m.x - 3), Math.round(m.y - 6));
   ctx.fillStyle = 'rgba(16, 40, 16, 0.35)';
   if (spielt) ellipse(ctx, p.x, p.y, 5, 2);
   const tierDa = spielt && S.tier && !kammer && S.begleiter;
   if (tierDa) begleiterSchatten(ctx);
-  for (const g of S.gegner) if (sicht(g.x, g.y, 12, 12, 12)) ellipse(ctx, g.x, g.y, g.art === 'hummel' || g.art === 'motte' ? 3 : 5, g.art === 'hummel' || g.art === 'motte' ? 1.5 : 2);
+  for (const g of S.gegner) if (sicht(g.x, g.y, 12, 12, 12)) ellipse(ctx, g.x, g.y, g.art === 'hummel' || g.art === 'motte' || g.art === 'fledermaus' ? 3 : 5, g.art === 'hummel' || g.art === 'motte' || g.art === 'fledermaus' ? 1.5 : 2);
   for (const e of S.beute) if (e.z > 1) ellipse(ctx, e.x, e.y + 3, 2.5, 1);
   if (kammer) kammerBoden(ctx); else lebenBoden(ctx, S);
   // Zielmarke der Tippen-Steuerung: kleiner pulsierender Ring am Boden
@@ -731,6 +823,9 @@ export function zeichne(ctx, cw, ch, zoom) {
   for (const b of W.baeume) if (sicht(b.x, b.y, 24, 50, 4)) liste.push({ y: b.y, t: 1, o: b });
   if (W.haus && sicht(W.haus.x, W.haus.y, 50, 85, 6)) liste.push({ y: W.haus.y, t: 2, o: W.haus });
   if (W.hoehle && sicht(W.hoehle.x, W.hoehle.y, 50, 70, 6)) liste.push({ y: W.hoehle.y, t: 6, o: W.hoehle });
+  for (const pt of W.portale) if (sicht(pt.x, pt.y, 26, 48, 4)) liste.push({ y: pt.y, t: 'portal', o: pt });
+  if (W.portal && sicht(W.portal.x, W.portal.y, 26, 48, 4)) liste.push({ y: W.portal.y, t: 'portal', o: { ...W.portal, gebiet: W.gebiet, zurueck: true } });
+  if (W.feuer && sicht(W.feuer.x, W.feuer.y, 12, 20, 4)) liste.push({ y: W.feuer.y, t: 'feuer', o: W.feuer });
   if (kammer) kammerListe(liste); else lebenListe(liste, S, sicht);
   if (spielt) liste.push({ y: p.y, t: 3, o: p });
   if (tierDa) liste.push({ y: S.tier.y, t: 7, o: S.tier });
@@ -752,7 +847,9 @@ export function zeichne(ctx, cw, ch, zoom) {
       }
       case 7: zeichneBegleiter(ctx); break;
       default:
-        if (e.t === 'schilf' || e.t === 'ente' || e.t === 'hoernchen') lebenZeichne(ctx, e, S);
+        if (e.t === 'portal') zeichnePortal(ctx, e.o);
+        else if (e.t === 'feuer') ctx.drawImage(G.feuer[Math.floor(S.t * 8) % 3], Math.round(e.o.x - 8), Math.round(e.o.y - 14));
+        else if (e.t === 'schilf' || e.t === 'ente' || e.t === 'hoernchen') lebenZeichne(ctx, e, S);
         else kammerZeichne(ctx, e);
     }
   }
@@ -780,7 +877,7 @@ export function zeichne(ctx, cw, ch, zoom) {
 
   if (!kammer) wetterZeichne(ctx, S);
   if (kammer) kammerDunkel(ctx, L, T, vw, vh);
-  else if (S.phase === 'tag' && W.haus && S.zeit > S.dauer - HEIM_WARNUNG) heimPfeil(ctx, L, T, vw, vh);
+  else if (S.phase === 'tag' && (W.haus || W.portal) && S.zeit > S.dauer - HEIM_WARNUNG) heimPfeil(ctx, L, T, vw, vh);
   // Abendlicht (nur draußen)
   const q = spielt && !kammer ? S.zeit / S.dauer : 0;
   const abend = klemme((q - 0.6) / 0.4, 0, 1);
@@ -792,11 +889,15 @@ export function zeichne(ctx, cw, ch, zoom) {
     ctx.fillStyle = `rgb(${rr},${gg},${bb})`;
     ctx.fillRect(L - 2, T - 2, vw + 4, vh + 4);
     ctx.globalCompositeOperation = 'lighter';
-    const I = G.hausInfo, hx = W.haus.x - I.w / 2, hy = W.haus.y + 2 - I.fussY;
-    for (const [fx, fy, fr] of I.fenster) leuchten(ctx, hx + fx, hy + fy, fr * (1 + abend), abend * 0.55);
+    if (W.haus) {
+      const I = G.hausInfo, hx = W.haus.x - I.w / 2, hy = W.haus.y + 2 - I.fussY;
+      for (const [fx, fy, fr] of I.fenster) leuchten(ctx, hx + fx, hy + fy, fr * (1 + abend), abend * 0.55);
+    }
     ctx.globalCompositeOperation = 'source-over';
-    lebenLeuchten(ctx, S, abend);
+    if (W.gebiet !== 'dunkel') lebenLeuchten(ctx, S, abend);
   }
+  if (!kammer && W.gebiet === 'dunkel') dunkelwald(ctx, L, T, vw, vh);
+  if (!kammer && W.feuer) { ctx.globalCompositeOperation = 'lighter'; leuchten(ctx, W.feuer.x, W.feuer.y - 6, 40, 0.35 + 0.08 * Math.sin(S.t * 9)); ctx.globalCompositeOperation = 'source-over'; }
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (S.phase === 'abblende' || S.phase === 'bilanz') {
@@ -814,7 +915,7 @@ export function zeichne(ctx, cw, ch, zoom) {
 // Kurz vor Sonnenuntergang: Pfeil am Bildrand, der zum Baumstumpf zeigt (wenn er nicht zu sehen ist)
 export const HEIM_WARNUNG = 15;
 function heimPfeil(ctx, L, T, vw, vh) {
-  const ziel = S.welt.haus.tuer, mx = L + vw / 2, my = T + vh / 2;
+  const ziel = S.welt.haus ? S.welt.haus.tuer : S.welt.portal.tuer, mx = L + vw / 2, my = T + vh / 2;
   const rand = 16;
   if (ziel.x > L + rand && ziel.x < L + vw - rand && ziel.y - 30 > T + rand && ziel.y < T + vh - rand) return;
   const dx = ziel.x - mx, dy = ziel.y - 20 - my, a = Math.atan2(dy, dx);
@@ -830,6 +931,69 @@ function heimPfeil(ctx, L, T, vw, vh) {
   ctx.fillStyle = '#ffd23f';
   ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -5); ctx.lineTo(-2, 0); ctx.lineTo(-4, 5); ctx.closePath(); ctx.fill();
   ctx.restore();
+}
+
+// Ruine oder Portal (wirbelnder Schimmer im Steinbogen, Farbe je Gebiet)
+const PORTAL_FARBE = { dunkel: [62, 232, 208], berg: [191, 233, 255] };
+function zeichnePortal(ctx, pt) {
+  const aktiv = pt.zurueck || gebietFrei(pt.gebiet);
+  const x = Math.round(pt.x), y = Math.round(pt.y);
+  if (aktiv) {
+    const [r, g, b] = PORTAL_FARBE[pt.gebiet];
+    for (let i = 0; i < 4; i++) {
+      const a = S.t * (1.5 + i * 0.4) + i;
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.25 + i * 0.12})`;
+      ctx.beginPath(); ctx.ellipse(x, y - 16, 10 - i * 2 + Math.sin(a) * 1.2, 14 - i * 3 + Math.cos(a) * 1.2, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 6; i++) {
+      const a = S.t * 2.4 + i * 1.05, rr = 4 + ((S.t * 6 + i * 3) % 8);
+      ctx.fillRect(Math.round(x + Math.cos(a) * rr * 0.7), Math.round(y - 16 + Math.sin(a) * rr), 1, 1);
+    }
+  }
+  const img = aktiv ? G.portal[pt.gebiet] : G.ruine;
+  ctx.drawImage(img, x - 22, y + 2 - 44);
+  if (aktiv) {
+    const [r, g, b] = PORTAL_FARBE[pt.gebiet];
+    ctx.globalCompositeOperation = 'lighter';
+    const gr = ctx.createRadialGradient(x, y - 16, 0, x, y - 16, 28);
+    gr.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.35)`); gr.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+    ctx.fillStyle = gr; ctx.fillRect(x - 28, y - 44, 56, 56);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+}
+
+// Dunkelwald: nur der Lichtkreis der Fackel ist hell. Türkise, Leuchtpilze, Glühwürmchen und das Portal
+// leuchten durch die Dunkelheit (danach additiv drübergemalt).
+function dunkelwald(ctx, L, T, vw, vh) {
+  const p = S.sp, r = S.w.licht, x = p.x, y = p.y - 8;
+  const gr = ctx.createRadialGradient(x, y, r * 0.45, x, y, r);
+  gr.addColorStop(0, 'rgba(4, 6, 14, 0)'); gr.addColorStop(1, 'rgba(4, 6, 14, 0.9)');
+  ctx.fillStyle = gr; ctx.fillRect(L - 2, T - 2, vw + 4, vh + 4);
+  ctx.globalCompositeOperation = 'lighter';
+  for (const m of S.welt.pilze) {
+    const f = [[62, 232, 208], [187, 98, 238], [127, 240, 255]][m.v], a = 0.22 + 0.1 * Math.sin(S.t * 2 + m.ph);
+    const g = ctx.createRadialGradient(m.x, m.y - 4, 0, m.x, m.y - 4, 10);
+    g.addColorStop(0, `rgba(${f[0]}, ${f[1]}, ${f[2]}, ${a})`); g.addColorStop(1, `rgba(${f[0]}, ${f[1]}, ${f[2]}, 0)`);
+    ctx.fillStyle = g; ctx.fillRect(m.x - 10, m.y - 14, 20, 20);
+    ctx.fillStyle = `rgba(${f[0]}, ${f[1]}, ${f[2]}, 0.8)`; ctx.fillRect(Math.round(m.x - 1), Math.round(m.y - 6), 2, 1);
+  }
+  for (const e of S.beute) if (e.typ === SPEZIAL.tuerkis && !e.herz) {
+    const g = ctx.createRadialGradient(e.x, e.y - e.z, 0, e.x, e.y - e.z, 12);
+    g.addColorStop(0, 'rgba(90, 255, 230, 0.7)'); g.addColorStop(1, 'rgba(90, 255, 230, 0)');
+    ctx.fillStyle = g; ctx.fillRect(e.x - 12, e.y - e.z - 12, 24, 24);
+  }
+  for (const g2 of S.gegner) if (g2.art === 'fledermaus') { ctx.fillStyle = '#ff5050'; ctx.fillRect(Math.round(g2.x - 2), Math.round(g2.y - g2.z - 5), 1, 1); ctx.fillRect(Math.round(g2.x + 1), Math.round(g2.y - g2.z - 5), 1, 1); }
+  ctx.globalCompositeOperation = 'source-over';
+  if (S.welt.portal) zeichnePortalLicht(ctx, S.welt.portal);
+  lebenLeuchten(ctx, S, 1);
+}
+function zeichnePortalLicht(ctx, pt) {
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(pt.x, pt.y - 16, 0, pt.x, pt.y - 16, 30);
+  g.addColorStop(0, 'rgba(62, 232, 208, 0.45)'); g.addColorStop(1, 'rgba(62, 232, 208, 0)');
+  ctx.fillStyle = g; ctx.fillRect(pt.x - 30, pt.y - 46, 60, 60);
+  ctx.globalCompositeOperation = 'source-over';
 }
 
 function ellipse(ctx, x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(Math.round(x), Math.round(y), rx, ry, 0, 0, Math.PI * 2); ctx.fill(); }
@@ -852,7 +1016,7 @@ function wasserGlitzer(ctx, L, T, R, U) {
 }
 
 function zeichneBueschel(ctx, b, spielt) {
-  const img = G.bueschel[b.art];
+  const img = ((G.bueschelGebiet && G.bueschelGebiet[S.welt.gebiet]) || G.bueschel)[b.art];
   let s = Math.sin(S.t * 1.8 + b.ph) * 0.07;
   const wi = S.wetter && S.ort === 'wald' ? S.wetter.wind : null;
   if (wi && wi.staerke) s += wi.x * wi.staerke * (0.16 + Math.sin(S.t * 4 + b.ph) * 0.07);   // Sturm biegt das Gras
@@ -869,7 +1033,8 @@ function zeichneBueschel(ctx, b, spielt) {
 }
 
 function zeichneBaum(ctx, b, spielt) {
-  const img = G.baum[b.v];
+  const satz = S.welt.gebiet === 'dunkel' ? G.baumDunkel : S.welt.gebiet === 'berg' ? G.tanne : G.baum;
+  const img = satz[b.v % satz.length];
   // Steht der Held dahinter, wird die Krone durchsichtig
   let a = 1;
   if (spielt) {
@@ -961,7 +1126,7 @@ function zeichneSchwert(ctx, ox = 0, oy = 0) {
 
 function zeichneGegner(ctx, g) {
   const satz = G.gegner[g.art];
-  const f = g.art === 'blob' || g.art === 'blobchen' ? Math.floor(g.t * 3) % 2 : g.art === 'hummel' || g.art === 'motte' ? Math.floor(g.t * (g.art === 'motte' ? 12 : 20)) % 2 : g.art === 'pilz' || g.art === 'kueken' ? (g.hop > 0 ? 0 : 1) : 0;
+  const f = g.art === 'blob' || g.art === 'blobchen' ? Math.floor(g.t * 3) % 2 : g.art === 'hummel' || g.art === 'motte' || g.art === 'fledermaus' ? Math.floor(g.t * (g.art === 'hummel' ? 20 : 12)) % 2 : g.art === 'pilz' || g.art === 'kueken' || g.art === 'schneekugel' ? (g.hop > 0 ? 0 : 1) : 0;
   const reihe = g.blitz > 0 ? (g.links ? satz.lw : satz.rw) : (g.links ? satz.l : satz.r);
   const img = reihe[f];
   let sx = 1;

@@ -14,9 +14,23 @@ export const STEINE = [
   { name: 'Rot',  wert: 20,  farben: ['#ffd0cf', '#f04f5a', '#9a1d3b'] },
   { name: 'Lila', wert: 60,  farben: ['#f6d4ff', '#bb62ee', '#6a2aa0'] },
   { name: 'Gold', wert: 200, farben: ['#fffbd0', '#ffd23f', '#c27512'] },
+  // Besondere Steine der neuen Gebiete: kein Diamantwert, sondern Schlüssel für die späteren Höhlentüren
+  { name: 'Türkis',     wert: 0, farben: ['#e0fffb', '#3ee8d0', '#138a8a'], spezial: 'tuerkis' },   // Dunkelwald, leuchtet
+  { name: 'Eiskristall', wert: 0, farben: ['#ffffff', '#bfe9ff', '#5aa0d8'], spezial: 'eis' },      // Gebirge
 ];
+export const SPEZIAL = { tuerkis: 5, eis: 6 };      // Index in STEINE
 // Grundgewichte beim Auswürfeln der Farbe (vor Glücksklee)
 export const STEIN_GEWICHT = [100, 20, 4, 0.8, 0.12];
+
+// Gebiete: der Startwald und die beiden freispielbaren Welten (Portale an den Wegenden im Wald)
+//   ab      = so viele Wächter müssen besiegt sein, damit das Portal erwacht
+//   spezial = wie oft ein Fund dort der besondere Stein ist
+export const GEBIETE = {
+  wald:   { name: 'Wald' },
+  dunkel: { name: 'Dunkelwald', ab: 2, spezial: 0.32, gewichte: [1, 0.8, 0.45, 0.25] },
+  berg:   { name: 'Gebirge',    ab: 3, spezial: 0.32, gewichte: [1, 0.7, 0.4, 0.35] },
+};
+export const GEBIET_KARTE = 36;     // Kacheln je Seite der neuen Gebiete
 
 // Grasarten. fund = Chance auf einen Diamanten, beste = teuerste Farbe, die drinstecken kann
 export const BUESCHEL = [
@@ -43,6 +57,8 @@ export const GEGNER = {
   motte:    { name: 'Mottenkind',   hp: 2, tempo: 42, schaden: 1, beute: 0.5 },   // nur bei der Riesenmotte
   blob:     { name: 'Riesenblob',   hp: 6, tempo: 16, schaden: 1, beute: 0.9 },   // nur bei Regen, zerfällt in zwei Blobchen
   blobchen: { name: 'Blobchen',     hp: 1, tempo: 30, schaden: 1, beute: 0.3 },
+  fledermaus:  { name: 'Fledermaus',  hp: 2, tempo: 56, schaden: 1, beute: 0.6 },   // Dunkelwald, fliegt wie die Hummel
+  schneekugel: { name: 'Schneekugel', hp: 3, tempo: 52, schaden: 1, beute: 0.7 },   // Gebirge, hüpft wie der Pilz
   kueken:   { name: 'Küken',        hp: 1, tempo: 50, schaden: 1, beute: 0.4 },   // nur bei der Riesenente (hüpft wie der Pilz)
 };
 export function gegnerMax(tag) { return Math.min(16, 2 + Math.floor(tag * 1.3)); }
@@ -66,6 +82,8 @@ export const AUFRUESTUNGEN = [
   { id: 'sonne',   name: 'Sonnenuhr',      kosten: [50, 160, 420, 950],       text: 'Der Tag dauert 15 s länger.' },
   { id: 'klee',    name: 'Glücksklee',     kosten: [60, 220, 650, 1600, 4000], text: 'Öfter Diamanten und seltene Farben.' },
   { id: 'wirbel',  name: 'Wirbelschlag',   kosten: [250],                     text: 'Halten, loslassen: Rundumschlag.' },
+  { id: 'fackel',  name: 'Fackel',         kosten: [250, 700, 1800],          text: 'Größerer Lichtkreis im Dunkelwald.', ab: 2 },
+  { id: 'jacke',   name: 'Daunenjacke',    kosten: [400, 1100, 2600],         text: 'Länger warm im Gebirge.', ab: 3 },
 ];
 
 export const KLINGE = {
@@ -80,19 +98,19 @@ export const KLINGE = {
 // Fortschritt steht in S.st.tueren (geöffnet) und S.st.bosse (besiegt) – also im normalen Spielstand.
 export const KAMMERN = [
   { name: 'Teichgrotte',   boss: 'Riesenente',     art: 'ente',     preis: 100,  hp: 28,  schaden: 1,
-    schatz: [10, 6, 2, 0, 0],  belohnung: 'fackel',
-    beute: 'Fackel', beuteText: 'Eine Fackel, die nie ausgeht. Mit ihr traust du dich bald in den Dunkelwald.' },
+    schatz: [10, 6, 2, 0, 0],  belohnung: 'herz',
+    beute: 'Goldenes Herz', beuteText: 'Du hast jetzt für immer ein Herz mehr.' },
   { name: 'Wabenkammer',   boss: 'Hummelkönigin',  art: 'koenigin', preis: 350,  hp: 40,  schaden: 1,
-    schatz: [10, 10, 6, 1, 0], belohnung: 'herz',
-    beute: 'Königinnenherz', beuteText: 'Du hast jetzt für immer ein Herz mehr.' },
+    schatz: [10, 10, 6, 1, 0], belohnung: 'fackel',
+    beute: 'Fackel', beuteText: 'Eine Fackel, die nie ausgeht. Irgendwo im Wald hat sich gerade etwas verändert …' },
   { name: 'Schattenhalle', boss: 'Schattenpilz',   art: 'schatten', preis: 900,  hp: 65,  schaden: 1,
-    schatz: [10, 10, 10, 4, 1], belohnung: 'steigeisen',
-    beute: 'Steigeisen', beuteText: 'Eiserne Zacken für die Stiefel. Damit kommst du bald hoch ins Gebirge.' },
+    schatz: [10, 10, 10, 4, 1], belohnung: 'steigeisen', brauche: { tuerkis: 15 },
+    beute: 'Steigeisen', beuteText: 'Eiserne Zacken für die Stiefel. Im Wald hat sich wieder etwas verändert …' },
   { name: 'Frostkammer',   boss: 'Eisigel',        art: 'igel',     preis: 2000, hp: 100, schaden: 2,
-    schatz: [10, 10, 10, 8, 3], belohnung: 'schliff',
+    schatz: [10, 10, 10, 8, 3], belohnung: 'schliff', brauche: { eis: 15 },
     beute: 'Goldener Schliff', beuteText: 'Deine Klinge glänzt golden und trifft ab jetzt halb so fest noch mal dazu.' },
   { name: 'Kristallthron', boss: 'Riesenmotte',    art: 'motte',    preis: 4000, hp: 240, schaden: 2,
-    schatz: [10, 10, 10, 10, 8], belohnung: 'riesendiamant',
+    schatz: [10, 10, 10, 10, 8], belohnung: 'riesendiamant', brauche: { tuerkis: 10, eis: 10 },
     beute: 'Der Riesendiamant', beuteText: 'Du hast alle fünf Wächter besiegt!' },
 ];
 
@@ -105,11 +123,13 @@ export function werte(st) {
     bogen: KLINGE.bogenGrad[k] * Math.PI / 180,
     abklingen: 0.42 - 0.055 * (st.schwung | 0),
     tempo: 62 + 11 * (st.stiefel | 0),
-    maxHp: 3 + (st.herz | 0) + (bosse >= 2 ? 1 : 0),
+    maxHp: 3 + (st.herz | 0) + (bosse >= 1 ? 1 : 0),
     magnet: 14 + 14 * (st.magnet | 0),
     tagDauer: 70 + 15 * (st.sonne | 0),
     glueck: st.klee | 0,
     wirbel: (st.wirbel | 0) > 0,
+    licht: 46 + 22 * (st.fackel | 0),          // Lichtkreis im Dunkelwald (Weltpixel)
+    kaelte: 28 + 18 * (st.jacke | 0),          // Sekunden, bis es im Gebirge zu kalt wird
   };
 }
 

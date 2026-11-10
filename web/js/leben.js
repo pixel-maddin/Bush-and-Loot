@@ -9,7 +9,7 @@ import { BODEN } from './welt.js';
 import { zufall } from './hilfe.js';
 
 const B = {};          // Bilder
-let L = null;          // Zustand für die aktuelle Waldwelt
+// Der Zustand hängt an der jeweiligen Welt (W.leben): Wald, Dunkelwald und Gebirge haben je ihr eigenes Gewusel
 
 function bilder() {
   if (B.fertig) return;
@@ -72,17 +72,20 @@ export function lebenInit(W) {
     const [tx, ty] = innen[Math.floor(r() * innen.length)];
     enten.push({ x: tx * K + 8, y: ty * K + 9, dir: r() * 6.28, t: r() * 5, wechsel: 0, tauch: 0 });
   }
-  L = { W, schilf, enten, voegel: [], vogelT: 3, schwaerme: [], hoernchen: null, hoernchenT: 6 };
+  // Im Gebirge sind die Teiche zugefroren: kein Schilf, keine Enten, keine Eichhörnchen in den Tannen
+  const berg = W.gebiet === 'berg';
+  W.leben = { W, schilf: berg ? [] : schilf, enten: berg ? [] : enten, voegel: [], vogelT: 3, schwaerme: [], hoernchen: null, hoernchenT: berg ? 1e9 : 6 };
 }
 
-const wasserBei = (x, y) => {
-  const W = L.W, tx = Math.floor(x / K), ty = Math.floor(y / K);
+const wasserBei = (W, x, y) => {
+  const tx = Math.floor(x / K), ty = Math.floor(y / K);
   return tx >= 0 && ty >= 0 && tx < W.b && ty < W.h && W.boden[ty * W.b + tx] === BODEN.WASSER;
 };
 
 // ---------- Ablauf ----------
 export function lebenUpdate(dt, S, sicht) {
-  if (!L || L.W !== S.welt) return;
+  const L = S.welt.leben;
+  if (!L) return;
   const wind = S.wetter && S.wetter.wind ? S.wetter.wind : { x: 0, y: 0, staerke: 0 };
   // Enten paddeln umher, bleiben auf dem Wasser, tauchen ab und zu kurz ab
   for (const e of L.enten) {
@@ -91,7 +94,7 @@ export function lebenUpdate(dt, S, sicht) {
     if (e.tauch > 0) e.tauch -= dt;
     const v = 7, nx = e.x + Math.cos(e.dir) * v * dt, ny = e.y + Math.sin(e.dir) * v * dt * 0.7;
     // vorausschauend: 5 px weiter muss auch Wasser sein
-    if (wasserBei(nx + Math.cos(e.dir) * 6, ny + Math.sin(e.dir) * 4) && wasserBei(nx, ny)) { e.x = nx; e.y = ny; }
+    if (wasserBei(L.W, nx + Math.cos(e.dir) * 6, ny + Math.sin(e.dir) * 4) && wasserBei(L.W, nx, ny)) { e.x = nx; e.y = ny; }
     else { e.dir += Math.PI * (0.6 + Math.random() * 0.8); }
   }
   // Vögel: ab und zu ein kleiner Schwarm quer übers Bild
@@ -135,7 +138,8 @@ export function lebenUpdate(dt, S, sicht) {
 // ---------- Zeichnen ----------
 // Flach auf dem Boden/Wasser: Bugwellen der Enten, Schatten der Vögel
 export function lebenBoden(ctx, S) {
-  if (!L || L.W !== S.welt) return;
+  const L = S.welt.leben;
+  if (!L) return;
   ctx.fillStyle = 'rgba(255,255,255,0.45)';
   for (const e of L.enten) {
     if (e.tauch > 0) { const r = 2 + (1.2 - e.tauch) * 4; ctx.globalAlpha = Math.max(0, e.tauch); ctx.fillRect(Math.round(e.x - r), Math.round(e.y + 1), Math.round(r * 2), 1); ctx.globalAlpha = 1; continue; }
@@ -148,7 +152,8 @@ export function lebenBoden(ctx, S) {
 
 // Was in die nach Höhe sortierte Liste gehört (Schilf, Enten, Eichhörnchen)
 export function lebenListe(liste, S, sicht) {
-  if (!L || L.W !== S.welt) return;
+  const L = S.welt.leben;
+  if (!L) return;
   for (const s of L.schilf) if (sicht(s.x, s.y, 6, 16, 2)) liste.push({ y: s.y, t: 'schilf', o: s });
   for (const e of L.enten) if (e.tauch <= 0 && sicht(e.x, e.y, 8, 8, 4)) liste.push({ y: e.y, t: 'ente', o: e });
   if (L.hoernchen) liste.push({ y: L.hoernchen.baum.y + 0.5, t: 'hoernchen', o: L.hoernchen });
@@ -182,7 +187,8 @@ export function lebenZeichne(ctx, e, S) {
 
 // Über allem (unter dem Abendlicht): Vögel und Mücken
 export function lebenUeber(ctx, S) {
-  if (!L || L.W !== S.welt) return;
+  const L = S.welt.leben;
+  if (!L) return;
   for (const v of L.voegel) {
     const f = Math.floor(v.t * 8) % 2, img = (v.vx > 0 ? B.vogel : B.vogelL)[f];
     ctx.drawImage(img, Math.round(v.x - 3), Math.round(v.y - 2));
@@ -201,7 +207,8 @@ export function lebenUeber(ctx, S) {
 
 // Nach dem Abendlicht: dieselben Mücken leuchten als Glühwürmchen
 export function lebenLeuchten(ctx, S, abend) {
-  if (!L || L.W !== S.welt || abend < 0.25) return;
+  const L = S.welt.leben;
+  if (!L || abend < 0.25) return;
   ctx.globalCompositeOperation = 'lighter';
   for (const s of L.schwaerme) {
     for (const m of s.mucken) {

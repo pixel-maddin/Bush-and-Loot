@@ -39,6 +39,8 @@ export function wetterText(w) {
   return '';
 }
 
+export function wetterTextGebirge(w) { return w && w.art === 'regen' ? 'Im Gebirge schneit es – dort stapft man langsamer.' : ''; }
+
 // Laufen mit dem Wind schneller, dagegen langsamer (bis ±35 %)
 export function windFaktor(w, rx, ry) {
   if (!w || !w.wind.staerke) return 1;
@@ -49,6 +51,15 @@ export function windFaktor(w, rx, ry) {
 export function wetterUpdate(dt, S) {
   const w = S.wetter, f = S.sichtfeld;
   if (!w || !f || S.ort !== 'wald') return;
+  const schnee = w.art === 'regen' && S.gebiet === 'berg';      // im Gebirge fällt statt Regen Schnee
+  if (schnee) {
+    while (w.tropfen.length < 70) w.tropfen.push({ x: Math.random() * (f.vw + 40) - 20, y: Math.random() * f.vh, v: 18 + Math.random() * 20, l: Math.random() < 0.3 ? 2 : 1, ph: Math.random() * 6 });
+    for (const t of w.tropfen) {
+      t.y += t.v * dt; t.x += Math.sin(S.t * 1.3 + t.ph) * 8 * dt + w.wind.x * 30 * w.wind.staerke * dt;
+      if (t.y > f.vh) { t.y = -4; t.x = Math.random() * (f.vw + 40) - 20; }
+    }
+    return;
+  }
   if (w.art === 'regen') {
     while (w.tropfen.length < 90) w.tropfen.push({ x: Math.random() * (f.vw + 40) - 20, y: Math.random() * f.vh, v: 170 + Math.random() * 60, l: 4 + Math.random() * 3 });
     for (const t of w.tropfen) {
@@ -73,6 +84,12 @@ export function wetterUpdate(dt, S) {
 export function wetterZeichne(ctx, S) {
   const w = S.wetter, f = S.sichtfeld;
   if (!w || !f || S.ort !== 'wald') return;
+  if (w.art === 'regen' && S.gebiet === 'berg') {
+    ctx.fillStyle = 'rgba(235, 242, 255, 0.12)'; ctx.fillRect(f.L - 2, f.T - 2, f.vw + 4, f.vh + 4);
+    ctx.fillStyle = '#ffffff';
+    for (const t of w.tropfen) ctx.fillRect(Math.round(f.L + t.x), Math.round(f.T + t.y), t.l, t.l);
+    return;
+  }
   if (w.art === 'regen') {
     // Gedämpftes, kühles Licht
     ctx.globalCompositeOperation = 'multiply';

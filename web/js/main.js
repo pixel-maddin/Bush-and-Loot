@@ -3,12 +3,13 @@
 import { KACHEL, SICHT_KACHELN } from './config.js';
 import { initGrafik, setzeFigur } from './grafik.js';
 import { initHoehlenGrafik } from './hoehlengrafik.js';
-import { initWetterGrafik, wetterText } from './wetter.js';
+import { initWetterGrafik, wetterText, wetterTextGebirge } from './wetter.js';
+import { initGebietGrafik } from './gebietgrafik.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
-  kaufen, update, zeichne, setzeHooks, oeffneTuer, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
+  kaufen, update, zeichne, setzeHooks, oeffneTuer, reiseNach, gebietFrei, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
 } from './spiel.js';
-import { KAMMERN } from './config.js';
+import { KAMMERN, GEBIETE } from './config.js';
 import { tierName } from './begleiter.js';
 
 // Morgens nach dem Schlafen: Von Tag 2 bis 6 erzählt der Text eine kleine Geschichte,
@@ -73,6 +74,7 @@ groesse();
 initGrafik();
 initHoehlenGrafik();
 initWetterGrafik();
+initGebietGrafik();
 laden();
 if (S.figur) setzeFigur(S.figur.art, S.figur.farbe);
 // Zum Testen: ?geld=5000 schenkt Diamanten – nur lokal, online soll keiner schummeln
@@ -109,18 +111,39 @@ setzeHooks({
   bilanz: (info) => { eingabe.leeren(); letzterGrund = info.grund; UI.zeigeBilanz(info); steuerung.aktualisiere(); },
   hinweis: (t) => UI.toast(t),
   hoehle: () => { eingabe.leeren(); UI.zeigeHoehle(); steuerung.aktualisiere(); },
+  // Durch ein Portal: kurz schwarz, dann im anderen Gebiet; beim ersten Mal ein Hinweis
+  reise: (ziel) => {
+    eingabe.leeren();
+    const text = ziel === 'wald' ? 'Zurück in den Wald …' : ziel === 'berg' ? 'Auf ins Gebirge …' : 'In den Dunkelwald …';
+    UI.nachtAn(() => {
+      reiseNach(ziel); steuerung.aktualisiere();
+      setTimeout(UI.nachtAus, 250);
+      const k = 'besucht_' + ziel;
+      if (ziel !== 'wald' && !S.hinweise[k]) {
+        S.hinweise[k] = true;
+        UI.toast(ziel === 'dunkel'
+          ? 'Der Dunkelwald! Nur im Licht deiner Fackel siehst du etwas. Hier leuchten Türkise im Gras.'
+          : 'Das Gebirge! Achte auf die Wärme oben links – am Lagerfeuer wird dir warm. Hier gibt es Eiskristalle.', 6000);
+      }
+    }, text);
+  },
   bossBesiegt: (k) => UI.toast(`${KAMMERN[k - 1].boss} ist besiegt!`, 2500),
   belohnung: (k) => { eingabe.leeren(); S.phase = 'fund'; UI.zeigeFund(k); steuerung.aktualisiere(); },
   kammerVerlassen: () => {
     verlasseKammer();
-    UI.toast(S.st.bosse >= 5 ? 'Der Riesendiamant funkelt in deiner Tasche.' : 'Zurück im Wald. Die nächste Tür wartet …', 3000);
+    const neu = ['dunkel', 'berg'].find(g => gebietFrei(g) && !S.hinweise['portal_' + g]);
+    if (neu) { S.hinweise['portal_' + neu] = true; UI.toast('Irgendwo im Wald hat sich etwas verändert … Halte die Augen offen!', 5000); }
+    else UI.toast(S.st.bosse >= 5 ? 'Der Riesendiamant funkelt in deiner Tasche.' : 'Zurück im Wald. Die nächste Tür wartet …', 3000);
     steuerung.aktualisiere();
   },
   tagBeginnt: () => {
     UI.hudNeu();
     if (S.tag === 1) UI.toast('Hau das Gras weg – manchmal steckt ein Diamant drin!', 4000);
     else {
-      const text = [wetterText(S.wetter), morgenText(), TIPPS[S.tag]].filter(Boolean).join('\n');
+      // Alte Spielstände: wer die Wächter schon besiegt hat, bekommt den Hinweis auf die Portale einmal morgens
+      const neu = ['dunkel', 'berg'].find(g => gebietFrei(g) && !S.hinweise['portal_' + g]);
+      if (neu) S.hinweise['portal_' + neu] = true;
+      const text = [neu ? 'Irgendwo im Wald hat sich etwas verändert …' : '', wetterText(S.wetter), gebietFrei('berg') ? wetterTextGebirge(S.wetter) : '', morgenText(), TIPPS[S.tag]].filter(Boolean).join('\n');
       if (text) UI.toast(text, TIPPS[S.tag] ? 6000 : 4500);
     }
     steuerung.aktualisiere();
@@ -203,6 +226,9 @@ else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
   else if (q.has('eingang')) {          // ?eingang: vor dem Höhleneingang stehen
     const h = S.welt.hoehle; S.sp.x = h.tuer.x - 20; S.sp.y = h.tuer.y + 36; S.kam.x = S.sp.x; S.kam.y = S.sp.y;
   } else { S.phase = 'hoehle'; UI.zeigeHoehle(); }
+  if (q.has('gebiet')) {                        // ?eingang&gebiet=dunkel: Gebiet freispielen (nur diesmal) und hinreisen
+    const g = q.get('gebiet'); S.st.bosse = Math.max(S.st.bosse | 0, GEBIETE[g].ab); S.hinweise['portal_' + g] = true; reiseNach(g);
+  }
   if (q.has('ort')) { const [x, y] = q.get('ort').split(',').map(Number); S.sp.x = x; S.sp.y = y; S.kam.x = x; S.kam.y = y; S.gegner = []; }   // ?eingang&ort=200,240
   if (q.has('spaet')) S.zeit = S.dauer - 14;      // ?spaet: kurz vor Sonnenuntergang (Heimweg-Pfeil)
   // ?vor=6: so viele Sekunden vorspulen (Held steht still, unverwundbar) – für Bilder mitten im Kampf
@@ -258,7 +284,8 @@ function schleife(t) {
   zeichne(ctx, cv.width, cv.height, zoom);
   if (S.phase !== 'titel') UI.hud();
   musikWaehle(stueckFuerPhase(), S.phase === 'pause');
-  wetterTon(S.ort === 'wald' && S.phase === 'tag' && S.wetter && S.wetter.art !== 'sonne' ? S.wetter.art : null);
+  const leiserSchnee = S.gebiet === 'berg' && S.wetter && S.wetter.art === 'regen';
+  wetterTon(S.ort === 'wald' && S.phase === 'tag' && S.wetter && S.wetter.art !== 'sonne' && !leiserSchnee ? S.wetter.art : null);
   requestAnimationFrame(schleife);
 }
 requestAnimationFrame(schleife);

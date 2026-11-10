@@ -1,7 +1,7 @@
 // ui.js – Alles, was als HTML über dem Spielbild liegt: Anzeige oben, Titel, Laden, Tagesbilanz, Pause.
 
 import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
-import { AUFRUESTUNGEN, STEINE, KAMMERN } from './config.js';
+import { AUFRUESTUNGEN, STEINE, KAMMERN, SPEZIAL } from './config.js';
 import { S, liegenGeblieben } from './spiel.js';
 import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, TAUSCH_PREIS, LECKERLI_KOSTEN, NAMEN, tierName, nameSauber } from './begleiter.js';
 import { stubenBilder } from './stube.js';
@@ -126,12 +126,27 @@ export function hud() {
   const heute = S.heute ? S.heute.wert : 0;
   if (alt.heute !== heute) { alt.heute = heute; $('heuteZahl').textContent = heute ? `heute +${zahl(heute)}` : ''; }
   if (alt.tag !== S.tag) { alt.tag = S.tag; $('tagText').textContent = `Tag ${S.tag}`; }
-  const wk = S.wetter && S.ort === 'wald' ? S.wetter.art + S.wetter.richtung : '';
+  const bosse = S.st.bosse | 0, sz = S.schaetze || { tuerkis: 0, eis: 0 };
+  const zeigT = bosse >= 2 || sz.tuerkis > 0, zeigE = bosse >= 3 || sz.eis > 0;
+  const sk = `${zeigT}${zeigE}${sz.tuerkis}|${sz.eis}`;
+  if (alt.schaetze !== sk) {
+    alt.schaetze = sk;
+    $('schaetze').classList.toggle('versteckt', !zeigT && !zeigE);
+    $('schaetze').innerHTML = (zeigT ? `<span>${px(G.stein[SPEZIAL.tuerkis])}${sz.tuerkis}</span>` : '') + (zeigE ? `<span>${px(G.stein[SPEZIAL.eis])}${sz.eis}</span>` : '');
+  }
+  const imBerg = S.gebiet === 'berg' && S.ort === 'wald';
+  $('kaelte').classList.toggle('versteckt', !imBerg);
+  if (imBerg) {
+    const q = Math.max(0, S.kaelte / S.w.kaelte);
+    $('kaelteBalken').style.width = (q * 100).toFixed(0) + '%';
+    $('kaelte').classList.toggle('kalt', q < 0.2);
+  }
+  const wk = S.wetter && S.ort === 'wald' ? S.wetter.art + S.wetter.richtung + S.gebiet : '';
   if (alt.wetter !== wk) {
     alt.wetter = wk;
     const w = S.wetter, a = $('wetterAnzeige');
     if (!w || S.ort !== 'wald' || w.art === 'sonne') a.innerHTML = '';
-    else if (w.art === 'regen') a.innerHTML = 'Regen';
+    else if (w.art === 'regen') a.innerHTML = S.gebiet === 'berg' ? 'Schnee' : 'Regen';
     else a.innerHTML = `Sturm <i class="windpfeil" style="transform: rotate(${Math.atan2(w.wind.y, w.wind.x)}rad)"></i>`;
   }
   const q = Math.min(1, S.zeit / S.dauer);
@@ -206,6 +221,7 @@ function waren() {
   const box = $('waren');
   box.innerHTML = '';
   for (const a of AUFRUESTUNGEN) {
+    if (a.ab && (S.st.bosse | 0) < a.ab) continue;     // Fackel/Daunenjacke erst, wenn das Gebiet frei ist
     const stufe = S.st[a.id] | 0, max = a.kosten.length, voll = stufe >= max, preis = voll ? 0 : a.kosten[stufe];
     const icon = a.id === 'klinge' ? G.icons.klinge[Math.min(stufe + (voll ? 0 : 1), 5)] : G.icons[a.id];
     const name = a.id === 'klinge' ? (voll ? a.stufen[stufe] : a.stufen[stufe + 1]) : a.name;
@@ -356,7 +372,7 @@ export function zeigeBegleiterWahl() {
 }
 
 // ---------- Glitzerhöhle ----------
-const BELOHNUNGS_BILD = ['fackel', 'herz', 'steigeisen', 'schliff', 'riesendiamant'];
+const BELOHNUNGS_BILD = ['herz', 'fackel', 'steigeisen', 'schliff', 'riesendiamant'];
 export function zeigeHoehle() {
   $('hoehleGeld').innerHTML = `${px(G.waehrung)}<span>${zahl(S.geld)}</span>`;
   const box = $('kammern');
@@ -379,8 +395,10 @@ export function zeigeHoehle() {
     if (besiegt) { b.textContent = 'Besiegt'; b.disabled = true; }
     else if (offen) { b.textContent = 'Kämpfen!'; b.onclick = () => h.kaempfen(nr); }
     else if (dran) {
-      b.innerHTML = `Tür öffnen ${px(G.waehrung)}${zahl(k.preis)}`;
-      b.disabled = S.geld < k.preis;
+      const br = k.brauche || {};
+      const extra = Object.entries(br).map(([art, n]) => `<span class="brauche">+ ${px(G.stein[SPEZIAL[art]])}${n}</span>`).join('');
+      b.innerHTML = `Tür öffnen ${px(G.waehrung)}${zahl(k.preis)}${extra}`;
+      b.disabled = S.geld < k.preis || Object.entries(br).some(([art, n]) => ((S.schaetze || {})[art] | 0) < n);
       b.onclick = () => { if (h.tuerOeffnen(nr)) zeigeHoehle(); };
     } else { b.textContent = `Erst Kammer ${nr - 1}`; b.disabled = true; }
     d.append(b);
@@ -423,7 +441,7 @@ export function zeigeBilanz({ grund, heute, verlust, tag, kammer, liegen }) {
   let steine = '';
   STEINE.forEach((s, i) => {
     if (!heute.steine[i]) return;
-    steine += `<div class="stein-zeile">${px(G.stein[i])}<span>${heute.steine[i]} × ${s.name}</span><b>${zahl(heute.steine[i] * s.wert)}</b></div>`;
+    steine += `<div class="stein-zeile">${px(G.stein[i])}<span>${heute.steine[i]} × ${s.name}</span><b>${s.spezial ? 'für die Höhle' : zahl(heute.steine[i] * s.wert)}</b></div>`;
   });
   if (!steine) steine = '<p class="leer">Heute keinen einzigen Diamanten gefunden.</p>';
   $('bilanzInhalt').innerHTML = `
@@ -457,11 +475,11 @@ export function nachtUebergang(mitte) {
   nachtAn(() => { mitte(); setTimeout(nachtAus, 450); });
 }
 // Einzeln: schwarz werden (mit „Gute Nacht“), dann mitte(); später nachtAus() blendet wieder auf
-export function nachtAn(mitte) {
+export function nachtAn(mitte, text = '☾ Gute Nacht …') {
   if (nachtLaeuft) return;
   nachtLaeuft = true;
   const n = $('nacht');
-  n.querySelector('span').textContent = '☾ Gute Nacht …';
+  n.querySelector('span').textContent = text;
   n.classList.add('an');
   setTimeout(mitte, 650);
 }

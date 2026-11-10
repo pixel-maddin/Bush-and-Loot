@@ -627,7 +627,7 @@ export function kammerZeichne(ctx, e) {
     }
   } else if (e.t === 'belohnung') {
     const bd = e.o, k = bd.k;
-    const img = [G.belohnung.fackel, G.belohnung.herz, G.belohnung.steigeisen, G.belohnung.schliff, G.belohnung.riesendiamant][k - 1];
+    const img = [G.belohnung.herz, G.belohnung.fackel, G.belohnung.steigeisen, G.belohnung.schliff, G.belohnung.riesendiamant][k - 1];
     const schweb = Math.sin(S.t * 3) * 2;
     ctx.globalCompositeOperation = 'lighter';
     const gr = ctx.createRadialGradient(bd.x, bd.y - 10, 0, bd.x, bd.y - 10, 22);
