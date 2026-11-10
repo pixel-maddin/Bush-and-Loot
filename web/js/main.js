@@ -3,6 +3,7 @@
 import { KACHEL, SICHT_KACHELN } from './config.js';
 import { initGrafik, setzeFigur } from './grafik.js';
 import { initHoehlenGrafik } from './hoehlengrafik.js';
+import { initWetterGrafik, wetterText } from './wetter.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
   kaufen, update, zeichne, setzeHooks, oeffneTuer, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
@@ -50,7 +51,7 @@ const TIPPS = {
 };
 import * as UI from './ui.js';
 import { initEingabe, eingabe } from './eingabe.js';
-import { tonStart, tonSchlafen } from './ton.js';
+import { tonStart, tonSchlafen, wetterTon } from './ton.js';
 import { musikWaehle } from './musik.js';
 
 const cv = document.getElementById('cv');
@@ -71,6 +72,7 @@ groesse();
 
 initGrafik();
 initHoehlenGrafik();
+initWetterGrafik();
 laden();
 if (S.figur) setzeFigur(S.figur.art, S.figur.farbe);
 // Zum Testen: ?geld=5000 schenkt Diamanten – nur lokal, online soll keiner schummeln
@@ -118,7 +120,7 @@ setzeHooks({
     UI.hudNeu();
     if (S.tag === 1) UI.toast('Hau das Gras weg – manchmal steckt ein Diamant drin!', 4000);
     else {
-      const text = [morgenText(), TIPPS[S.tag]].filter(Boolean).join('\n');
+      const text = [wetterText(S.wetter), morgenText(), TIPPS[S.tag]].filter(Boolean).join('\n');
       if (text) UI.toast(text, TIPPS[S.tag] ? 6000 : 4500);
     }
     steuerung.aktualisiere();
@@ -186,6 +188,7 @@ UI.zeigeTitel(hatSpielstand());
 // Ohne Ton, weil niemand getippt hat. Fürs Bild aus Headless-Chrome gedacht (siehe CLAUDE.md).
 // ?begleiter=katze-tiger: Tier nur für diesen Besuch dabeihaben (wird nicht gespeichert, solange man nichts kauft)
 if (lokal && q.has('begleiter')) { const [art, rasse] = q.get('begleiter').split('-'); S.begleiter = { art, rasse }; }
+if (lokal && q.has('wetter')) S.wetterTest = q.get('wetter');         // ?wetter=regen / sturm: jeden Tag dieses Wetter
 if (lokal && q.has('tierwahl')) { S.geld = Math.max(S.geld, 200); UI.zeigeBegleiterWahl(); }
 else if (lokal && q.has('laden')) { S.phase = 'laden'; UI.zeigeHaus(true); }    // ?laden: Ladenfenster nach dem Tag
 else if (lokal && q.has('wahl')) UI.zeigeFigur('start');                    // ?wahl: Figur-Auswahl
@@ -255,6 +258,7 @@ function schleife(t) {
   zeichne(ctx, cv.width, cv.height, zoom);
   if (S.phase !== 'titel') UI.hud();
   musikWaehle(stueckFuerPhase(), S.phase === 'pause');
+  wetterTon(S.ort === 'wald' && S.phase === 'tag' && S.wetter && S.wetter.art !== 'sonne' ? S.wetter.art : null);
   requestAnimationFrame(schleife);
 }
 requestAnimationFrame(schleife);

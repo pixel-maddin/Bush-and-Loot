@@ -20,6 +20,34 @@ export function tonStart() {
   } catch (e) { ac = null; }
 }
 
+// Wettergeräusch im Hintergrund: Regenrauschen oder heulender Wind (null = still)
+let wetterArt = null, wetterKnoten = null;
+export function wetterTon(art) {
+  if (stumm) art = null;
+  if (!ac || art === wetterArt) return;
+  wetterArt = art;
+  const t = ac.currentTime;
+  if (wetterKnoten) {
+    const alt = wetterKnoten;
+    alt.g.gain.cancelScheduledValues(t); alt.g.gain.setValueAtTime(alt.g.gain.value, t); alt.g.gain.linearRampToValueAtTime(0, t + 1);
+    setTimeout(() => { try { alt.q.stop(); alt.lfo && alt.lfo.stop(); } catch (e) { /* egal */ } }, 1200);
+    wetterKnoten = null;
+  }
+  if (!art) return;
+  const q = ac.createBufferSource(); q.buffer = rausch; q.loop = true;
+  const fi = ac.createBiquadFilter(), g = ac.createGain();
+  let lfo = null;
+  if (art === 'regen') { fi.type = 'bandpass'; fi.frequency.value = 2600; fi.Q.value = 0.4; }
+  else {
+    fi.type = 'bandpass'; fi.frequency.value = 420; fi.Q.value = 1.1;
+    lfo = ac.createOscillator(); const tiefe = ac.createGain();
+    lfo.frequency.value = 0.18; tiefe.gain.value = 180; lfo.connect(tiefe); tiefe.connect(fi.frequency); lfo.start();
+  }
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(art === 'regen' ? 0.05 : 0.07, t + 1.5);
+  q.connect(fi); fi.connect(g); g.connect(haupt); q.start();
+  wetterKnoten = { q, g, lfo };
+}
+
 // Wer die App verlässt, soll nichts mehr hören (sonst dudelt die Musik im Hintergrund weiter)
 export function tonSchlafen(ja) {
   if (!ac) return;

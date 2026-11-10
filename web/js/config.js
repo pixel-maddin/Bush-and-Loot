@@ -41,6 +41,8 @@ export const GEGNER = {
   hummel:   { name: 'Brummhummel',  hp: 1, tempo: 46, schaden: 1, beute: 0.4 },
   pilz:     { name: 'Hüpfpilz',     hp: 4, tempo: 58, schaden: 1, beute: 0.8 },
   motte:    { name: 'Mottenkind',   hp: 2, tempo: 42, schaden: 1, beute: 0.5 },   // nur bei der Riesenmotte
+  blob:     { name: 'Riesenblob',   hp: 6, tempo: 16, schaden: 1, beute: 0.9 },   // nur bei Regen, zerfällt in zwei Blobchen
+  blobchen: { name: 'Blobchen',     hp: 1, tempo: 30, schaden: 1, beute: 0.3 },
   kueken:   { name: 'Küken',        hp: 1, tempo: 50, schaden: 1, beute: 0.4 },   // nur bei der Riesenente (hüpft wie der Pilz)
 };
 export function gegnerMax(tag) { return Math.min(16, 2 + Math.floor(tag * 1.3)); }

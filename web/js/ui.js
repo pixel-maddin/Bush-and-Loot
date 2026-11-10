@@ -126,6 +126,14 @@ export function hud() {
   const heute = S.heute ? S.heute.wert : 0;
   if (alt.heute !== heute) { alt.heute = heute; $('heuteZahl').textContent = heute ? `heute +${zahl(heute)}` : ''; }
   if (alt.tag !== S.tag) { alt.tag = S.tag; $('tagText').textContent = `Tag ${S.tag}`; }
+  const wk = S.wetter && S.ort === 'wald' ? S.wetter.art + S.wetter.richtung : '';
+  if (alt.wetter !== wk) {
+    alt.wetter = wk;
+    const w = S.wetter, a = $('wetterAnzeige');
+    if (!w || S.ort !== 'wald' || w.art === 'sonne') a.innerHTML = '';
+    else if (w.art === 'regen') a.innerHTML = 'Regen';
+    else a.innerHTML = `Sturm <i class="windpfeil" style="transform: rotate(${Math.atan2(w.wind.y, w.wind.x)}rad)"></i>`;
+  }
   const q = Math.min(1, S.zeit / S.dauer);
   $('sonne').style.left = (q * 100).toFixed(1) + '%';
   $('sonnenBahn').classList.toggle('spaet', q > 0.8);

@@ -9,6 +9,7 @@ import { G } from './grafik.js';
 import { SFX } from './ton.js';
 import { baueWelt } from './welt.js';
 import { klemme } from './hilfe.js';
+import { neuesWetter, windFaktor, wetterUpdate, wetterZeichne } from './wetter.js';
 import { lebenInit, lebenUpdate, lebenBoden, lebenListe, lebenZeichne, lebenUeber, lebenLeuchten } from './leben.js';
 import { begleiterUpdate, begleiterNeu, zeichneBegleiter, begleiterSchatten } from './begleiter.js';
 import { baueKammer, neuerBoss, kammerUpdate, bossTreffer, kammerBoden, kammerListe, kammerZeichne, kammerDunkel } from './hoehle.js';
@@ -76,6 +77,7 @@ export const hatSpielstand = () => S.tag > 1 || S.geld > 0;
 export function initSpiel() {
   S.welt = baueWelt(WELT_SAAT);
   lebenInit(S.welt);
+  S.wetter = neuesWetter(1);
   S.ort = 'wald'; S.wald = null; S.boss = null; S.geschosse = []; S.wellen = []; S.warn = []; S.belohnungsDing = null;
   S.w = werte(S.st);
   S.sp = neuerSpieler();
@@ -128,6 +130,7 @@ function ruheImBild() { S.wackeln = 0; S.stopp = 0; }
 export function neuerTag() {
   if (S.ort !== 'wald') zurueckInDenWald();      // in einer Kammer umgekippt
   S.w = werte(S.st);
+  S.wetter = neuesWetter(S.tag, S.wetterTest);
   S.zeit = 0; S.dauer = S.w.tagDauer;
   S.sp = neuerSpieler();
   pflanzen();
@@ -263,7 +266,7 @@ export function update(dt, ein) {
   S.rauchT -= dt;
   if (S.rauchT <= 0) { S.rauchT = 0.3; rauch(); }
   partikelUpdate(dt);
-  if (S.ort === 'wald') lebenUpdate(dt, S, S.sichtfeld);
+  if (S.ort === 'wald') { lebenUpdate(dt, S, S.sichtfeld); wetterUpdate(dt, S); }
   for (const b of S.bueschel) if (b.wackel > 0) b.wackel -= dt;
   const neu = ein.holeNeu();
 
@@ -344,6 +347,7 @@ function spielerUpdate(dt, ein, neu) {
   }
   let tempo = w.tempo;
   if (p.ladung > 0.15) tempo *= 0.6;
+  if (m > 0.1 && S.ort === 'wald') tempo *= windFaktor(S.wetter, r.x / m, r.y / m);   // Sturm: mit dem Wind schneller
   let dx = 0, dy = 0;
   if (m > 0.1) {
     const f = Math.min(1, m);
@@ -425,7 +429,8 @@ function schlag(rund) {
     if (!b || b.weg) continue;
     if (trifft(b.x, b.y - 4, 5)) { haueBueschel(b, schaden); n++; }
   }
-  for (const g of S.gegner) if (!g.tot && trifft(g.x, g.y - 4 - g.z, 7)) haueGegner(g, schaden, cx, cy);
+  // Kopie: Was dieser Hieb neu entstehen lässt (Blobchen), trifft er nicht gleich mit
+  for (const g of S.gegner.slice()) if (!g.tot && trifft(g.x, g.y - 4 - g.z, 7)) haueGegner(g, schaden, cx, cy);
   if (S.boss) bossTreffer(trifft, schaden);
   if (n >= 6) S.wackeln = Math.max(S.wackeln, 0.08);
 }
@@ -449,8 +454,8 @@ function haueBueschel(b, schaden) {
   else if (S.sp.hp < w.maxHp && Math.random() < 0.025) wirfHerz(b.x, b.y - 3);
   // Manchmal sitzt einer drin …
   if (S.tag >= 2 && Math.random() < 0.012 && S.gegner.length < gegnerMax(S.tag) + 2) {
-    const arten = gegnerArten(S.tag);
-    spawne(arten[Math.floor(Math.random() * arten.length)], b.x, b.y, true);
+    const a = arten();
+    spawne(a[Math.floor(Math.random() * a.length)], b.x, b.y, true);
   }
 }
 
@@ -481,6 +486,8 @@ function beuteUpdate(dt) {
       e.x += dx / d * s; e.y += dy / d * s; e.z *= 0.85;
     } else {
       e.vz -= 260 * dt; e.z += e.vz * dt;
+      // Sturm: Diamanten in der Luft trägt der Wind mit
+      if (e.z > 0.5 && S.wetter && S.wetter.wind.staerke && S.ort === 'wald') { e.vx += S.wetter.wind.x * 90 * dt; e.vy += S.wetter.wind.y * 55 * dt; }
       if (e.z <= 0) { e.z = 0; e.vz = Math.abs(e.vz) > 25 ? -e.vz * 0.4 : 0; e.vx *= 0.6; e.vy *= 0.6; }
       e.x += e.vx * dt; e.y += e.vy * dt;
       // In der Kammer prallen Diamanten an den Wänden ab, statt darin zu verschwinden
@@ -521,21 +528,27 @@ export function spawne(art, x, y, ausGras) {
   if (ausGras) { SFX.plopp(); puff(x, y - 4); }
 }
 function spawneIrgendwo() {
-  const W = S.welt, p = S.sp, arten = gegnerArten(S.tag);
+  const W = S.welt, p = S.sp, a = arten();
   for (let n = 0; n < 30; n++) {
     const tx = 3 + Math.floor(Math.random() * (B - 6)), ty = 3 + Math.floor(Math.random() * (H - 6));
     if (W.fest[ty * B + tx]) continue;
     const x = tx * K + 8, y = ty * K + 10;
     if (Math.hypot(x - p.x, y - p.y) < 150) continue;
-    spawne(arten[Math.floor(Math.random() * arten.length)], x, y, false);
+    spawne(a[Math.floor(Math.random() * a.length)], x, y, false);
     return;
   }
+}
+// Welche Plagegeister heute unterwegs sind – bei Regen kommen Riesenblobs dazu
+function arten() {
+  const a = gegnerArten(S.tag);
+  if (S.wetter && S.wetter.art === 'regen') a.push('blob', 'blob');
+  return a;
 }
 function spawner(dt) {
   S.spawnT -= dt;
   if (S.spawnT > 0) return;
   S.spawnT = Math.max(2.5, 7 - S.tag * 0.4);
-  if (S.gegner.length < gegnerMax(S.tag)) spawneIrgendwo();
+  if (S.gegner.length < gegnerMax(S.tag) + (S.wetter && S.wetter.art === 'regen' ? 2 : 0)) spawneIrgendwo();
 }
 
 function gegnerUpdate(dt) {
@@ -545,7 +558,7 @@ function gegnerUpdate(dt) {
     const def = GEGNER[g.art];
     const dx = p.x - g.x, dy = p.y - g.y, d = Math.hypot(dx, dy) || 1;
     const ab = Math.exp(-8 * dt);
-    if (g.art === 'schnecke') {
+    if (g.art === 'schnecke' || g.art === 'blob' || g.art === 'blobchen') {   // kriechen hinterher
       let mx = 0, my = 0;
       if (d < 110) { mx = dx / d * def.tempo; my = dy / d * def.tempo; }
       else {
@@ -605,6 +618,7 @@ function haueGegner(g, schaden, cx, cy) {
   S.stopp = 0.04;
   if (g.hp > 0) { SFX.gegnerTreffer(); return; }
   g.tot = true; S.heute.besiegt++;
+  if (g.art === 'blob') { spawne('blobchen', g.x - 7, g.y, false); spawne('blobchen', g.x + 7, g.y, false); }   // zerfällt
   SFX.gegnerWeg(); puff(g.x, g.y - 4 - g.z);
   if (Math.random() < GEGNER[g.art].beute) wirfStein(g.x, g.y - 4, waehleStein(Math.min(4, 1 + Math.floor(S.tag / 3)), S.w.glueck));
 }
@@ -764,6 +778,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   }
   ctx.globalAlpha = 1;
 
+  if (!kammer) wetterZeichne(ctx, S);
   if (kammer) kammerDunkel(ctx, L, T, vw, vh);
   else if (S.phase === 'tag' && W.haus && S.zeit > S.dauer - HEIM_WARNUNG) heimPfeil(ctx, L, T, vw, vh);
   // Abendlicht (nur draußen)
@@ -839,6 +854,8 @@ function wasserGlitzer(ctx, L, T, R, U) {
 function zeichneBueschel(ctx, b, spielt) {
   const img = G.bueschel[b.art];
   let s = Math.sin(S.t * 1.8 + b.ph) * 0.07;
+  const wi = S.wetter && S.ort === 'wald' ? S.wetter.wind : null;
+  if (wi && wi.staerke) s += wi.x * wi.staerke * (0.16 + Math.sin(S.t * 4 + b.ph) * 0.07);   // Sturm biegt das Gras
   if (b.wackel > 0) s += Math.sin(b.wackel * 50) * b.wackel * 1.4;
   if (spielt) {
     const p = S.sp, dx = b.x - p.x, dy = b.y - p.y;
@@ -944,7 +961,7 @@ function zeichneSchwert(ctx, ox = 0, oy = 0) {
 
 function zeichneGegner(ctx, g) {
   const satz = G.gegner[g.art];
-  const f = g.art === 'hummel' || g.art === 'motte' ? Math.floor(g.t * (g.art === 'motte' ? 12 : 20)) % 2 : g.art === 'pilz' || g.art === 'kueken' ? (g.hop > 0 ? 0 : 1) : 0;
+  const f = g.art === 'blob' || g.art === 'blobchen' ? Math.floor(g.t * 3) % 2 : g.art === 'hummel' || g.art === 'motte' ? Math.floor(g.t * (g.art === 'motte' ? 12 : 20)) % 2 : g.art === 'pilz' || g.art === 'kueken' ? (g.hop > 0 ? 0 : 1) : 0;
   const reihe = g.blitz > 0 ? (g.links ? satz.lw : satz.rw) : (g.links ? satz.l : satz.r);
   const img = reihe[f];
   let sx = 1;

@@ -340,3 +340,8 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 /* Sieg: der Riesendiamant funkelt */
 .fundpanel.sieg #fundBild { width: 66px; animation: huepfen 1.2s ease-in-out infinite, funkeln 1.6s ease-in-out infinite; }
 @keyframes funkeln { 0%, 100% { filter: drop-shadow(0 0 2px #7ff0a6); } 50% { filter: drop-shadow(0 0 12px #b8ffd0) brightness(1.15); } }
+
+/* Wetter in der Anzeige oben */
+#wetterAnzeige { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; font-size: 11px; font-weight: 800; color: #cfe4ff; vertical-align: middle; }
+#wetterAnzeige:empty { display: none; }
+.windpfeil { display: inline-block; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 10px solid #ffffff; filter: drop-shadow(0 1px 0 #000); }
