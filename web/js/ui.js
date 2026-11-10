@@ -170,7 +170,7 @@ export function zeigeHaus(nachTag) {
   const spaet = !nachTag && S.zeit / S.dauer > 0.75;
   const liegt = nachTag ? { anzahl: 0 } : liegenGeblieben();
   const warnung = liegt.anzahl
-    ? ` Draußen liegen noch ${liegt.anzahl} ${liegt.anzahl === 1 ? 'Diamant' : 'Diamanten'} (Wert ${zahl(liegt.wert)}) – wer jetzt schläft, lässt sie liegen!`
+    ? ` Draußen liegen noch ${liegt.anzahl} ${liegt.anzahl === 1 ? 'Edelstein' : 'Edelsteine'}${liegt.wert ? ` (Wert ${zahl(liegt.wert)})` : ''} – wer jetzt schläft, lässt sie liegen!`
     : '';
   $('hausText').textContent = (nachTag
     ? 'Der Tag ist vorbei. Gib deine Diamanten aus – morgen wächst das Gras neu.'
@@ -454,7 +454,7 @@ export function zeigeBilanz({ grund, heute, verlust, tag, kammer, liegen }) {
     ${verlust ? `<p class="verlust">${grund === 'abend'
       ? 'Im Dunkeln über Wurzeln gestolpert – die Hälfte ist aus der Tasche gekullert'
       : 'Beim Umkippen ist die Hälfte davon aus der Tasche gekullert'}: −${zahl(verlust)}</p>` : ''}
-    ${liegen && liegen.anzahl ? `<p class="verlust">Liegen geblieben: ${liegen.anzahl} ${liegen.anzahl === 1 ? 'Diamant' : 'Diamanten'} (Wert ${zahl(liegen.wert)}) – die findet keiner mehr.</p>` : ''}
+    ${liegen && liegen.anzahl ? `<p class="verlust">Liegen geblieben: ${liegen.anzahl} ${liegen.anzahl === 1 ? 'Edelstein' : 'Edelsteine'}${liegen.wert ? ` (Wert ${zahl(liegen.wert)})` : ''} – die findet keiner mehr.</p>` : ''}
     ${grund === 'abend' ? '<p class="hilfe">Nächstes Mal vor Sonnenuntergang in den Baumstumpf und „Schlafen gehen“ – dann bleibt alles.</p>' : ''}
     ${kammer ? '<p class="hilfe">Die Tür bleibt offen – morgen kannst du es noch mal versuchen. Vielleicht mit einer besseren Klinge?</p>' : ''}
   `;

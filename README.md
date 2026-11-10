@@ -128,6 +128,27 @@ trotzdem).
 - Fackel und Steigeisen sind für den Dunkelwald und das Gebirge, die als
   Nächstes dazukommen.
 
+## Neue Gebiete: Dunkelwald und Gebirge
+
+An den Enden der beiden Wege im Startwald stehen alte Ruinen. Erst passiert dort
+nichts – aber wenn ein Wächter in der Höhle besiegt ist, „hat sich irgendwo im Wald
+etwas verändert“: Nach Boss 2 erwacht die linke Ruine zum Portal in den
+**Dunkelwald**, nach Boss 3 die rechte zum Portal ins **Gebirge**. Durch das Portal
+im Gebiet geht es zurück. Die Zeit läuft weiter – vor Sonnenuntergang musst du wieder
+im Baumstumpf sein.
+
+- **Dunkelwald:** stockfinster, nur der Lichtkreis der Fackel ist hell (im Laden
+  verbesserbar). Leuchtpilze, Glühwürmchen, Fledermäuse. Im Gras stecken leuchtende
+  **Türkise**.
+- **Gebirge:** Schnee, Tannen, zugefrorene Teiche, hüpfende Schneekugeln. Die
+  **Wärme** oben links läuft ab – am Lagerfeuer beim Portal wird dir warm, ist sie
+  leer, frierst du Herz um Herz ein. Die **Daunenjacke** im Laden hält länger warm.
+  Wenn es im Wald regnet, schneit es hier: Man stapft langsamer, und es gibt mehr
+  Schneekugeln. Im Gras stecken **Eiskristalle**.
+- Türkise und Eiskristalle sind keine Diamanten zum Ausgeben, sondern Schlüssel für
+  die späteren Höhlentüren: Tür 3 braucht 15 Türkise, Tür 4 15 Eiskristalle, Tür 5
+  je 10. Wer umkippt oder zu spät heimkommt, verliert auch davon die Hälfte des Tages.
+
 ## Begleiter
 
 Im Laden gibt es für 200 Diamanten einen Begleiter: drei Hunde (Dackel, Spitz,

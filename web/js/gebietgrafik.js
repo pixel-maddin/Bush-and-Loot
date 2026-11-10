@@ -151,4 +151,19 @@ export function initGebietGrafik() {
   G.stein[6] = eiskristall();
   G.feuer = lagerfeuer();
   G.leuchtpilz = [leuchtpilz('#3ee8d0'), leuchtpilz('#bb62ee'), leuchtpilz('#7ff0ff')];
+  // Laden-Symbole für Fackel und Daunenjacke (ohne Symbol bricht der Aufbau der Warenliste ab)
+  G.icons.fackel = G.belohnung.fackel;
+  G.icons.jacke = daunenjacke();
+}
+
+function daunenjacke() {
+  const pb = new PB(14, 13);
+  for (let y = 2; y < 12; y++) {
+    const w = y < 4 ? 4 : 6;
+    for (let x = 7 - w; x < 7 + w; x++) pb.set(x, y, (y % 3 === 1) ? '#c8443c' : x < 7 ? '#f0645a' : '#d8503f');
+  }
+  for (let y = 4; y < 11; y++) { pb.set(0, y, '#c8443c'); pb.set(13, y, '#c8443c'); }      // Ärmel
+  pb.rechteck(5, 0, 4, 3, '#f4ece0');                                                     // Kragen
+  for (let y = 3; y < 12; y++) pb.set(7, y, '#7a2622');                                   // Reißverschluss
+  return pb.umriss('#3a1410').bild();
 }
