@@ -9,6 +9,7 @@ import { G } from './grafik.js';
 import { SFX } from './ton.js';
 import { baueWelt } from './welt.js';
 import { klemme } from './hilfe.js';
+import { lebenInit, lebenUpdate, lebenBoden, lebenListe, lebenZeichne, lebenUeber, lebenLeuchten } from './leben.js';
 import { begleiterUpdate, begleiterNeu, zeichneBegleiter, begleiterSchatten } from './begleiter.js';
 import { baueKammer, neuerBoss, kammerUpdate, bossTreffer, kammerBoden, kammerListe, kammerZeichne, kammerDunkel } from './hoehle.js';
 
@@ -74,6 +75,7 @@ export const hatSpielstand = () => S.tag > 1 || S.geld > 0;
 
 export function initSpiel() {
   S.welt = baueWelt(WELT_SAAT);
+  lebenInit(S.welt);
   S.ort = 'wald'; S.wald = null; S.boss = null; S.geschosse = []; S.wellen = []; S.warn = []; S.belohnungsDing = null;
   S.w = werte(S.st);
   S.sp = neuerSpieler();
@@ -261,6 +263,7 @@ export function update(dt, ein) {
   S.rauchT -= dt;
   if (S.rauchT <= 0) { S.rauchT = 0.3; rauch(); }
   partikelUpdate(dt);
+  if (S.ort === 'wald') lebenUpdate(dt, S, S.sichtfeld);
   for (const b of S.bueschel) if (b.wackel > 0) b.wackel -= dt;
   const neu = ein.holeNeu();
 
@@ -679,6 +682,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   const ox = Math.round((cx - vw / 2 + wx) * zoom), oy = Math.round((cy - vh / 2 + wy) * zoom);
   const L = ox / zoom, T = oy / zoom, R = L + vw, U = T + vh;
   S.ansicht = { ox, oy, zoom };      // für die Tippen-Steuerung (Bildschirm → Welt)
+  S.sichtfeld = { L, T, vw, vh };    // für das Gewusel (Vögel, Mücken, Eichhörnchen)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = kammer ? W.thema.hinter : '#16301b'; ctx.fillRect(0, 0, cw, ch);
@@ -699,7 +703,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   if (tierDa) begleiterSchatten(ctx);
   for (const g of S.gegner) if (sicht(g.x, g.y, 12, 12, 12)) ellipse(ctx, g.x, g.y, g.art === 'hummel' || g.art === 'motte' ? 3 : 5, g.art === 'hummel' || g.art === 'motte' ? 1.5 : 2);
   for (const e of S.beute) if (e.z > 1) ellipse(ctx, e.x, e.y + 3, 2.5, 1);
-  if (kammer) kammerBoden(ctx);
+  if (kammer) kammerBoden(ctx); else lebenBoden(ctx, S);
   // Zielmarke der Tippen-Steuerung: kleiner pulsierender Ring am Boden
   if (spielt && p.ziel && S.phase === 'tag') {
     const pr = 4 + Math.sin(S.t * 10) * 0.8;
@@ -713,7 +717,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   for (const b of W.baeume) if (sicht(b.x, b.y, 24, 50, 4)) liste.push({ y: b.y, t: 1, o: b });
   if (W.haus && sicht(W.haus.x, W.haus.y, 50, 85, 6)) liste.push({ y: W.haus.y, t: 2, o: W.haus });
   if (W.hoehle && sicht(W.hoehle.x, W.hoehle.y, 50, 70, 6)) liste.push({ y: W.hoehle.y, t: 6, o: W.hoehle });
-  if (kammer) kammerListe(liste);
+  if (kammer) kammerListe(liste); else lebenListe(liste, S, sicht);
   if (spielt) liste.push({ y: p.y, t: 3, o: p });
   if (tierDa) liste.push({ y: S.tier.y, t: 7, o: S.tier });
   for (const g of S.gegner) if (sicht(g.x, g.y, 12, 20, 4)) liste.push({ y: g.y, t: 4, o: g });
@@ -733,10 +737,13 @@ export function zeichne(ctx, cw, ch, zoom) {
         break;
       }
       case 7: zeichneBegleiter(ctx); break;
-      default: kammerZeichne(ctx, e);
+      default:
+        if (e.t === 'schilf' || e.t === 'ente' || e.t === 'hoernchen') lebenZeichne(ctx, e, S);
+        else kammerZeichne(ctx, e);
     }
   }
 
+  if (!kammer) lebenUeber(ctx, S);
   // Partikel
   for (const q of S.partikel) {
     if (!sicht(q.x, q.y, 4, 4, 4)) continue;
@@ -773,6 +780,7 @@ export function zeichne(ctx, cw, ch, zoom) {
     const I = G.hausInfo, hx = W.haus.x - I.w / 2, hy = W.haus.y + 2 - I.fussY;
     for (const [fx, fy, fr] of I.fenster) leuchten(ctx, hx + fx, hy + fy, fr * (1 + abend), abend * 0.55);
     ctx.globalCompositeOperation = 'source-over';
+    lebenLeuchten(ctx, S, abend);
   }
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);

@@ -200,6 +200,7 @@ else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
   else if (q.has('eingang')) {          // ?eingang: vor dem Höhleneingang stehen
     const h = S.welt.hoehle; S.sp.x = h.tuer.x - 20; S.sp.y = h.tuer.y + 36; S.kam.x = S.sp.x; S.kam.y = S.sp.y;
   } else { S.phase = 'hoehle'; UI.zeigeHoehle(); }
+  if (q.has('ort')) { const [x, y] = q.get('ort').split(',').map(Number); S.sp.x = x; S.sp.y = y; S.kam.x = x; S.kam.y = y; S.gegner = []; }   // ?eingang&ort=200,240
   if (q.has('spaet')) S.zeit = S.dauer - 14;      // ?spaet: kurz vor Sonnenuntergang (Heimweg-Pfeil)
   // ?vor=6: so viele Sekunden vorspulen (Held steht still, unverwundbar) – für Bilder mitten im Kampf
   if (q.has('vor')) {
