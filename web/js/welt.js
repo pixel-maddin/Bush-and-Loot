@@ -147,6 +147,13 @@ export function baueGebiet(gebiet, saat) {
   // Lagerfeuer im Gebirge (wärmt), links neben dem Platz
   const feuer = gebiet === 'berg' ? { x: (ptx - 3) * K + 8, y: (pty + 4) * K + 6 } : null;
   if (feuer) { const fx = ptx - 3, fy = pty + 4; fest[id(fx, fy)] = 1; sperr[id(fx, fy)] = 1; }
+  // Unterschlupf rechts vom Platz (Zelt im Dunkelwald, Berghütte im Gebirge): 3 × 2 Kacheln, Tür unten in der Mitte.
+  // Drinnen: Laden und „Schlafen gehen“ – so muss man nicht erst zurück zum Baumstumpf.
+  const hx0 = ptx + 3, hy0 = pty + 1;
+  for (let j = hy0; j < hy0 + 2; j++) for (let i = hx0; i < hx0 + 3; i++) { fest[id(i, j)] = 1; sperr[id(i, j)] = 1; }
+  for (let j = hy0 - 1; j <= hy0 + 3; j++) for (let i = hx0 - 1; i <= hx0 + 3; i++) sperr[id(i, j)] = 1;
+  const huette = { x: (hx0 + 1.5) * K, y: (hy0 + 2) * K, art: gebiet };
+  huette.tuer = { x: huette.x, y: huette.y };
   // Teiche (im Gebirge zugefroren – fest, aber ohne Enten)
   const teiche = gebiet === 'berg' ? [[8 + r() * 3, 9 + r() * 3, 2.4], [26 + r() * 3, 25 + r() * 3, 2.8]] : [[9 + r() * 3, 26 + r() * 3, 2.6]];
   for (const [mx, my, mr] of teiche) {
@@ -185,7 +192,7 @@ export function baueGebiet(gebiet, saat) {
     if (sperr[id(x, y)]) continue;
     pilze.push({ x: x * K + 2 + r() * 12, y: y * K + 4 + r() * 10, v: Math.floor(r() * 3), ph: r() * 6 });
   }
-  const welt = { gebiet, b: N, h: N, boden, fest, sperr, baeume, felsen, haus: null, hoehle: null, portale: [], portal, feuer, pilze, start, saat };
+  const welt = { gebiet, b: N, h: N, boden, fest, sperr, baeume, felsen, haus: null, hoehle: null, portale: [], portal, feuer, huette, pilze, start, saat };
   welt.bodenBild = maleBoden(welt, zufall(saat + 1), FARBEN[gebiet]);
   welt.wasser = [];
   if (gebiet !== 'berg') for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (boden[id(x, y)] === BODEN.WASSER) welt.wasser.push(x, y);
@@ -283,6 +290,7 @@ function maleBoden(W, r, P) {
   if (W.haus) { g.beginPath(); g.ellipse(W.haus.x + 2, W.haus.y - 2, 44, 9, 0, 0, Math.PI * 2); g.fill(); }
   if (W.hoehle) { g.beginPath(); g.ellipse(W.hoehle.x, W.hoehle.y - 2, 46, 8, 0, 0, Math.PI * 2); g.fill(); }
   for (const pt of W.portale.concat(W.portal ? [W.portal] : [])) { g.beginPath(); g.ellipse(pt.x, pt.y - 2, 22, 5, 0, 0, Math.PI * 2); g.fill(); }
+  if (W.huette) { g.beginPath(); g.ellipse(W.huette.x, W.huette.y - 2, 26, 6, 0, 0, Math.PI * 2); g.fill(); }
   // Felsen (flach genug, um im Boden zu liegen)
   for (const f of W.felsen) {
     g.fillStyle = 'rgba(16, 40, 16, 0.3)'; g.beginPath(); g.ellipse(f.x + 8, f.y + 13, 8, 3, 0, 0, Math.PI * 2); g.fill();

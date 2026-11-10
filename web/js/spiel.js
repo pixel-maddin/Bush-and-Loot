@@ -155,7 +155,9 @@ export function neuerTag() {
 
 // Raus aus dem Stumpf, der Tag läuft weiter
 export function weiterMaehen() {
-  const st = S.welt.start;
+  const hu = S.welt.huette;
+  const st = hu ? { x: hu.tuer.x, y: hu.tuer.y + 14 } : S.welt.start;
+  if (S.gebiet === 'berg') { S.kaelte = S.w.kaelte; S.frierT = 3; }     // in der Hütte ist es warm
   S.sp.x = st.x; S.sp.y = st.y; S.sp.tuerSperre = true; S.sp.kx = S.sp.ky = 0; S.sp.ziel = null;
   S.sp.winkel = Math.PI / 2; S.sp.blick = 'unten';
   S.w = werte(S.st);
@@ -345,7 +347,8 @@ export function update(dt, ein) {
 export const schneit = () => S.gebiet === 'berg' && S.wetter && S.wetter.art === 'regen';
 function kaelteUpdate(dt) {
   const p = S.sp, F = S.welt.feuer;
-  const amFeuer = F && Math.hypot(p.x - F.x, p.y - F.y) < 36;
+  const hu = S.welt.huette;
+  const amFeuer = (F && Math.hypot(p.x - F.x, p.y - F.y) < 36) || (hu && Math.hypot(p.x - hu.tuer.x, p.y - hu.tuer.y) < 22);
   if (amFeuer) S.kaelte = Math.min(S.w.kaelte, S.kaelte + 12 * dt);
   else S.kaelte = Math.max(0, S.kaelte - dt * (schneit() ? 1.3 : 1));
   if (!S.hinweise.kalt && S.kaelte < S.w.kaelte * 0.6) { S.hinweise.kalt = true; hooks.hinweis && hooks.hinweis('Brr, ist das kalt! Am Lagerfeuer beim Portal wird dir wieder warm.'); }
@@ -443,8 +446,9 @@ function spielerUpdate(dt, ein, neu) {
   }
 
   // Tür des Baumstumpfs
-  if (S.welt.haus) {
-    const T = S.welt.haus.tuer;
+  const heim = S.welt.haus || S.welt.huette;      // Baumstumpf oder Unterschlupf im Gebiet
+  if (heim) {
+    const T = heim.tuer;
     // Nur ein schmaler Streifen direkt vor der Tür zählt – sonst öffnet sich der Laden auch,
     // wenn man oben hinter dem Stumpf vorbeiläuft
     const inTuer = Math.abs(p.x - T.x) < 8 && p.y < T.y + 6 && p.y > T.y - 2;
@@ -720,7 +724,33 @@ export function aua(g, schaden) {
   p.kx = dx / d * 220; p.ky = dy / d * 220;
   S.wackeln = 0.3; SFX.aua();
   hooks.aua && hooks.aua();
-  if (p.hp <= 0) { p.hp = 0; beginneAbend('ohnmacht'); }
+  if (p.hp <= 0) {
+    p.hp = 0;
+    // In einer Kammer umgekippt: nicht der ganze Tag ist weg – man wacht vor dem Baumstumpf auf (main.js)
+    if (S.ort === 'kammer') { S.phase = 'niederlage'; SFX.ohnmacht(); hooks.kammerNiederlage && hooks.kammerNiederlage(); }
+    else beginneAbend('ohnmacht');
+  }
+}
+
+// Nach einer Niederlage gegen einen Wächter: zurück in den Wald vor den Stumpf, volle Herzen,
+// die Hälfte der heutigen Diamanten (und besonderen Steine) ist weg, der Tag läuft weiter.
+export function nachNiederlage() {
+  const k = S.boss ? S.boss.k : 0;
+  zurueckInDenWald();
+  const verlust = Math.min(S.geld, Math.floor(S.heute.wert / 2));
+  S.geld -= verlust; S.heute.wert -= verlust;
+  for (const [art, i] of Object.entries(SPEZIAL)) {
+    const weg = Math.floor(S.heute.steine[i] / 2);
+    S.schaetze[art] = Math.max(0, S.schaetze[art] - weg); S.heute.steine[i] -= weg;
+  }
+  const p = S.sp, st = S.welt.start;
+  p.x = st.x; p.y = st.y; p.hp = S.w.maxHp; p.unverw = 1; p.kx = p.ky = 0; p.ziel = null;
+  p.tuerSperre = true; p.winkel = Math.PI / 2; p.blick = 'unten';
+  S.kam.x = p.x; S.kam.y = p.y - 8;
+  begleiterNeu(); ruheImBild();
+  S.phase = 'tag';
+  speichern();
+  return { k, verlust };
 }
 
 function kamera(dt) {
@@ -826,6 +856,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   for (const pt of W.portale || []) if (sicht(pt.x, pt.y, 26, 48, 4)) liste.push({ y: pt.y, t: 'portal', o: pt });
   if (W.portal && sicht(W.portal.x, W.portal.y, 26, 48, 4)) liste.push({ y: W.portal.y, t: 'portal', o: { ...W.portal, gebiet: W.gebiet, zurueck: true } });
   if (W.feuer && sicht(W.feuer.x, W.feuer.y, 12, 20, 4)) liste.push({ y: W.feuer.y, t: 'feuer', o: W.feuer });
+  if (W.huette && sicht(W.huette.x, W.huette.y, 30, 48, 4)) liste.push({ y: W.huette.y, t: 'huette', o: W.huette });
   if (kammer) kammerListe(liste); else lebenListe(liste, S, sicht);
   if (spielt) liste.push({ y: p.y, t: 3, o: p });
   if (tierDa) liste.push({ y: S.tier.y, t: 7, o: S.tier });
@@ -848,6 +879,7 @@ export function zeichne(ctx, cw, ch, zoom) {
       case 7: zeichneBegleiter(ctx); break;
       default:
         if (e.t === 'portal') zeichnePortal(ctx, e.o);
+        else if (e.t === 'huette') ctx.drawImage(G.huette[e.o.art], Math.round(e.o.x - 26), Math.round(e.o.y + 2 - G.huette[e.o.art].height));
         else if (e.t === 'feuer') ctx.drawImage(G.feuer[Math.floor(S.t * 8) % 3], Math.round(e.o.x - 8), Math.round(e.o.y - 14));
         else if (e.t === 'schilf' || e.t === 'ente' || e.t === 'hoernchen') lebenZeichne(ctx, e, S);
         else kammerZeichne(ctx, e);
@@ -877,7 +909,7 @@ export function zeichne(ctx, cw, ch, zoom) {
 
   if (!kammer) wetterZeichne(ctx, S);
   if (kammer) kammerDunkel(ctx, L, T, vw, vh);
-  else if (S.phase === 'tag' && (W.haus || W.portal) && S.zeit > S.dauer - HEIM_WARNUNG) heimPfeil(ctx, L, T, vw, vh);
+  else if (S.phase === 'tag' && (W.haus || W.huette) && S.zeit > S.dauer - HEIM_WARNUNG) heimPfeil(ctx, L, T, vw, vh);
   // Abendlicht (nur draußen)
   const q = spielt && !kammer ? S.zeit / S.dauer : 0;
   const abend = klemme((q - 0.6) / 0.4, 0, 1);
@@ -915,7 +947,7 @@ export function zeichne(ctx, cw, ch, zoom) {
 // Kurz vor Sonnenuntergang: Pfeil am Bildrand, der zum Baumstumpf zeigt (wenn er nicht zu sehen ist)
 export const HEIM_WARNUNG = 15;
 function heimPfeil(ctx, L, T, vw, vh) {
-  const ziel = S.welt.haus ? S.welt.haus.tuer : S.welt.portal.tuer, mx = L + vw / 2, my = T + vh / 2;
+  const ziel = (S.welt.haus || S.welt.huette || S.welt.portal).tuer, mx = L + vw / 2, my = T + vh / 2;
   const rand = 16;
   if (ziel.x > L + rand && ziel.x < L + vw - rand && ziel.y - 30 > T + rand && ziel.y < T + vh - rand) return;
   const dx = ziel.x - mx, dy = ziel.y - 20 - my, a = Math.atan2(dy, dx);

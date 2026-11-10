@@ -7,7 +7,7 @@ import { initWetterGrafik, wetterText, wetterTextGebirge } from './wetter.js';
 import { initGebietGrafik } from './gebietgrafik.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
-  kaufen, update, zeichne, setzeHooks, oeffneTuer, reiseNach, gebietFrei, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
+  kaufen, update, zeichne, setzeHooks, oeffneTuer, reiseNach, gebietFrei, nachNiederlage, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
 } from './spiel.js';
 import { KAMMERN, GEBIETE } from './config.js';
 import { tierName } from './begleiter.js';
@@ -129,6 +129,15 @@ setzeHooks({
   },
   bossBesiegt: (k) => UI.toast(`${KAMMERN[k - 1].boss} ist besiegt!`, 2500),
   belohnung: (k) => { eingabe.leeren(); S.phase = 'fund'; UI.zeigeFund(k); steuerung.aktualisiere(); },
+  // Gegen einen Wächter umgekippt: kurz schwarz, dann vor dem Baumstumpf aufwachen – der Tag geht weiter
+  kammerNiederlage: () => {
+    eingabe.leeren();
+    UI.nachtAn(() => {
+      const r = nachNiederlage(); steuerung.aktualisiere(); UI.hudNeu();
+      setTimeout(UI.nachtAus, 300);
+      UI.toast(`${KAMMERN[r.k - 1].boss} war zu stark … Du wachst vor dem Baumstumpf auf.${r.verlust ? ` Die Hälfte der Diamanten von heute ist weg (−${r.verlust}).` : ''} Der Tag geht weiter!`, 6000);
+    }, 'Uff …');
+  },
   kammerVerlassen: () => {
     verlasseKammer();
     const neu = ['dunkel', 'berg'].find(g => gebietFrei(g) && !S.hinweise['portal_' + g]);

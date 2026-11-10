@@ -27,8 +27,8 @@ export const STEIN_GEWICHT = [100, 20, 4, 0.8, 0.12];
 //   spezial = wie oft ein Fund dort der besondere Stein ist
 export const GEBIETE = {
   wald:   { name: 'Wald' },
-  dunkel: { name: 'Dunkelwald', ab: 2, spezial: 0.32, gewichte: [1, 0.8, 0.45, 0.25] },
-  berg:   { name: 'Gebirge',    ab: 3, spezial: 0.32, gewichte: [1, 0.7, 0.4, 0.35] },
+  dunkel: { name: 'Dunkelwald', ab: 2, spezial: 0.13, gewichte: [1, 0.8, 0.45, 0.25] },
+  berg:   { name: 'Gebirge',    ab: 3, spezial: 0.12, gewichte: [1, 0.7, 0.4, 0.35] },
 };
 export const GEBIET_KARTE = 36;     // Kacheln je Seite der neuen Gebiete
 

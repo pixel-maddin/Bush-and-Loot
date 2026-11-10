@@ -128,6 +128,42 @@ function lagerfeuer() {
   });
 }
 
+// Unterschlupf: Zelt (Dunkelwald) und Berghütte (Gebirge), 52 × 44, Fuß unten mittig, Eingang unten in der Mitte
+function zelt() {
+  const pb = new PB(52, 44), mx = 26;
+  for (let y = 6; y < 43; y++) {
+    const w = Math.round((y - 4) * 0.62);
+    for (let x = mx - w; x <= mx + w; x++) {
+      const l = (x - mx) / (w + 0.01);
+      pb.set(x, y, l < -0.45 ? '#4a6a4a' : l < 0.2 ? '#3a5a3e' : '#2a4430');
+    }
+  }
+  for (let y = 26; y < 43; y++) { const w = Math.round((y - 24) * 0.42); for (let x = mx - w; x <= mx + w; x++) pb.set(x, y, '#120e18'); }  // Eingang
+  for (let y = 4; y < 43; y += 3) pb.set(mx, y, '#6b4220');                                                                            // Stange
+  pb.set(mx, 2, '#8c5a2c'); pb.set(mx, 3, '#8c5a2c');
+  for (const [x, y] of [[mx - 18, 42], [mx + 18, 42]]) pb.rechteck(x - 1, y - 1, 3, 2, '#6b4220');                                    // Heringe
+  // Laterne an der Seite
+  pb.rechteck(mx + 12, 22, 4, 5, '#2b1d16'); pb.rechteck(mx + 13, 23, 2, 3, '#ffd76a');
+  return pb.umriss('#141c14').bild();
+}
+function berghuette() {
+  const pb = new PB(52, 46), mx = 26;
+  // Holzwände
+  for (let y = 22; y < 45; y++) for (let x = 7; x < 45; x++) pb.set(x, y, (y % 4 === 0) ? '#6b4220' : x < 26 ? '#a8703c' : '#8c5a2c');
+  // Tür und Fenster
+  pb.rechteck(mx - 5, 31, 10, 14, '#4a2e14'); pb.rechteck(mx - 4, 32, 8, 13, '#5a3818'); pb.set(mx + 2, 38, '#ffd23f');
+  for (const fx of [12, 36]) { pb.rechteck(fx, 28, 6, 6, '#2b1d16'); pb.rechteck(fx + 1, 29, 4, 4, '#ffd76a'); pb.set(fx + 3, 29, '#2b1d16'); pb.set(fx + 3, 30, '#2b1d16'); pb.set(fx + 3, 31, '#2b1d16'); pb.set(fx + 3, 32, '#2b1d16'); }
+  // Dach mit Schnee
+  for (let y = 6; y < 24; y++) {
+    const w = Math.round((y - 4) * 1.35);
+    for (let x = mx - w; x <= mx + w; x++) pb.set(x, y, y < 9 || (y === 23) ? '#ffffff' : (x + y) % 7 === 0 ? '#d8e8f4' : y > 19 ? '#ffffff' : '#7a4a22');
+  }
+  for (let x = mx - 25; x <= mx + 25; x++) { pb.set(x, 22, '#e8f2fa'); pb.set(x, 23, '#ffffff'); }
+  // Schornstein
+  pb.rechteck(mx + 10, 2, 5, 10, '#6d6a66'); pb.rechteck(mx + 10, 1, 5, 2, '#ffffff');
+  return pb.umriss('#1a1410').bild();
+}
+
 // Leuchtpilz (Schmuck im Dunkelwald)
 function leuchtpilz(farbe) {
   const pb = new PB(7, 7);
@@ -153,6 +189,7 @@ export function initGebietGrafik() {
   G.leuchtpilz = [leuchtpilz('#3ee8d0'), leuchtpilz('#bb62ee'), leuchtpilz('#7ff0ff')];
   // Laden-Symbole für Fackel und Daunenjacke (ohne Symbol bricht der Aufbau der Warenliste ab)
   G.icons.fackel = G.belohnung.fackel;
+  G.huette = { dunkel: zelt(), berg: berghuette() };
   G.icons.jacke = daunenjacke();
 }
 

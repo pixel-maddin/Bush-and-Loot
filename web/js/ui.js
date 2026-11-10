@@ -67,7 +67,12 @@ export function steuerHilfe() {
 }
 
 const SCHICHTEN = ['titel', 'haus', 'bilanz', 'pauseSchicht', 'hoehle', 'fund', 'figurWahl', 'begleiterWahl'];
+let offen = null;
 export function zeige(id) {
+  // Geht aus dem Spiel heraus ein Fenster auf, verschwindet ein laufender Hinweis (sonst schwebt er darüber).
+  // Wechsel zwischen Fenstern lassen ihn stehen – z. B. „Wuff! Waldi ist jetzt dabei“ nach dem Kauf.
+  if (id && !offen) { $('toast').classList.remove('an'); clearTimeout(toastT); }
+  offen = id;
   for (const s of SCHICHTEN) $(s).classList.toggle('versteckt', s !== id);
   $('hud').classList.toggle('versteckt', id === 'titel' || id === 'figurWahl');
 }
@@ -168,6 +173,9 @@ let hausModus = false;   // true = Tag ist vorbei, nächster Knopf startet einen
 export function zeigeHaus(nachTag) {
   hausModus = nachTag;
   const spaet = !nachTag && S.zeit / S.dauer > 0.75;
+  // Im Gebiet ist man im Unterschlupf statt im Baumstumpf
+  const unterschlupf = !nachTag && S.gebiet !== 'wald' && S.ort === 'wald';
+  document.querySelector('.hauspanel .kopf h2').textContent = unterschlupf ? (S.gebiet === 'berg' ? 'In der Berghütte' : 'Im Zelt') : 'Im alten Baumstumpf';
   const liegt = nachTag ? { anzahl: 0 } : liegenGeblieben();
   const warnung = liegt.anzahl
     ? ` Draußen liegen noch ${liegt.anzahl} ${liegt.anzahl === 1 ? 'Edelstein' : 'Edelsteine'}${liegt.wert ? ` (Wert ${zahl(liegt.wert)})` : ''} – wer jetzt schläft, lässt sie liegen!`
@@ -489,6 +497,14 @@ export function nachtAus() { $('nacht').classList.remove('an'); nachtLaeuft = fa
 let toastT = null;
 export function toast(text, ms = 3200) {
   const t = $('toast');
+  // Unter die linke Anzeige rutschen, wenn sie in die Bildmitte reicht (schmale Handys)
+  const links = document.querySelector('.hud-links');
+  let oben = '';                                          // leer = Platz aus style.css
+  if (links && !$('hud').classList.contains('versteckt')) {
+    const r = links.getBoundingClientRect(), breite = Math.min(innerWidth * 0.9, 460);
+    if (r.right > (innerWidth - breite) / 2 - 4 && r.bottom + 8 > 74) oben = Math.round(r.bottom + 8) + 'px';
+  }
+  t.style.top = oben;
   t.textContent = text; t.classList.add('an');
   clearTimeout(toastT);
   toastT = setTimeout(() => t.classList.remove('an'), ms);
