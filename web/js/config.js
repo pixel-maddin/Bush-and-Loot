@@ -86,6 +86,11 @@ export const AUFRUESTUNGEN = [
   { id: 'jacke',   name: 'Daunenjacke',    kosten: [400, 1100, 2600],         text: 'Länger warm im Gebirge.', ab: 3 },
 ];
 
+// Kleiderschrank und Stube erscheinen erst nach und nach im Laden (Anzahl besiegter Wächter),
+// damit am Anfang nicht zu viel auf einmal dasteht
+export const KLEIDERSCHRANK_AB = 1;
+export const STUBE_AB = 2;
+
 // Stube einrichten: reine Schmuckstücke, die oben im Stubenbild erscheinen (gekauft = S.st['moebel_' + id])
 export const EINRICHTUNG = [
   { id: 'pflanze', name: 'Zimmerpflanze',     preis: 400,   text: 'Ein großes grünes Blatt-Wunder neben dem Bett.' },
@@ -106,7 +111,7 @@ export const HUETE = [
   { id: 'laterne', name: 'Laternenhelm',     preis: 2200,  bonus: 'Größerer Lichtkreis im Dunkelwald.', ab: 2 },
   { id: 'pudel',   name: 'Pudelmütze',       preis: 2400,  bonus: 'Im Gebirge 15 s länger warm.', ab: 3 },
   { id: 'ritter',  name: 'Ritterhelm',       preis: 6000,  bonus: 'Ein Herz mehr.' },
-  { id: 'krone',   name: 'Goldkrone',        preis: 15000, bonus: 'Jeder Diamant ist 10 % mehr wert.' },
+  { id: 'cap',     name: 'Baseballcap',      preis: 15000, bonus: 'Jeder Diamant ist 10 % mehr wert.' },
 ];
 
 export const KLINGE = {
@@ -150,7 +155,7 @@ export function werte(st) {
     magnet: 14 + 14 * (st.magnet | 0) + (hut === 'feder' ? 12 : 0),
     tagDauer: 70 + 15 * (st.sonne | 0) + (hut === 'stroh' ? 10 : 0),
     glueck: (st.klee | 0) + (hut === 'klee' ? 1 : 0),
-    wertMal: hut === 'krone' ? 1.1 : 1,
+    wertMal: hut === 'cap' ? 1.1 : 1,
     wirbel: (st.wirbel | 0) > 0,
     licht: 46 + 22 * (st.fackel | 0) + (hut === 'laterne' ? 24 : 0),     // Lichtkreis im Dunkelwald (Weltpixel)
     kaelte: 28 + 18 * (st.jacke | 0) + (hut === 'pudel' ? 15 : 0),       // Sekunden, bis es im Gebirge zu kalt wird

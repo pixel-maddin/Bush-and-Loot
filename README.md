@@ -155,14 +155,14 @@ im Baumstumpf sein.
 
 ## Kleiderschrank und Stube
 
-Im Laden gibt es zwei weitere Bereiche:
+Im Laden kommen nach und nach zwei weitere Bereiche dazu (beim ersten Mal mit „Neu!“):
 
-- **Kleiderschrank** – Hüte, von denen man immer einen trägt (auch im Spiel und in der
+- **Kleiderschrank** (nach dem ersten Wächter) – Hüte, von denen man immer einen trägt (auch im Spiel und in der
   Stube zu sehen): Strohhut (Tag +10 s), Federhut (Diamanten fliegen von weiter her),
   Kleeblattmütze (mehr Glück), Laternenhelm (größerer Lichtkreis im Dunkelwald),
-  Pudelmütze (länger warm im Gebirge), Ritterhelm (ein Herz mehr), Goldkrone (jeder
-  Diamant +10 %).
-- **Stube einrichten** – Zimmerpflanze, Gemälde, Kuschelkorb für den Begleiter,
+  Pudelmütze (länger warm im Gebirge), Ritterhelm (ein Herz mehr), blau-weiße
+  Baseballcap (jeder Diamant +10 %).
+- **Stube einrichten** (nach dem zweiten Wächter) – Zimmerpflanze, Gemälde, Kuschelkorb für den Begleiter,
   Regenbogenteppich, Kuckucksuhr, Lichterkette, Goldleuchter. Reiner Schmuck, oben
   im Stubenbild zu sehen.
 

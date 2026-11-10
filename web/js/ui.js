@@ -1,7 +1,7 @@
 // ui.js – Alles, was als HTML über dem Spielbild liegt: Anzeige oben, Titel, Laden, Tagesbilanz, Pause.
 
 import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
-import { AUFRUESTUNGEN, STEINE, KAMMERN, SPEZIAL, EINRICHTUNG, HUETE } from './config.js';
+import { AUFRUESTUNGEN, STEINE, KAMMERN, SPEZIAL, EINRICHTUNG, HUETE, KLEIDERSCHRANK_AB, STUBE_AB } from './config.js';
 import { S, liegenGeblieben } from './spiel.js';
 import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, TAUSCH_PREIS, LECKERLI_KOSTEN, NAMEN, tierName, nameSauber } from './begleiter.js';
 import { stubenBilder } from './stube.js';
@@ -170,8 +170,16 @@ export function hudNeu() { alt = {}; }
 
 // ---------- Laden im Baumstumpf ----------
 let hausModus = false;   // true = Tag ist vorbei, nächster Knopf startet einen neuen Tag
+// Kleiderschrank/Stube: frei nach genug Wächtern – oder wenn schon etwas daraus gekauft ist (alte Spielstände)
+const kleiderFrei = () => (S.st.bosse | 0) >= KLEIDERSCHRANK_AB || HUETE.some(x => S.st['hut_' + x.id]);
+const stubeFrei = () => (S.st.bosse | 0) >= STUBE_AB || EINRICHTUNG.some(x => S.st['moebel_' + x.id]);
+let neuIm = {};                 // Abschnitte, die bei diesem Besuch zum ersten Mal zu sehen sind („Neu!“)
+
 export function zeigeHaus(nachTag) {
   hausModus = nachTag;
+  neuIm = {};
+  for (const [k, frei] of [['kleider', kleiderFrei()], ['stube', stubeFrei()]])
+    if (frei && !S.hinweise['laden_' + k]) { S.hinweise['laden_' + k] = true; neuIm[k] = true; }
   const spaet = !nachTag && S.zeit / S.dauer > 0.75;
   // Im Gebiet ist man im Unterschlupf statt im Baumstumpf
   const unterschlupf = !nachTag && S.gebiet !== 'wald' && S.ort === 'wald';
@@ -261,8 +269,9 @@ function waren() {
   }
   box.append(begleiterKarte());
   if (S.begleiter) box.append(tauschKarte());
-  // Kleiderschrank: Hüte mit Boni (einer wird getragen)
-  box.append(abschnitt('Kleiderschrank', 'Ein Hut zur Zeit – jeder hat einen eigenen Vorteil.'));
+  // Kleiderschrank: Hüte mit Boni (einer wird getragen) – erst ab dem ersten Wächter
+  if (kleiderFrei()) {
+  box.append(abschnitt('Kleiderschrank', 'Ein Hut zur Zeit – jeder hat einen eigenen Vorteil.', neuIm.kleider));
   const fig = S.figur || { art: 'junge', farbe: 'blau' }, traegt = S.st.hut || 'eichel';
   for (const hut of HUETE) {
     if (hut.ab && (S.st.bosse | 0) < hut.ab) continue;
@@ -277,8 +286,10 @@ function waren() {
     else { b.innerHTML = `${px(G.waehrung)}${zahl(hut.preis)}`; b.disabled = S.geld < hut.preis; b.onclick = () => { if (h.kaufeEinmal('hut_' + hut.id, hut.preis)) { h.hutAufsetzen(hut.id); zeigeHaus(hausModus); aufleuchten('hut_' + hut.id); } }; }
     d.append(b); box.append(d);
   }
-  // Stube einrichten: Schmuck, der oben im Stubenbild erscheint
-  box.append(abschnitt('Stube einrichten', 'Macht es gemütlicher – du siehst es oben im Bild.'));
+  }
+  // Stube einrichten: Schmuck, der oben im Stubenbild erscheint – erst ab dem zweiten Wächter
+  if (!stubeFrei()) return;
+  box.append(abschnitt('Stube einrichten', 'Macht es gemütlicher – du siehst es oben im Bild.', neuIm.stube));
   for (const e of EINRICHTUNG) {
     const hat = S.st['moebel_' + e.id];
     const d = document.createElement('div');
@@ -292,10 +303,10 @@ function waren() {
   }
 }
 
-function abschnitt(titel, text) {
+function abschnitt(titel, text, neu) {
   const d = document.createElement('div');
   d.className = 'abschnitt';
-  d.innerHTML = `<b>${titel}</b><span>${text}</span>`;
+  d.innerHTML = `<b>${titel}${neu ? ' <i class="neu">Neu!</i>' : ''}</b><span>${text}</span>`;
   return d;
 }
 

@@ -210,7 +210,7 @@ const BEINE_S = [
 // Hüte: über den Eichelhut (Zeilen 0–4) gemalt. Erst Haare über die Kappe, dann der Hut.
 // seite = Blick nach rechts (Kappe dort in Spalte 3–15)
 const HUT_FARBEN = { k: '#2b1d16', w: '#ffffff', r: '#d8443c', R: '#8a2422', g: '#e8c25a', G: '#a8801e', s: '#9aa4b4', S: '#5e6a7a',
-  f: '#3f8a37', F: '#2a5e28', y: '#ffd23f', Y: '#c27512', p: '#d8443c', o: '#f4ece0', b: '#8c5a2c', B: '#5a3818', l: '#ffe680' };
+  f: '#3f8a37', F: '#2a5e28', y: '#ffd23f', Y: '#c27512', p: '#d8443c', o: '#f4ece0', b: '#8c5a2c', B: '#5a3818', l: '#ffe680', u: '#2f6fd0', U: '#1d4590' };
 const HUETE_PIX = {
   stroh:   { vorn: ['................', '.....kkkkkk.....', '....kggggggk....', '....kRRRRRRk....', 'kkkkggggggggkkkk', 'kGGGGGGGGGGGGGGk'],
              seite: ['................', '......kkkkkk....', '.....kggggggk...', '.....kRRRRRRk...', '..kkkkggggggkkkk', '..kGGGGGGGGGGGGk'] },
@@ -224,17 +224,19 @@ const HUETE_PIX = {
              seite: ['........kk......', '.......kwwk.....', '.....kkrrrrkk...', '....krrrrrrrrk..', '...kwwwwwwwwwwwk', '................'] },
   ritter:  { vorn: ['.......kk.......', '......krrk......', '....kkssssskk...', '...ksssssssssk..', '..kSSSSSSSSSSSk.', '..kSkkkkkkkkSk..'],
              seite: ['........kk......', '.......krrk.....', '.....kkssssskk..', '....kssssssssssk', '...kSSSSSSSSSSSk', '...kSSSkkkkkkkk.'] },
-  krone:   { vorn: ['...k..k..k..k...', '...kyky.kykyk...', '...kyyyyyyyyk...', '...kyyyrryyyk...', '...kYYYYYYYYk...', '................'],
-             seite: ['....k..k..k..k..', '....kyk.kykyk...', '....kyyyyyyyyk..', '....kyyyrryyyk..', '....kYYYYYYYYk..', '................'] },
+  // Baseballcap: blau mit weißer Front, Schirm nach vorn (seitlich ragt er nach rechts heraus)
+  cap:     { vorn: ['.....kkkkkk.....', '...kkuwwwwukk...', '..kuuwwwwwwuuk..', '..kuuwwuuwwuuk..', '..kUUUUUUUUUUk..', '................'],
+             hinten: ['.....kkkkkk.....', '...kkuuuuuukk...', '..kuuuuuuuuuuk..', '..kuuuuuuuuuuk..', '..kuuukwwkuuuk..', '................'],
+             seite: ['......kkkkkk....', '....kkuuuuuwwwk.', '...kuuuuuuuwwwk.', '...kuuuuuuuwwwkk', '...kuuuuuuuUUUUk', '...kkkkkkkkkkkk.'] },
 };
-function hutAufsetzen(c, hut, seite, haar) {
+function hutAufsetzen(c, hut, seite, haar, hinten = false) {
   const p = HUETE_PIX[hut]; if (!p) return c;
   const g = c.getContext('2d');
   // Kappe des Eichelhuts mit Haaren übermalen (Zeilen 1–4), damit unter schmalen Hüten nichts durchschaut
   const x0 = seite ? 4 : 3, x1 = seite ? 14 : 12;
   for (let y = 1; y <= 4; y++) for (let x = x0; x <= x1; x++) { g.fillStyle = haar; g.fillRect(x, y, 1, 1); }
   g.clearRect(0, 0, 16, 1);
-  const zeilen = seite ? p.seite : p.vorn;
+  const zeilen = seite ? p.seite : (hinten && p.hinten) || p.vorn;      // von hinten (laufen nach oben) eigene Zeilen, falls vorhanden
   zeilen.forEach((z, y) => { for (let x = 0; x < z.length; x++) if (z[x] !== '.') { g.fillStyle = HUT_FARBEN[z[x]]; g.fillRect(x, y, 1, 1); } });
   return c;
 }
@@ -247,7 +249,7 @@ const BEINE_HAU_S = ['...kpk....kpk...', '...kkk....kkk...'];
 export function setzeFigur(art = 'junge', farbe = 'blau', hut = 'eichel') {
   G.figur = { art, farbe, hut };
   const pal = palKind(art, farbe), m = art === 'maedchen';
-  const v = (kopf, beine) => hutAufsetzen(ausText([...kopf, ...beine], pal).bild(), hut, kopf === KOPF_SEITE || kopf === M_SEITE, pal.y);
+  const v = (kopf, beine) => hutAufsetzen(ausText([...kopf, ...beine], pal).bild(), hut, kopf === KOPF_SEITE || kopf === M_SEITE, pal.y, kopf === KOPF_OBEN || kopf === M_OBEN);
   const KU = m ? M_UNTEN : KOPF_UNTEN, KO = m ? M_OBEN : KOPF_OBEN, KS = m ? M_SEITE : KOPF_SEITE;
   G.kind = {
     unten: [0, 1, 0, 2].map(i => v(KU, BEINE_V[i])),

@@ -60,6 +60,9 @@ export function laden() {
       S.figur = d.figur || null;
       S.begleiter = d.begleiter || null;
       S.schaetze = Object.assign({ tuerkis: 0, eis: 0 }, d.schaetze);
+      // Goldkrone wurde zur Baseballcap (10.11.2026): gekaufte Krone mitnehmen
+      if (S.st.hut_krone) { S.st.hut_cap = 1; delete S.st.hut_krone; }
+      if (S.st.hut === 'krone') S.st.hut = 'cap';
       return true;
     }
   } catch (e) { /* kein Spielstand */ }
@@ -607,7 +610,7 @@ function einsammeln(e, leise) {
     }
     return;
   }
-  const wert = Math.round(s.wert * (S.w.wertMal || 1));          // Goldkrone: +10 %
+  const wert = Math.round(s.wert * (S.w.wertMal || 1));          // Baseballcap: +10 %
   S.geld += wert; S.heute.wert += wert; S.heute.steine[e.typ]++;
   if (!leise) {
     SFX.stein(e.typ);

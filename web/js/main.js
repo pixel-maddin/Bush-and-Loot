@@ -9,7 +9,7 @@ import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
   kaufen, update, zeichne, setzeHooks, oeffneTuer, kaufeEinmal, setzeHut, reiseNach, gebietFrei, nachNiederlage, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
 } from './spiel.js';
-import { KAMMERN, GEBIETE } from './config.js';
+import { KAMMERN, GEBIETE, KLEIDERSCHRANK_AB, STUBE_AB } from './config.js';
 import { tierName } from './begleiter.js';
 
 // Morgens nach dem Schlafen: Von Tag 2 bis 6 erzählt der Text eine kleine Geschichte,
@@ -141,8 +141,11 @@ setzeHooks({
   kammerVerlassen: () => {
     verlasseKammer();
     const neu = ['dunkel', 'berg'].find(g => gebietFrei(g) && !S.hinweise['portal_' + g]);
-    if (neu) { S.hinweise['portal_' + neu] = true; UI.toast('Irgendwo im Wald hat sich etwas verändert … Halte die Augen offen!', 5000); }
-    else UI.toast(S.st.bosse >= 5 ? 'Der Riesendiamant funkelt in deiner Tasche.' : 'Zurück im Wald. Die nächste Tür wartet …', 3000);
+    // Neu im Laden? (Kleiderschrank nach Wächter 1, Stube nach Wächter 2)
+    const laden = S.st.bosse === KLEIDERSCHRANK_AB ? ' Im Baumstumpf steht jetzt ein Kleiderschrank.'
+      : S.st.bosse === STUBE_AB ? ' Im Baumstumpf kannst du jetzt die Stube einrichten.' : '';
+    if (neu) { S.hinweise['portal_' + neu] = true; UI.toast('Irgendwo im Wald hat sich etwas verändert … Halte die Augen offen!' + laden, 6000); }
+    else UI.toast((S.st.bosse >= 5 ? 'Der Riesendiamant funkelt in deiner Tasche.' : 'Zurück im Wald. Die nächste Tür wartet …') + laden, laden ? 5000 : 3000);
     steuerung.aktualisiere();
   },
   tagBeginnt: () => {
@@ -223,10 +226,10 @@ UI.zeigeTitel(hatSpielstand());
 // ?begleiter=katze-tiger: Tier nur für diesen Besuch dabeihaben (wird nicht gespeichert, solange man nichts kauft)
 if (lokal && q.has('begleiter')) { const [art, rasse] = q.get('begleiter').split('-'); S.begleiter = { art, rasse }; }
 if (lokal && q.has('wetter')) S.wetterTest = q.get('wetter');         // ?wetter=regen / sturm: jeden Tag dieses Wetter
-// ?alles=krone: alle Möbel und dieser Hut (nur für diesen Besuch, z. B. mit ?laden)
+// ?alles=cap: alle Möbel und dieser Hut (nur für diesen Besuch, z. B. mit ?laden)
 if (lokal && q.has('alles')) {
   for (const e of ['pflanze', 'bild', 'korb', 'teppich', 'uhr', 'lichter', 'leuchter']) S.st['moebel_' + e] = 1;
-  S.st.hut = q.get('alles') || 'krone'; S.figur = S.figur || { art: 'junge', farbe: 'blau' }; setzeFigur(S.figur.art, S.figur.farbe, S.st.hut);
+  S.st.hut = q.get('alles') || 'cap'; S.st.bosse = Math.max(S.st.bosse | 0, 2); S.figur = S.figur || { art: 'junge', farbe: 'blau' }; setzeFigur(S.figur.art, S.figur.farbe, S.st.hut);
 }
 if (lokal && q.has('tierwahl')) { S.geld = Math.max(S.geld, 200); UI.zeigeBegleiterWahl(); }
 else if (lokal && q.has('laden')) { S.phase = 'laden'; UI.zeigeHaus(true); }    // ?laden: Ladenfenster nach dem Tag
