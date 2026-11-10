@@ -206,6 +206,7 @@ function waren() {
     for (let i = 0; i < max; i++) punkte += `<i class="${i < stufe ? 'an' : ''}"></i>`;
     const d = document.createElement('div');
     d.className = 'ware' + (voll ? ' voll' : '');
+    d.dataset.id = a.id;
     d.innerHTML = `
       <div class="ware-bild">${px(icon)}</div>
       <div class="ware-text">
@@ -220,7 +221,7 @@ function waren() {
     else {
       b.innerHTML = `${px(G.waehrung)}${zahl(preis)}`;
       b.disabled = S.geld < preis;
-      b.onclick = () => { if (h.kaufen(a.id, preis)) { waren(); d.classList.add('gekauft'); } };
+      b.onclick = () => { if (h.kaufen(a.id, preis)) { waren(); aufleuchten(a.id); } };
     }
     d.append(b);
     box.append(d);
@@ -236,21 +237,28 @@ function tauschKarte() {
     <div class="ware-bild">${px(tierIcon(S.begleiter.art === 'katze' ? 'hund' : 'katze', S.begleiter.art === 'katze' ? 'spitz' : 'tiger'))}</div>
     <div class="ware-text">
       <div class="ware-name">Begleiter tauschen</div>
-      <div class="ware-info">Lieber ein anderes Tier? Geht jederzeit – kostet aber jedes Mal. Leckerli bleiben.</div>
+      <div class="ware-info">Kostet jedes Mal. Leckerli bleiben.</div>
     </div>`;
   const b = document.createElement('button');
   b.className = 'knopf preis grau';
-  b.innerHTML = `Tauschen ${px(G.waehrung)}${zahl(TAUSCH_PREIS)}`;
+  b.innerHTML = `${px(G.waehrung)}${zahl(TAUSCH_PREIS)}`;
   b.disabled = S.geld < TAUSCH_PREIS;
   b.onclick = () => zeigeBegleiterWahl();
   d.append(b);
   return d;
 }
 
+// Gerade Gekauftes kurz aufleuchten lassen (die Liste wird beim Kauf neu gebaut)
+function aufleuchten(id) {
+  const k = document.querySelector(`#waren .ware[data-id="${id}"]`);
+  if (k) k.classList.add('gekauft');
+}
+
 // ---------- Begleiter im Laden ----------
 function begleiterKarte() {
   const d = document.createElement('div');
   d.className = 'ware begleiter';
+  d.dataset.id = 'leckerli';
   const b = document.createElement('button');
   b.className = 'knopf preis';
   if (!S.begleiter) {
@@ -259,9 +267,9 @@ function begleiterKarte() {
       <div class="ware-text">
         <div class="ware-name">Begleiter</div>
         <div class="ware-unter">Hund oder Katze</div>
-        <div class="ware-info">Läuft dir hinterher und buddelt ab und zu einen Diamanten aus.</div>
+        <div class="ware-info">Läuft mit und buddelt Diamanten aus.</div>
       </div>`;
-    b.innerHTML = `Aussuchen ${px(G.waehrung)}${zahl(BEGLEITER_PREIS)}`;
+    b.innerHTML = `${px(G.waehrung)}${zahl(BEGLEITER_PREIS)}`;
     b.disabled = S.geld < BEGLEITER_PREIS;
     b.onclick = () => zeigeBegleiterWahl();
   } else {
@@ -273,7 +281,7 @@ function begleiterKarte() {
       <div class="ware-text">
         <div class="ware-name">Leckerli</div>
         <div class="ware-unter">für ${art === 'katze' ? 'deine' : 'deinen'} ${RASSEN[art][rasse].name}</div>
-        <div class="ware-info">Buddelt öfter und findet bessere Farben.</div>
+        <div class="ware-info">Buddelt öfter und besser.</div>
         <div class="punkte">${punkte}</div>
       </div>`;
     if (voll) { b.textContent = 'Fertig'; b.disabled = true; }
@@ -281,7 +289,7 @@ function begleiterKarte() {
       const preis = LECKERLI_KOSTEN[lv];
       b.innerHTML = `${px(G.waehrung)}${zahl(preis)}`;
       b.disabled = S.geld < preis;
-      b.onclick = () => { if (h.kaufen('leckerli', preis)) { waren(); } };
+      b.onclick = () => { if (h.kaufen('leckerli', preis)) { waren(); aufleuchten('leckerli'); } };
     }
   }
   d.append(b);

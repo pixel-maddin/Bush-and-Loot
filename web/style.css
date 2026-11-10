@@ -285,6 +285,7 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 .hauspanel .ware.voll { opacity: .75; }
 .hauspanel .ware-unter { color: #6b4220; }
 .hauspanel .punkte i { background: #e2c492; }
+.hauspanel .punkte i.an { background: var(--gruen-dunkel); }   /* sonst überdeckt die Zeile darüber die gefüllten Punkte */
 /* Knopfleiste unten: dunkles Brett */
 .hauspanel .knoepfe.fussleiste {
   margin: 14px -32px -18px; padding: 12px 32px calc(14px + env(safe-area-inset-bottom));
@@ -312,3 +313,17 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 /* Bilanz nach dem Schlafengehen: liegt über dem schwarzen Nachtbild */
 #bilanz.nachts { z-index: 57; background: transparent; }
 #bilanz.nachts .panel { box-shadow: 0 6px 0 var(--tinte), 0 0 40px rgba(140, 150, 255, .25); }
+
+/* ---------- Laden kompakt: eine Zeile pro Ware (Bild · Text + Stufen · Preis) ---------- */
+.hauspanel .stube { max-width: 420px; margin-left: auto; margin-right: auto; }
+.hauspanel .waren { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 6px; margin-top: 8px; }
+.hauspanel .ware { grid-template-columns: 38px 1fr auto; grid-template-rows: auto; align-items: center; gap: 2px 8px; padding: 6px 8px; }
+.hauspanel .ware-bild { grid-row: auto; padding-top: 0; }
+.hauspanel .ware-bild img { width: 34px; }
+.hauspanel .ware-name { font-size: 15px; line-height: 1.15; }
+.hauspanel .ware-unter { font-size: 11px; }
+.hauspanel .ware-info { font-size: 12px; line-height: 1.25; margin-top: 1px; }
+.hauspanel .punkte { margin-top: 3px; gap: 2px; }
+.hauspanel .punkte i { width: 11px; height: 7px; }
+.hauspanel .knopf.preis { grid-column: 3; grid-row: 1; justify-self: end; font-size: 14px; padding: 6px 10px; white-space: nowrap; }
+.hauspanel .hilfe { margin: 6px 0 0; }

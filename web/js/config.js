@@ -55,14 +55,14 @@ export const AUFRUESTUNGEN = [
   { id: 'klinge', name: 'Klinge',
     stufen: ['Holzschwert', 'Kurzschwert', 'Eisenschwert', 'Breitschwert', 'Mondsichel', 'Sternenklinge'],
     kosten: [30, 140, 450, 1300, 3600],
-    text: 'Mehr Schaden, längere Klinge, breiterer Schwung.' },
+    text: 'Mehr Schaden und Reichweite.' },
   { id: 'schwung', name: 'Schwungkraft',   kosten: [20, 70, 200, 550, 1400],  text: 'Schneller zuschlagen.' },
   { id: 'stiefel', name: 'Flinke Stiefel', kosten: [15, 55, 170, 450, 1100],  text: 'Schneller laufen.' },
   { id: 'herz',    name: 'Herzbeere',      kosten: [40, 130, 350, 800, 1800], text: 'Ein Herz mehr.' },
-  { id: 'magnet',  name: 'Elsternfeder',   kosten: [25, 90, 260, 650],        text: 'Diamanten fliegen von weiter her zu dir.' },
-  { id: 'sonne',   name: 'Sonnenuhr',      kosten: [50, 160, 420, 950],       text: 'Der Tag dauert 15 Sekunden länger.' },
-  { id: 'klee',    name: 'Glücksklee',     kosten: [60, 220, 650, 1600, 4000], text: 'Öfter Diamanten, öfter seltene Farben.' },
-  { id: 'wirbel',  name: 'Wirbelschlag',   kosten: [250],                     text: 'Hauen gedrückt halten, dann loslassen: Rundumschlag.' },
+  { id: 'magnet',  name: 'Elsternfeder',   kosten: [25, 90, 260, 650],        text: 'Diamanten fliegen von weiter her.' },
+  { id: 'sonne',   name: 'Sonnenuhr',      kosten: [50, 160, 420, 950],       text: 'Der Tag dauert 15 s länger.' },
+  { id: 'klee',    name: 'Glücksklee',     kosten: [60, 220, 650, 1600, 4000], text: 'Öfter Diamanten und seltene Farben.' },
+  { id: 'wirbel',  name: 'Wirbelschlag',   kosten: [250],                     text: 'Halten, loslassen: Rundumschlag.' },
 ];
 
 export const KLINGE = {
