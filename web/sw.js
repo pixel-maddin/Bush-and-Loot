@@ -1,8 +1,8 @@
-// sw.js – Macht Halmhauer installierbar und offline spielbar.
+// sw.js – Macht Bush & Loot installierbar und offline spielbar.
 // Strategie: erst das Netz fragen (damit Änderungen sofort ankommen), nur ohne Netz aus dem Speicher.
 // Bei neuen Dateien die Liste unten ergänzen und STAND hochzählen.
 
-const STAND = 'halmhauer-20';
+const STAND = 'halmhauer-21';
 const DATEIEN = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'js/main.js', 'js/config.js', 'js/hilfe.js', 'js/grafik.js', 'js/welt.js', 'js/spiel.js',

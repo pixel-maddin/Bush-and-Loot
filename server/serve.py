@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-serve.py - Liefert "Halmhauer" im lokalen Netzwerk aus.
+serve.py - Liefert "Bush & Loot" (frueher Halmhauer) im lokalen Netzwerk aus.
 
     python3 server/serve.py            # nur starten
     python3 server/serve.py --open     # starten und Browser oeffnen
@@ -95,7 +95,7 @@ class Server(socketserver.ThreadingTCPServer):
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Halmhauer - Spielserver")
+    ap = argparse.ArgumentParser(description="Bush & Loot - Spielserver")
     # Ohne -p gilt die Umgebungsvariable PORT, sonst 8080. Das brauchen
     # Werkzeuge, die sich selbst einen freien Port suchen; von Hand
     # gestartet bleibt es bei 8080 wie in README und CLAUDE.md.
@@ -121,7 +121,7 @@ def main() -> int:
     ip = local_ip()
     line = "=" * 52
     print(f"\n{line}")
-    print("  HALMHAUER  -  Gras hauen im Pixelwald")
+    print("  BUSH & LOOT  -  Gras hauen im Pixelwald")
     print(line)
     print(f"  Auf diesem Rechner:  http://localhost:{args.port}")
     print(f"  Auf dem Handy:       http://{ip}:{args.port}")

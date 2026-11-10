@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-icons.py - Malt die App-Symbole fuer Halmhauer (die einzigen Bilddateien).
+icons.py - Malt die App-Symbole fuer Bush & Loot (die einzigen Bilddateien).
 
     python3 halmhauer/werkzeug/icons.py
 

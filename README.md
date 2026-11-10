@@ -1,4 +1,6 @@
-# Halmhauer
+# Bush & Loot
+
+*(früher „Halmhauer“)*
 
 Kleines Pixel-Actionspiel fürs Handy und den PC. Du bist ein kleiner Junge oder
 ein kleines Mädchen mit Eichelhut und hast jeden Tag bis Sonnenuntergang Zeit, so viel Gras wie möglich
@@ -7,7 +9,7 @@ alten Baumstumpf, in dem du wohnst, bessere Sachen.
 
 ## Spielen
 
-Online: **https://pixel-maddin.github.io/Halmhauer/** – dort auch als App
+Online: **https://pixel-maddin.github.io/Bush-and-Loot/** – dort auch als App
 installierbar (siehe unten).
 
 ## Lokal starten
@@ -21,7 +23,7 @@ Auf dem Handy die IP-Adresse eingeben, die der Server beim Start anzeigt
 
 ## Als App aufs Handy
 
-- **iPhone (Safari):** Teilen → „Zum Home-Bildschirm“. Danach startet Halmhauer
+- **iPhone (Safari):** Teilen → „Zum Home-Bildschirm“. Danach startet Bush & Loot
   ohne Adressleiste wie eine App. Das geht auch über die WLAN-Adresse vom Server.
 - **Android (Chrome):** die Online-Adresse oben öffnen, Menü ⋮ → „App
   installieren“. Dann läuft es im Vollbild und auch **offline**. Über
