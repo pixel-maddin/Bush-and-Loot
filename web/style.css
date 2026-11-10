@@ -336,3 +336,7 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 }
 .namefeld { width: 8em; font-size: 14px; padding: 3px 6px; }
 .knopf.mini { font-size: 12px; padding: 2px 8px; box-shadow: 0 2px 0 var(--tinte); border-width: 2px; border-radius: 7px; }
+
+/* Sieg: der Riesendiamant funkelt */
+.fundpanel.sieg #fundBild { width: 66px; animation: huepfen 1.2s ease-in-out infinite, funkeln 1.6s ease-in-out infinite; }
+@keyframes funkeln { 0%, 100% { filter: drop-shadow(0 0 2px #7ff0a6); } 50% { filter: drop-shadow(0 0 12px #b8ffd0) brightness(1.15); } }

@@ -290,17 +290,28 @@ function belohnungen() {
     '.........kk', '........kwk', '.......kwyk', '......kwyk.', '.....kwyk..', '....kwyk...',
     'k..kwyk....', 'kkkwyk.....', '.kkyk......', '.kbkk......', 'kbk.kk.....', 'kk.........',
   ], { k: '#4a2a08', w: '#fffbd0', y: '#ffd23f', b: '#6b4220' }).bild();
-  const rd = new PB(30, 28);
-  const form = (x, y) => { const dx = Math.abs(x + 0.5 - 15); return y < 9 ? dx < 6 + y : dx < 14 - (y - 9) * 0.75; };
-  for (let y = 1; y < 27; y++) for (let x = 0; x < 30; x++) {
-    if (!form(x, y)) continue;
-    const dx = x + 0.5 - 15;
-    let f = y < 9 ? (dx < -2 ? '#eaffff' : dx < 4 ? '#b8f6ff' : '#7fe3ef') : (dx < -3 ? '#a8f0ff' : dx < 3 ? '#62d4ec' : '#2a8fb0');
-    if (y === 9) f = '#ffffff';
+  // Der Riesendiamant: großer grüner Edelstein, länglich-sechseckig geschliffen, mit Facetten
+  const rd = new PB(22, 34);
+  const aussen = [[11, 0], [21.5, 8], [21.5, 25.5], [11, 34], [0.5, 25.5], [0.5, 8]];
+  const tafel = [[11, 6], [16, 10], [16, 24], [11, 28], [6, 24], [6, 10]];
+  // Sektoren ab „oben“ im Uhrzeigersinn: oben-rechts, rechts, unten-rechts, unten-links, links, oben-links
+  // (Licht von links oben wie im ganzen Spiel)
+  const facette = ['#7ef0a0', '#2a9e56', '#14663a', '#1e8a48', '#5fd88a', '#b8ffd0'];
+  for (let y = 0; y < 34; y++) for (let x = 0; x < 22; x++) {
+    const px = x + 0.5, py = y + 0.5;
+    if (!innen(px, py, aussen)) continue;
+    let f;
+    if (innen(px, py, tafel)) f = py < 14 ? '#7ff0a6' : py < 20 ? '#5fe08a' : '#4ccf78';
+    else {
+      // Welche der sechs Außenfacetten? Nach dem Winkel um die Mitte
+      const w = (Math.atan2(py - 17, px - 11) + Math.PI * 2.5) % (Math.PI * 2);
+      f = facette[Math.floor(w / (Math.PI / 3)) % 6];
+    }
     rd.set(x, y, f);
   }
-  for (const [x, y] of [[10, 4], [11, 4], [10, 5], [19, 12], [20, 13]]) rd.set(x, y, '#ffffff');
-  b.riesendiamant = rd.umriss('#14304a').bild();
+  for (const [x, y] of [[8, 9], [8, 10], [7, 11], [7, 12], [7, 13], [12, 7], [10, 3]]) rd.set(x, y, '#ffffff');   // Glanzlichter
+  rd.set(14, 25, '#d8ffe4'); rd.set(15, 24, '#d8ffe4');
+  b.riesendiamant = rd.umriss('#0b3a20').bild();
   G.belohnung = b;
   G.icons.schloss = ausText([
     '...kkkk...', '..kiiiik..', '.ki.kk.ik.', '.ki.kk.ik.', 'kkkkkkkkkk', 'kyyyyyyyyk', 'kyYYkkYYyk',
