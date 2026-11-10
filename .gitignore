@@ -9,3 +9,6 @@ __pycache__/
 
 # Original der Hintergrundmusik – im Spiel liegt die kleinere Kopie in web/audio/
 /Audio/
+
+# Testseiten (Bilder per Headless-Chrome), nie veröffentlichen
+web/_*.html
