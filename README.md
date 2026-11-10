@@ -121,8 +121,9 @@ trotzdem).
 | Kristallthron | 4.000 | Riesenmotte | flattert hoch oben und streut Glitzerstaub (rote Flecken, dann eine Wolke, die wehtut); Flügelsturm mit Windstoß und Staubkugeln; landet an einem leuchtenden Kristall, um Licht zu trinken – nur dann zu treffen. Ab halber Kraft mit Mottenkindern | Riesendiamant |
 
 - Rote Flecken und Kreise am Boden zeigen, wo gleich etwas einschlägt. Weglaufen!
-- In der Höhle steht die Sonne still. Wer im Kampf umkippt, für den ist der Tag
-  vorbei (wie draußen: die Hälfte der heutigen Diamanten ist weg). Die Tür bleibt offen.
+- In der Höhle steht die Sonne still. Wer im Kampf umkippt, wacht mit vollen
+  Herzen vor dem Baumstumpf auf – die Hälfte der heutigen Diamanten ist weg, aber
+  der Tag geht weiter. Die Tür bleibt offen.
 - Der Wächter lässt einen Haufen Diamanten fallen – einsammeln, sonst bleiben
   sie in der Kammer. Wer die Belohnung aufhebt, bekommt die Tür nach draußen auf.
 - Fackel und Steigeisen sind für den Dunkelwald und das Gebirge, die als
@@ -145,9 +146,25 @@ im Baumstumpf sein.
   leer, frierst du Herz um Herz ein. Die **Daunenjacke** im Laden hält länger warm.
   Wenn es im Wald regnet, schneit es hier: Man stapft langsamer, und es gibt mehr
   Schneekugeln. Im Gras stecken **Eiskristalle**.
+- In jedem Gebiet steht neben dem Portal ein **Unterschlupf** (Zelt im Dunkelwald,
+  Berghütte im Gebirge): Laden und „Schlafen gehen“ wie im Baumstumpf – das zählt als
+  rechtzeitig daheim. Die Berghütte wärmt.
 - Türkise und Eiskristalle sind keine Diamanten zum Ausgeben, sondern Schlüssel für
   die späteren Höhlentüren: Tür 3 braucht 15 Türkise, Tür 4 15 Eiskristalle, Tür 5
   je 10. Wer umkippt oder zu spät heimkommt, verliert auch davon die Hälfte des Tages.
+
+## Kleiderschrank und Stube
+
+Im Laden gibt es zwei weitere Bereiche:
+
+- **Kleiderschrank** – Hüte, von denen man immer einen trägt (auch im Spiel und in der
+  Stube zu sehen): Strohhut (Tag +10 s), Federhut (Diamanten fliegen von weiter her),
+  Kleeblattmütze (mehr Glück), Laternenhelm (größerer Lichtkreis im Dunkelwald),
+  Pudelmütze (länger warm im Gebirge), Ritterhelm (ein Herz mehr), Goldkrone (jeder
+  Diamant +10 %).
+- **Stube einrichten** – Zimmerpflanze, Gemälde, Kuschelkorb für den Begleiter,
+  Regenbogenteppich, Kuckucksuhr, Lichterkette, Goldleuchter. Reiner Schmuck, oben
+  im Stubenbild zu sehen.
 
 ## Begleiter
 

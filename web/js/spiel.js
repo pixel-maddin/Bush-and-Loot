@@ -296,6 +296,14 @@ export function kaufeBegleiter(art, rasse, preis, name) {
   return true;
 }
 
+// Kleiderschrank und Stube: einmal kaufen; Hüte kann man danach jederzeit aufsetzen
+export function kaufeEinmal(schluessel, preis) {
+  if (S.st[schluessel] || S.geld < preis) { SFX.nein(); return false; }
+  S.geld -= preis; S.st[schluessel] = 1; SFX.kauf(); speichern();
+  return true;
+}
+export function setzeHut(id) { S.st.hut = id; neueWerte(); speichern(); }
+
 export function kaufen(id, preis) {
   if (S.geld < preis) { SFX.nein(); return false; }
   S.geld -= preis;
@@ -599,10 +607,11 @@ function einsammeln(e, leise) {
     }
     return;
   }
-  S.geld += s.wert; S.heute.wert += s.wert; S.heute.steine[e.typ]++;
+  const wert = Math.round(s.wert * (S.w.wertMal || 1));          // Goldkrone: +10 %
+  S.geld += wert; S.heute.wert += wert; S.heute.steine[e.typ]++;
   if (!leise) {
     SFX.stein(e.typ);
-    text(e.x, e.y - 6, '+' + s.wert, s.farben[1]);
+    text(e.x, e.y - 6, '+' + wert, s.farben[1]);
     funkeln(e.x, e.y, s.farben[0]);
     if (!S.hinweise.stein) { S.hinweise.stein = true; hooks.hinweis && hooks.hinweis('Ein Diamant! Im Baumstumpf kannst du ihn ausgeben.'); }
   }

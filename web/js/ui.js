@@ -1,7 +1,7 @@
 // ui.js – Alles, was als HTML über dem Spielbild liegt: Anzeige oben, Titel, Laden, Tagesbilanz, Pause.
 
 import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
-import { AUFRUESTUNGEN, STEINE, KAMMERN, SPEZIAL } from './config.js';
+import { AUFRUESTUNGEN, STEINE, KAMMERN, SPEZIAL, EINRICHTUNG, HUETE } from './config.js';
 import { S, liegenGeblieben } from './spiel.js';
 import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, TAUSCH_PREIS, LECKERLI_KOSTEN, NAMEN, tierName, nameSauber } from './begleiter.js';
 import { stubenBilder } from './stube.js';
@@ -207,7 +207,8 @@ let stubeUhr = null;
 function stubeStarten(nacht) {
   const cv = $('stubeBild'), g = cv.getContext('2d');
   const tier = S.begleiter ? tierSchlafend(S.begleiter.art, S.begleiter.rasse) : null;
-  const bilder = stubenBilder(tier, nacht, G.kind.unten[0]);
+  const moebel = Object.fromEntries(EINRICHTUNG.map(e => [e.id, !!S.st['moebel_' + e.id]]));
+  const bilder = stubenBilder(tier, nacht, G.kind.unten[0], moebel);
   let i = 0;
   const malen = () => { g.clearRect(0, 0, cv.width, cv.height); g.drawImage(bilder[i], 0, 0); i = (i + 1) % bilder.length; };
   malen();
@@ -260,6 +261,42 @@ function waren() {
   }
   box.append(begleiterKarte());
   if (S.begleiter) box.append(tauschKarte());
+  // Kleiderschrank: Hüte mit Boni (einer wird getragen)
+  box.append(abschnitt('Kleiderschrank', 'Ein Hut zur Zeit – jeder hat einen eigenen Vorteil.'));
+  const fig = S.figur || { art: 'junge', farbe: 'blau' }, traegt = S.st.hut || 'eichel';
+  for (const hut of HUETE) {
+    if (hut.ab && (S.st.bosse | 0) < hut.ab) continue;
+    const hat = hut.id === 'eichel' || S.st['hut_' + hut.id];
+    const d = document.createElement('div');
+    d.className = 'ware' + (traegt === hut.id ? ' voll' : ''); d.dataset.id = 'hut_' + hut.id;
+    d.innerHTML = `<div class="ware-bild">${px(figurVorschau(fig.art, fig.farbe, hut.id))}</div>
+      <div class="ware-text"><div class="ware-name">${hut.name}</div><div class="ware-info">${hut.bonus}</div></div>`;
+    const b = document.createElement('button'); b.className = 'knopf preis';
+    if (traegt === hut.id) { b.textContent = 'Trägst du'; b.disabled = true; }
+    else if (hat) { b.textContent = 'Aufsetzen'; b.classList.add('grau'); b.onclick = () => { h.hutAufsetzen(hut.id); zeigeHaus(hausModus); }; }
+    else { b.innerHTML = `${px(G.waehrung)}${zahl(hut.preis)}`; b.disabled = S.geld < hut.preis; b.onclick = () => { if (h.kaufeEinmal('hut_' + hut.id, hut.preis)) { h.hutAufsetzen(hut.id); zeigeHaus(hausModus); aufleuchten('hut_' + hut.id); } }; }
+    d.append(b); box.append(d);
+  }
+  // Stube einrichten: Schmuck, der oben im Stubenbild erscheint
+  box.append(abschnitt('Stube einrichten', 'Macht es gemütlicher – du siehst es oben im Bild.'));
+  for (const e of EINRICHTUNG) {
+    const hat = S.st['moebel_' + e.id];
+    const d = document.createElement('div');
+    d.className = 'ware' + (hat ? ' voll' : ''); d.dataset.id = 'moebel_' + e.id;
+    d.innerHTML = `<div class="ware-bild">${px(G.icons.moebel[e.id])}</div>
+      <div class="ware-text"><div class="ware-name">${e.name}</div><div class="ware-info">${e.text}</div></div>`;
+    const b = document.createElement('button'); b.className = 'knopf preis';
+    if (hat) { b.textContent = 'Steht schon'; b.disabled = true; }
+    else { b.innerHTML = `${px(G.waehrung)}${zahl(e.preis)}`; b.disabled = S.geld < e.preis; b.onclick = () => { if (h.kaufeEinmal('moebel_' + e.id, e.preis)) { zeigeHaus(hausModus); aufleuchten('moebel_' + e.id); } }; }
+    d.append(b); box.append(d);
+  }
+}
+
+function abschnitt(titel, text) {
+  const d = document.createElement('div');
+  d.className = 'abschnitt';
+  d.innerHTML = `<b>${titel}</b><span>${text}</span>`;
+  return d;
 }
 
 function tauschKarte() {

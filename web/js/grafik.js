@@ -207,15 +207,47 @@ const BEINE_S = [
   ['....kpk..kpk....', '....kkk..kkk....'],
 ];
 
+// Hüte: über den Eichelhut (Zeilen 0–4) gemalt. Erst Haare über die Kappe, dann der Hut.
+// seite = Blick nach rechts (Kappe dort in Spalte 3–15)
+const HUT_FARBEN = { k: '#2b1d16', w: '#ffffff', r: '#d8443c', R: '#8a2422', g: '#e8c25a', G: '#a8801e', s: '#9aa4b4', S: '#5e6a7a',
+  f: '#3f8a37', F: '#2a5e28', y: '#ffd23f', Y: '#c27512', p: '#d8443c', o: '#f4ece0', b: '#8c5a2c', B: '#5a3818', l: '#ffe680' };
+const HUETE_PIX = {
+  stroh:   { vorn: ['................', '.....kkkkkk.....', '....kggggggk....', '....kRRRRRRk....', 'kkkkggggggggkkkk', 'kGGGGGGGGGGGGGGk'],
+             seite: ['................', '......kkkkkk....', '.....kggggggk...', '.....kRRRRRRk...', '..kkkkggggggkkkk', '..kGGGGGGGGGGGGk'] },
+  feder:   { vorn: ['............kwk.', '.....kkkkkkkwrk.', '....kbbbbbbkrk..', '...kbbbbbbbbkk..', '..kkkkkkkkkkkk..', '................'],
+             seite: ['.............kwk', '......kkkkkkkwrk', '.....kbbbbbbkrk.', '....kbbbbbbbbkk.', '...kkkkkkkkkkkkk', '................'] },
+  klee:    { vorn: ['......kkkk......', '....kkffffkk....', '...kffkfkfffk...', '..kffffkffFffk..', '..kFFFFFFFFFFk..', '................'],
+             seite: ['.......kkkk.....', '.....kkffffkk...', '....kfffkfkffk..', '...kfffffkfFffk.', '...kFFFFFFFFFFFk', '................'] },
+  laterne: { vorn: ['......kkkk......', '....kkssssskk...', '...kssklllkssk..', '..kssskllkssssk.', '..kSSSSSSSSSSSk.', '................'],
+             seite: ['.......kkkk.....', '.....kkssssskk..', '....ksssssklk...', '...kssssssklllk.', '...kSSSSSSSSSSSk', '................'] },
+  pudel:   { vorn: ['.......kk.......', '......kwwk......', '....kkrrrrkk....', '...krrrrrrrrk...', '..kwwwwwwwwwwk..', '................'],
+             seite: ['........kk......', '.......kwwk.....', '.....kkrrrrkk...', '....krrrrrrrrk..', '...kwwwwwwwwwwwk', '................'] },
+  ritter:  { vorn: ['.......kk.......', '......krrk......', '....kkssssskk...', '...ksssssssssk..', '..kSSSSSSSSSSSk.', '..kSkkkkkkkkSk..'],
+             seite: ['........kk......', '.......krrk.....', '.....kkssssskk..', '....kssssssssssk', '...kSSSSSSSSSSSk', '...kSSSkkkkkkkk.'] },
+  krone:   { vorn: ['...k..k..k..k...', '...kyky.kykyk...', '...kyyyyyyyyk...', '...kyyyrryyyk...', '...kYYYYYYYYk...', '................'],
+             seite: ['....k..k..k..k..', '....kyk.kykyk...', '....kyyyyyyyyk..', '....kyyyrryyyk..', '....kYYYYYYYYk..', '................'] },
+};
+function hutAufsetzen(c, hut, seite, haar) {
+  const p = HUETE_PIX[hut]; if (!p) return c;
+  const g = c.getContext('2d');
+  // Kappe des Eichelhuts mit Haaren übermalen (Zeilen 1–4), damit unter schmalen Hüten nichts durchschaut
+  const x0 = seite ? 4 : 3, x1 = seite ? 14 : 12;
+  for (let y = 1; y <= 4; y++) for (let x = x0; x <= x1; x++) { g.fillStyle = haar; g.fillRect(x, y, 1, 1); }
+  g.clearRect(0, 0, 16, 1);
+  const zeilen = seite ? p.seite : p.vorn;
+  zeilen.forEach((z, y) => { for (let x = 0; x < z.length; x++) if (z[x] !== '.') { g.fillStyle = HUT_FARBEN[z[x]]; g.fillRect(x, y, 1, 1); } });
+  return c;
+}
+
 // Breiter Ausfallschritt beim Hauen
 const BEINE_HAU_V = ['...kpk....kpk...', '...kkk....kkk...'];
 const BEINE_HAU_S = ['...kpk....kpk...', '...kkk....kkk...'];
 
 // Baut alle Bilder der Spielfigur neu – beim Start und wenn im Auswahl-Fenster etwas geändert wird
-export function setzeFigur(art = 'junge', farbe = 'blau') {
-  G.figur = { art, farbe };
+export function setzeFigur(art = 'junge', farbe = 'blau', hut = 'eichel') {
+  G.figur = { art, farbe, hut };
   const pal = palKind(art, farbe), m = art === 'maedchen';
-  const v = (kopf, beine) => ausText([...kopf, ...beine], pal).bild();
+  const v = (kopf, beine) => hutAufsetzen(ausText([...kopf, ...beine], pal).bild(), hut, kopf === KOPF_SEITE || kopf === M_SEITE, pal.y);
   const KU = m ? M_UNTEN : KOPF_UNTEN, KO = m ? M_OBEN : KOPF_OBEN, KS = m ? M_SEITE : KOPF_SEITE;
   G.kind = {
     unten: [0, 1, 0, 2].map(i => v(KU, BEINE_V[i])),
@@ -225,12 +257,14 @@ export function setzeFigur(art = 'junge', farbe = 'blau') {
   G.kind.links = G.kind.rechts.map(spiegeln);
   G.kindHau = { unten: v(KU, BEINE_HAU_V), oben: v(KO, BEINE_HAU_V), rechts: v(KS, BEINE_HAU_S) };
   G.kindHau.links = spiegeln(G.kindHau.rechts);
+  G.hutVorschau = {};
   G.hautFarbe = pal.s;
 }
 function kindBilder() { setzeFigur(); }
 // Vorschau für das Auswahl-Fenster (ohne die laufende Figur zu ändern)
-export function figurVorschau(art, farbe) {
-  return ausText([...(art === 'maedchen' ? M_UNTEN : KOPF_UNTEN), ...BEINE_V[0]], palKind(art, farbe)).bild();
+export function figurVorschau(art, farbe, hut = 'eichel') {
+  const pal = palKind(art, farbe);
+  return hutAufsetzen(ausText([...(art === 'maedchen' ? M_UNTEN : KOPF_UNTEN), ...BEINE_V[0]], pal).bild(), hut, false, pal.y);
 }
 
 // ---------- Klingen, waagerecht nach rechts; Griff links ----------

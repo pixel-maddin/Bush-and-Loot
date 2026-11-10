@@ -9,7 +9,7 @@ export const STUBE_B = 160, STUBE_H = 84;
 
 function rechteck(g, x, y, w, h, f) { g.fillStyle = f; g.fillRect(x, y, w, h); }
 
-function stubeMalen(bild, tier, nacht, held) {
+function stubeMalen(bild, tier, nacht, held, m = {}) {
   const c = leinwand(STUBE_B, STUBE_H), g = c.getContext('2d');
   const B = STUBE_B, H = STUBE_H;
 
@@ -37,7 +37,8 @@ function stubeMalen(bild, tier, nacht, held) {
     const d = dx * dx + dy * dy;
     if (d > 1) continue;
     let f = '#b8463a';
-    if (d > 0.78) f = '#e8b04a'; else if (d > 0.62) f = '#8a2e2a'; else if ((x + y) % 6 === 0) f = '#d8604a';
+    if (m.teppich) f = ['#e8402c', '#ff9a2a', '#ffd23f', '#5aaa46', '#3d7ad8', '#9256c8'][Math.min(5, Math.floor(d * 6))];
+    else if (d > 0.78) f = '#e8b04a'; else if (d > 0.62) f = '#8a2e2a'; else if ((x + y) % 6 === 0) f = '#d8604a';
     rechteck(g, x, y, 1, 1, f);
   }
 
@@ -140,14 +141,43 @@ function stubeMalen(bild, tier, nacht, held) {
   const dampfT = [[76, 51 - bild], [75 + (bild % 2), 48 - bild], [77, 45 - bild]];
   dampfT.forEach(([x, y], i) => { if ((i + bild) % 3 !== 1) rechteck(g, x, y, 1, 2, 'rgba(240,235,225,0.65)'); });
 
-  // Laterne an der Decke
-  rechteck(g, 104, 0, 1, 9, '#2b1d16');
-  rechteck(g, 101, 9, 7, 2, '#2b1d16'); rechteck(g, 101, 11, 7, 7, '#2b1d16'); rechteck(g, 102, 12, 5, 5, '#ffd76a'); rechteck(g, 103, 13, 3, 3, '#fff3c0');
-  rechteck(g, 100, 18, 9, 1, '#2b1d16');
+  if (m.leuchter) {
+    // Goldleuchter mit fünf Kerzen
+    rechteck(g, 104, 0, 1, 7, '#8a6a20');
+    rechteck(g, 94, 10, 21, 2, '#c8981e'); rechteck(g, 96, 12, 17, 1, '#8a6a20'); rechteck(g, 102, 7, 5, 3, '#ffd23f');
+    for (const x of [94, 99, 104, 109, 114]) { rechteck(g, x, 6, 1, 4, '#f4ece0'); rechteck(g, x, 4 + (bild + x) % 2, 1, 2, '#ffd76a'); }
+  } else {
+    // Laterne an der Decke
+    rechteck(g, 104, 0, 1, 9, '#2b1d16');
+    rechteck(g, 101, 9, 7, 2, '#2b1d16'); rechteck(g, 101, 11, 7, 7, '#2b1d16'); rechteck(g, 102, 12, 5, 5, '#ffd76a'); rechteck(g, 103, 13, 3, 3, '#fff3c0');
+    rechteck(g, 100, 18, 9, 1, '#2b1d16');
+  }
+  if (m.uhr) {
+    // Kuckucksuhr mit schwingendem Pendel
+    rechteck(g, 98, 24, 10, 10, '#5a3818'); rechteck(g, 99, 25, 8, 8, '#8c5a2c'); rechteck(g, 97, 22, 12, 2, '#4a2e14');
+    rechteck(g, 101, 27, 4, 4, '#f4ece0'); rechteck(g, 103, 28, 1, 2, '#2b1d16'); rechteck(g, 103, 29, 2, 1, '#2b1d16');
+    const px = 103 + [-2, 0, 2][bild]; rechteck(g, 103, 34, 1, 5, '#c8981e'); rechteck(g, px - 1, 39, 3, 3, '#ffd23f');
+  }
+  if (m.bild) {
+    // Gemälde über dem Bett
+    rechteck(g, 124, 35, 24, 10, '#c8981e'); rechteck(g, 125, 36, 22, 8, '#ff9a52');
+    rechteck(g, 125, 40, 22, 4, '#3f8a37'); rechteck(g, 136, 37, 4, 3, '#ffd23f');
+    for (const x of [127, 131, 141, 145]) rechteck(g, x, 38, 2, 4, '#2a5e28');
+  }
+  if (m.pflanze) {
+    // große Zimmerpflanze zwischen Hocker und Bett
+    rechteck(g, 102, 58, 8, 8, '#c0603a'); rechteck(g, 102, 58, 8, 1, '#e07a4a');
+    for (const [x, y, w, h] of [[98, 48, 6, 4], [106, 46, 6, 5], [101, 42, 6, 5], [107, 52, 5, 4], [96, 53, 5, 4]]) { rechteck(g, x, y, w, h, '#3f8a37'); rechteck(g, x + 1, y + 1, w - 2, 1, '#6aa84f'); }
+    rechteck(g, 105, 47, 1, 11, '#2a5e28');
+  }
 
   // Begleiter schläft auf dem Teppich, kleine „z“ steigen auf
+  if (m.korb) {
+    for (let x = 86; x < 111; x++) { const h = 4 - Math.round(Math.abs(x - 98.5) / 6); rechteck(g, x, 76 - h, 1, h + 3, x % 3 ? '#a8703c' : '#7a4a22'); }
+    rechteck(g, 88, 74, 21, 2, '#f4a0b8');
+  }
   if (tier) {
-    const tx = 98 - Math.round(tier.width / 2), ty = 78 - tier.height;
+    const tx = 98 - Math.round(tier.width / 2), ty = (m.korb ? 76 : 78) - tier.height;
     g.drawImage(tier, tx, ty);
     const zs = [[0, 0], [3, -5], [7, -10]];
     zs.forEach(([zx, zy], i) => {
@@ -165,6 +195,15 @@ function stubeMalen(bild, tier, nacht, held) {
     else if (y < rand) rechteck(g, x, y, 1, 1, '#5a3818');
   }
 
+  if (m.lichter) {
+    const farben = ['#ff5a5a', '#ffd23f', '#5ae05a', '#5aa8ff', '#e07aff'];
+    for (let i = 0; i < 26; i++) {
+      const x = 14 + i * 5.3, dx = Math.abs(x + 0.5 - B / 2) / (B / 2);
+      const y = Math.round(20 * (1 - Math.sqrt(Math.max(0, 1 - dx * dx * dx * dx))) + 3 + (i % 2) * 2);
+      rechteck(g, Math.round(x), y - 1, 1, 1, '#2b1d16');
+      rechteck(g, Math.round(x), y, 2, 2, (i + bild) % 4 === 0 ? '#ffffff' : farben[i % 5]);
+    }
+  }
   // Warmes Licht von Feuer und Laterne
   g.globalCompositeOperation = 'lighter';
   const licht = (x, y, r, a) => {
@@ -184,10 +223,11 @@ function stubeMalen(bild, tier, nacht, held) {
 }
 
 // Drei Bilder, je nach Begleiter und Tageszeit; neu gemalt nur, wenn sich davon etwas ändert
-let vorrat = { tier: undefined, nacht: undefined, held: undefined, bilder: [] };
-export function stubenBilder(tier, nacht, held) {
-  if (vorrat.tier !== tier || vorrat.nacht !== nacht || vorrat.held !== held) {
-    vorrat = { tier, nacht, held, bilder: [0, 1, 2].map(i => stubeMalen(i, tier, nacht, held)) };
+let vorrat = { tier: undefined, nacht: undefined, held: undefined, moebel: '', bilder: [] };
+export function stubenBilder(tier, nacht, held, moebel = {}) {
+  const mk = Object.keys(moebel).filter(k => moebel[k]).sort().join(',');
+  if (vorrat.tier !== tier || vorrat.nacht !== nacht || vorrat.held !== held || vorrat.moebel !== mk) {
+    vorrat = { tier, nacht, held, moebel: mk, bilder: [0, 1, 2].map(i => stubeMalen(i, tier, nacht, held, moebel)) };
   }
   return vorrat.bilder;
 }

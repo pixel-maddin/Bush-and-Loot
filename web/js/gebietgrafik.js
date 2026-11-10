@@ -1,7 +1,7 @@
 // gebietgrafik.js – Bilder für Dunkelwald und Gebirge: Ruinen/Portale, Tannen, dunkle Bäume, umgefärbtes Gras,
 // Fledermaus, Schneekugel, Eiskristall, Lagerfeuer, Leuchtpilze. Wie überall: alles aus Code.
 
-import { G, PB, spiegeln, weiss } from './grafik.js';
+import { G, PB, spiegeln, weiss, ausText } from './grafik.js';
 import { leinwand, zufall } from './hilfe.js';
 
 // Jeden Pixel eines Bildes umfärben (für dunkle Bäume und frostiges Gras)
@@ -190,6 +190,18 @@ export function initGebietGrafik() {
   // Laden-Symbole für Fackel und Daunenjacke (ohne Symbol bricht der Aufbau der Warenliste ab)
   G.icons.fackel = G.belohnung.fackel;
   G.huette = { dunkel: zelt(), berg: berghuette() };
+  // Laden-Symbole für die Stuben-Einrichtung
+  const P = { k: '#2b1d16', g: '#3f8a37', G: '#6aa84f', t: '#c0603a', y: '#ffd23f', Y: '#c8981e', o: '#ff9a52', w: '#f4ece0', b: '#8c5a2c', B: '#5a3818', p: '#f4a0b8', r: '#e8402c', u: '#3d7ad8', v: '#9256c8', l: '#5aaa46' };
+  const ic = (z) => ausText(z, P).bild();
+  G.icons.moebel = {
+    pflanze: ic(['..kgk.kgk.', '.kgGgkgGgk', 'kgGgkkgGk.', '.kgkgGgk..', '..kgGgk...', '...kgk....', '..kttttk..', '..kttttk..', '...kttk...', '...kkkk...']),
+    bild:    ic(['kkkkkkkkkk', 'kYYYYYYYYk', 'kYooyyooYk', 'kYooooooYk', 'kYgGoogGYk', 'kYggggggYk', 'kYYYYYYYYk', 'kkkkkkkkkk']),
+    korb:    ic(['..........', '.kppppppk.', 'kbpppppppk', 'kbbbbbbbbk', 'kBbBbBbBbk', '.kbbbbbbk.', '..kkkkkk..']),
+    teppich: ic(['..kkkkkk..', '.krrrrrrk.', 'kroooooork', 'kroyylyork', 'kroyulyork', 'kroooooork', '.krrrrrrk.', '..kkkkkk..']),
+    uhr:     ic(['.kkkkkk.', 'kbbbbbbk', 'kbwwwwbk', 'kbwkwwbk', 'kbwkkwbk', 'kbbbbbbk', '.kkYkkk.', '...Y....', '..kyk...', '..kkk...']),
+    lichter: ic(['k.........k', '.k.......k.', '..kk...kk..', '.r..y.l..u.', 'rr.yy.ll.uu', '.r..y.l..u.']),
+    leuchter: ic(['....k....', '.w..k..w.', '.y..k..y.', 'kYkkYkkYk', '.kYYYYYk.', '...kYk...', '....k....']),
+  };
   G.icons.jacke = daunenjacke();
 }
 

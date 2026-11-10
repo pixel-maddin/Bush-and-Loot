@@ -7,7 +7,7 @@ import { initWetterGrafik, wetterText, wetterTextGebirge } from './wetter.js';
 import { initGebietGrafik } from './gebietgrafik.js';
 import {
   S, initSpiel, laden, speichern, neuAnfangen, hatSpielstand, neuerTag, weiterMaehen, tagBeenden,
-  kaufen, update, zeichne, setzeHooks, oeffneTuer, reiseNach, gebietFrei, nachNiederlage, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
+  kaufen, update, zeichne, setzeHooks, oeffneTuer, kaufeEinmal, setzeHut, reiseNach, gebietFrei, nachNiederlage, kaufeBegleiter, benenneBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
 } from './spiel.js';
 import { KAMMERN, GEBIETE } from './config.js';
 import { tierName } from './begleiter.js';
@@ -76,7 +76,7 @@ initHoehlenGrafik();
 initWetterGrafik();
 initGebietGrafik();
 laden();
-if (S.figur) setzeFigur(S.figur.art, S.figur.farbe);
+if (S.figur) setzeFigur(S.figur.art, S.figur.farbe, S.st.hut);
 // Zum Testen: ?geld=5000 schenkt Diamanten – nur lokal, online soll keiner schummeln
 const q = new URLSearchParams(location.search);
 const lokal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
@@ -170,7 +170,7 @@ UI.initUI({
   },
   neu() { neuAnfangen(); setzeFigur(); initSpiel(); UI.hudNeu(); UI.zeigeTitel(false); },
   figurGewaehlt(art, farbe, zweck) {
-    S.figur = { art, farbe }; setzeFigur(art, farbe); speichern();
+    S.figur = { art, farbe }; setzeFigur(art, farbe, S.st.hut); speichern();
     UI.hudNeu();
     if (zweck === 'start') this.start(); else UI.zeigeTitel(hatSpielstand());
   },
@@ -183,6 +183,8 @@ UI.initUI({
   // Schlafen gehen: schwarz („Gute Nacht“), Bilanz auf dem Nachtbild, „Aufstehen“ startet den Morgen
   tagBeenden() { UI.nachtAn(() => tagBeenden()); },
   kaufen(id, preis) { return kaufen(id, preis); },
+  kaufeEinmal(schluessel, preis) { return kaufeEinmal(schluessel, preis); },
+  hutAufsetzen(id) { setzeHut(id); const f = S.figur || { art: 'junge', farbe: 'blau' }; setzeFigur(f.art, f.farbe, id); UI.hudNeu(); },
   begleiterKaufen(art, rasse, preis, name) {
     const ok = kaufeBegleiter(art, rasse, preis, name);
     if (ok) UI.toast(art === 'katze' ? `Miau! ${tierName()} ist jetzt dabei.` : `Wuff! ${tierName()} ist jetzt dabei.`, 3000);
@@ -221,6 +223,11 @@ UI.zeigeTitel(hatSpielstand());
 // ?begleiter=katze-tiger: Tier nur für diesen Besuch dabeihaben (wird nicht gespeichert, solange man nichts kauft)
 if (lokal && q.has('begleiter')) { const [art, rasse] = q.get('begleiter').split('-'); S.begleiter = { art, rasse }; }
 if (lokal && q.has('wetter')) S.wetterTest = q.get('wetter');         // ?wetter=regen / sturm: jeden Tag dieses Wetter
+// ?alles=krone: alle Möbel und dieser Hut (nur für diesen Besuch, z. B. mit ?laden)
+if (lokal && q.has('alles')) {
+  for (const e of ['pflanze', 'bild', 'korb', 'teppich', 'uhr', 'lichter', 'leuchter']) S.st['moebel_' + e] = 1;
+  S.st.hut = q.get('alles') || 'krone'; S.figur = S.figur || { art: 'junge', farbe: 'blau' }; setzeFigur(S.figur.art, S.figur.farbe, S.st.hut);
+}
 if (lokal && q.has('tierwahl')) { S.geld = Math.max(S.geld, 200); UI.zeigeBegleiterWahl(); }
 else if (lokal && q.has('laden')) { S.phase = 'laden'; UI.zeigeHaus(true); }    // ?laden: Ladenfenster nach dem Tag
 else if (lokal && q.has('wahl')) UI.zeigeFigur('start');                    // ?wahl: Figur-Auswahl

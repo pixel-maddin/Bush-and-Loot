@@ -86,6 +86,29 @@ export const AUFRUESTUNGEN = [
   { id: 'jacke',   name: 'Daunenjacke',    kosten: [400, 1100, 2600],         text: 'Länger warm im Gebirge.', ab: 3 },
 ];
 
+// Stube einrichten: reine Schmuckstücke, die oben im Stubenbild erscheinen (gekauft = S.st['moebel_' + id])
+export const EINRICHTUNG = [
+  { id: 'pflanze', name: 'Zimmerpflanze',     preis: 400,   text: 'Ein großes grünes Blatt-Wunder neben dem Bett.' },
+  { id: 'bild',    name: 'Gemälde',           preis: 900,   text: 'Der Wald bei Sonnenuntergang, über dem Bett.' },
+  { id: 'korb',    name: 'Kuschelkorb',       preis: 1500,  text: 'Ein weiches Körbchen für deinen Begleiter.' },
+  { id: 'teppich', name: 'Regenbogenteppich', preis: 2500,  text: 'Bunter als der alte – und flauschiger.' },
+  { id: 'uhr',     name: 'Kuckucksuhr',       preis: 4000,  text: 'Tickt gemütlich an der Wand.' },
+  { id: 'lichter', name: 'Lichterkette',      preis: 7000,  text: 'Bunte Lichter unter der Decke.' },
+  { id: 'leuchter', name: 'Goldleuchter',     preis: 15000, text: 'Ein goldener Kronleuchter statt der Laterne.' },
+];
+
+// Hüte mit Boni: einer wird getragen (S.st.hut), gekauft = S.st['hut_' + id]. Eichelhut ist der Standard.
+export const HUETE = [
+  { id: 'eichel',  name: 'Eichelhut',        preis: 0,     bonus: 'Dein treuer alter Hut.' },
+  { id: 'stroh',   name: 'Strohhut',         preis: 600,   bonus: 'Der Tag dauert 10 s länger.' },
+  { id: 'feder',   name: 'Federhut',         preis: 900,   bonus: 'Diamanten fliegen von weiter her.' },
+  { id: 'klee',    name: 'Kleeblattmütze',   preis: 1500,  bonus: 'Mehr Glück: öfter seltene Farben.' },
+  { id: 'laterne', name: 'Laternenhelm',     preis: 2200,  bonus: 'Größerer Lichtkreis im Dunkelwald.', ab: 2 },
+  { id: 'pudel',   name: 'Pudelmütze',       preis: 2400,  bonus: 'Im Gebirge 15 s länger warm.', ab: 3 },
+  { id: 'ritter',  name: 'Ritterhelm',       preis: 6000,  bonus: 'Ein Herz mehr.' },
+  { id: 'krone',   name: 'Goldkrone',        preis: 15000, bonus: 'Jeder Diamant ist 10 % mehr wert.' },
+];
+
 export const KLINGE = {
   schaden:    [1, 2, 3, 5, 7, 10],
   reichweite: [15, 18, 21, 24, 28, 32],
@@ -116,20 +139,21 @@ export const KAMMERN = [
 
 // Aus den gekauften Stufen die Spielwerte ableiten (Boss-Belohnungen stecken mit drin)
 export function werte(st) {
-  const k = st.klinge | 0, bosse = st.bosse | 0;
+  const k = st.klinge | 0, bosse = st.bosse | 0, hut = st.hut || 'eichel';
   return {
     schaden: Math.ceil(KLINGE.schaden[k] * (bosse >= 4 ? 1.5 : 1)),
     reichweite: KLINGE.reichweite[k],
     bogen: KLINGE.bogenGrad[k] * Math.PI / 180,
     abklingen: 0.42 - 0.055 * (st.schwung | 0),
     tempo: 62 + 11 * (st.stiefel | 0),
-    maxHp: 3 + (st.herz | 0) + (bosse >= 1 ? 1 : 0),
-    magnet: 14 + 14 * (st.magnet | 0),
-    tagDauer: 70 + 15 * (st.sonne | 0),
-    glueck: st.klee | 0,
+    maxHp: 3 + (st.herz | 0) + (bosse >= 1 ? 1 : 0) + (hut === 'ritter' ? 1 : 0),
+    magnet: 14 + 14 * (st.magnet | 0) + (hut === 'feder' ? 12 : 0),
+    tagDauer: 70 + 15 * (st.sonne | 0) + (hut === 'stroh' ? 10 : 0),
+    glueck: (st.klee | 0) + (hut === 'klee' ? 1 : 0),
+    wertMal: hut === 'krone' ? 1.1 : 1,
     wirbel: (st.wirbel | 0) > 0,
-    licht: 46 + 22 * (st.fackel | 0),          // Lichtkreis im Dunkelwald (Weltpixel)
-    kaelte: 28 + 18 * (st.jacke | 0),          // Sekunden, bis es im Gebirge zu kalt wird
+    licht: 46 + 22 * (st.fackel | 0) + (hut === 'laterne' ? 24 : 0),     // Lichtkreis im Dunkelwald (Weltpixel)
+    kaelte: 28 + 18 * (st.jacke | 0) + (hut === 'pudel' ? 15 : 0),       // Sekunden, bis es im Gebirge zu kalt wird
   };
 }
 

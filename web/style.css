@@ -357,3 +357,9 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 #kaelte.kalt { animation: blinken .6s steps(2) infinite; }
 .brauche { display: inline-flex; align-items: center; gap: 2px; margin-left: 4px; }
 .brauche img { width: 14px; height: 14px; }
+
+/* Abschnitte im Laden (Kleiderschrank, Stube einrichten) */
+.abschnitt { grid-column: 1 / -1; display: flex; flex-direction: column; margin: 8px 2px 0; padding: 6px 10px; border-radius: 8px;
+  background: linear-gradient(#8c5a2c, #6b4220); color: #fff3d8; border: 2px solid #2b1d16; }
+.abschnitt b { font-size: 15px; text-shadow: 0 1px 0 #2b1d16; }
+.abschnitt span { font-size: 12px; opacity: .9; }
