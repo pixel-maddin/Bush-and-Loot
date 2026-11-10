@@ -8,7 +8,7 @@ import {
 import { G } from './grafik.js';
 import { SFX } from './ton.js';
 import { baueWelt, baueGebiet } from './welt.js';
-import { klemme } from './hilfe.js';
+import { klemme, leinwand } from './hilfe.js';
 import { neuesWetter, windFaktor, wetterUpdate, wetterZeichne } from './wetter.js';
 import { lebenInit, lebenUpdate, lebenBoden, lebenListe, lebenZeichne, lebenUeber, lebenLeuchten } from './leben.js';
 import { begleiterUpdate, begleiterNeu, zeichneBegleiter, begleiterSchatten } from './begleiter.js';
@@ -1017,12 +1017,37 @@ function zeichnePortal(ctx, pt) {
 
 // Dunkelwald: nur der Lichtkreis der Fackel ist hell. Türkise, Leuchtpilze, Glühwürmchen und das Portal
 // leuchten durch die Dunkelheit (danach additiv drübergemalt).
+// Dunkelheit als eigene Ebene: dunkel füllen, dann Lichtlöcher ausstanzen – um den Helden (Fackel)
+// und um das Zelt, dessen Laterne den Platz davor erhellt. So sieht man die Raststätte schon beim
+// Ankommen durchs Portal.
+let dunkelEbene = null;
 function dunkelwald(ctx, L, T, vw, vh) {
   const p = S.sp, r = S.w.licht, x = p.x, y = p.y - 8;
-  const gr = ctx.createRadialGradient(x, y, r * 0.45, x, y, r);
-  gr.addColorStop(0, 'rgba(4, 6, 14, 0)'); gr.addColorStop(1, 'rgba(4, 6, 14, 0.9)');
-  ctx.fillStyle = gr; ctx.fillRect(L - 2, T - 2, vw + 4, vh + 4);
+  const ox = Math.floor(L) - 2, oy = Math.floor(T) - 2, w = Math.ceil(vw) + 5, h = Math.ceil(vh) + 5;
+  if (!dunkelEbene || dunkelEbene.width !== w || dunkelEbene.height !== h) dunkelEbene = leinwand(w, h);
+  const m = dunkelEbene.getContext('2d');
+  m.globalCompositeOperation = 'source-over';
+  m.clearRect(0, 0, w, h);
+  m.fillStyle = 'rgba(4, 6, 14, 0.9)'; m.fillRect(0, 0, w, h);
+  m.globalCompositeOperation = 'destination-out';
+  const loch = (lx, ly, innen, aussen) => {
+    if (lx + aussen < ox || ly + aussen < oy || lx - aussen > ox + w || ly - aussen > oy + h) return;
+    const g = m.createRadialGradient(lx - ox, ly - oy, innen, lx - ox, ly - oy, aussen);
+    g.addColorStop(0, 'rgba(0, 0, 0, 1)'); g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    m.fillStyle = g; m.fillRect(lx - ox - aussen, ly - oy - aussen, aussen * 2, aussen * 2);
+  };
+  loch(x, y, r * 0.45, r);
+  const hu = S.welt.huette;
+  const flacker = Math.sin(S.t * 7.3) * 1.5 + Math.sin(S.t * 2.9) * 1.2;
+  if (hu) loch(hu.x + 4, hu.y - 14, 26, 70 + flacker);
+  ctx.drawImage(dunkelEbene, ox, oy);
   ctx.globalCompositeOperation = 'lighter';
+  if (hu) {
+    // warmer Schein: Laterne rechts am Zelt und der Eingang, aus dem Licht fällt
+    leuchten(ctx, hu.x + 13.5, hu.y - 17.5, 40 + flacker, 0.42);
+    leuchten(ctx, hu.x + 13.5, hu.y - 17.5, 9, 0.6);
+    leuchten(ctx, hu.x, hu.y - 6, 22, 0.38 + 0.04 * Math.sin(S.t * 5.1));
+  }
   for (const m of S.welt.pilze) {
     const f = [[62, 232, 208], [187, 98, 238], [127, 240, 255]][m.v], a = 0.22 + 0.1 * Math.sin(S.t * 2 + m.ph);
     const g = ctx.createRadialGradient(m.x, m.y - 4, 0, m.x, m.y - 4, 10);
