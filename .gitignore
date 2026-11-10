@@ -12,3 +12,4 @@ __pycache__/
 
 # Testseiten (Bilder per Headless-Chrome), nie veröffentlichen
 web/_*.html
+web/_*.js

@@ -455,7 +455,7 @@ function spielerUpdate(dt, ein, neu) {
     }
   }
   // Portale: im Wald die erwachten Ruinen, in den Gebieten das Portal zurück
-  const portale = S.welt.portale.filter(pt => gebietFrei(pt.gebiet)).map(pt => ({ ...pt.tuer, ziel: pt.gebiet }));
+  const portale = (S.welt.portale || []).filter(pt => gebietFrei(pt.gebiet)).map(pt => ({ ...pt.tuer, ziel: pt.gebiet }));   // Kammern haben keine
   if (S.welt.portal) portale.push({ ...S.welt.portal.tuer, ziel: 'wald' });
   let amPortal = null;
   for (const T of portale) if (Math.abs(p.x - T.x) < 9 && p.y < T.y + 6 && p.y > T.y - 2) amPortal = T;
@@ -823,7 +823,7 @@ export function zeichne(ctx, cw, ch, zoom) {
   for (const b of W.baeume) if (sicht(b.x, b.y, 24, 50, 4)) liste.push({ y: b.y, t: 1, o: b });
   if (W.haus && sicht(W.haus.x, W.haus.y, 50, 85, 6)) liste.push({ y: W.haus.y, t: 2, o: W.haus });
   if (W.hoehle && sicht(W.hoehle.x, W.hoehle.y, 50, 70, 6)) liste.push({ y: W.hoehle.y, t: 6, o: W.hoehle });
-  for (const pt of W.portale) if (sicht(pt.x, pt.y, 26, 48, 4)) liste.push({ y: pt.y, t: 'portal', o: pt });
+  for (const pt of W.portale || []) if (sicht(pt.x, pt.y, 26, 48, 4)) liste.push({ y: pt.y, t: 'portal', o: pt });
   if (W.portal && sicht(W.portal.x, W.portal.y, 26, 48, 4)) liste.push({ y: W.portal.y, t: 'portal', o: { ...W.portal, gebiet: W.gebiet, zurueck: true } });
   if (W.feuer && sicht(W.feuer.x, W.feuer.y, 12, 20, 4)) liste.push({ y: W.feuer.y, t: 'feuer', o: W.feuer });
   if (kammer) kammerListe(liste); else lebenListe(liste, S, sicht);

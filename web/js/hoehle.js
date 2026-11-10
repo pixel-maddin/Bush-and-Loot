@@ -35,7 +35,7 @@ export function baueKammer(k) {
   const tuer = { x: 7.5 * K, y: (KH - 1) * K };
   const W = {
     b: KB, h: KH, fest, sperr, boden: new Uint8Array(KB * KH), baeume: [], felsen: [], wasser: [],
-    haus: null, hoehle: null, kammer: k, tuer, start: { x: tuer.x, y: tuer.y - 12 }, thema: THEMEN[k - 1],
+    haus: null, hoehle: null, portale: [], kammer: k, tuer, start: { x: tuer.x, y: tuer.y - 12 }, thema: THEMEN[k - 1],
   };
   W.bodenBild = malKammer(W, k);
   return W;
