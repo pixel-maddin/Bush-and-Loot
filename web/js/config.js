@@ -106,7 +106,7 @@ export const KAMMERN = [
   { name: 'Schattenhalle', boss: 'Schattenpilz',   art: 'schatten', preis: 900,  hp: 65,  schaden: 1,
     schatz: [10, 10, 10, 4, 1], belohnung: 'steigeisen', brauche: { tuerkis: 15 },
     beute: 'Steigeisen', beuteText: 'Eiserne Zacken für die Stiefel. Im Wald hat sich wieder etwas verändert …' },
-  { name: 'Frostkammer',   boss: 'Eisigel',        art: 'igel',     preis: 2000, hp: 100, schaden: 2,
+  { name: 'Frostkammer',   boss: 'Eisigel',        art: 'igel',     preis: 2000, hp: 150, schaden: 2,
     schatz: [10, 10, 10, 8, 3], belohnung: 'schliff', brauche: { eis: 15 },
     beute: 'Goldener Schliff', beuteText: 'Deine Klinge glänzt golden und trifft ab jetzt halb so fest noch mal dazu.' },
   { name: 'Kristallthron', boss: 'Riesenmotte',    art: 'motte',    preis: 4000, hp: 240, schaden: 2,

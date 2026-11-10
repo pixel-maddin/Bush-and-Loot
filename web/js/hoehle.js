@@ -189,8 +189,8 @@ const VERHALTEN = {
       case 'einrollen':
         b.wx = Math.round((Math.random() - 0.5) * 2);
         if (b.t <= 0) {
-          b.wx = 0; b.ball = true; zu(b, 'rollen', halb ? 4.5 : 3.6);
-          const a = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.6, v = halb ? 165 : 130;
+          b.wx = 0; b.ball = true; zu(b, 'rollen', halb ? 4.8 : 4);
+          const a = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.6, v = halb ? 185 : 150;
           b.vx = Math.cos(a) * v; b.vy = Math.sin(a) * v; SFX.ansturm();
         }
         break;
@@ -202,13 +202,13 @@ const VERHALTEN = {
         if (b.y < Y0) { b.y = Y0; b.vy = Math.abs(b.vy); prall = true; }
         if (b.y > Y1) { b.y = Y1; b.vy = -Math.abs(b.vy); prall = true; }
         if (prall) { SFX.kling(); S.wackeln = 0.1; splitter(b.x, b.y - 8, ['#e8fbff', '#7ec4e4'], 4); }
-        if (b.t <= 0) { b.ball = false; zu(b, 'schwindel', 2.1); }
+        if (b.t <= 0) { b.ball = false; zu(b, 'schwindel', halb ? 1.5 : 1.8); }
         break;
       }
       case 'schwindel':
         if (b.t <= 0) {
           zu(b, 'stacheln', 0.5);
-          const n = halb ? 12 : 8, v = halb ? 105 : 90, a0 = Math.random();
+          const n = halb ? 14 : 10, v = halb ? 115 : 100, a0 = Math.random();
           for (let i = 0; i < n; i++) {
             const a = a0 + i / n * Math.PI * 2;
             S.geschosse.push({ art: 'stachel', x: b.x, y: b.y - 6, vx: Math.cos(a) * v, vy: Math.sin(a) * v, leben: 3 });
