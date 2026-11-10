@@ -75,6 +75,7 @@ if (lokal && q.has('geld')) { S.geld = parseInt(q.get('geld'), 10) || 0; speiche
 initSpiel();
 
 let vorPause = null;
+let letzterGrund = null;        // wie der letzte Tag endete ('heim', 'abend', 'ohnmacht')
 const steuerung = initEingabe({
   flaeche: cv,
   stickEl: document.getElementById('stick'),
@@ -98,7 +99,7 @@ function pause() {
 
 setzeHooks({
   haus: () => { eingabe.leeren(); UI.zeigeHaus(false); steuerung.aktualisiere(); },
-  bilanz: (info) => { eingabe.leeren(); UI.zeigeBilanz(info); steuerung.aktualisiere(); },
+  bilanz: (info) => { eingabe.leeren(); letzterGrund = info.grund; UI.zeigeBilanz(info); steuerung.aktualisiere(); },
   hinweis: (t) => UI.toast(t),
   hoehle: () => { eingabe.leeren(); UI.zeigeHoehle(); steuerung.aktualisiere(); },
   bossBesiegt: (k) => UI.toast(`${KAMMERN[k - 1].boss} ist besiegt!`, 2500),
@@ -140,14 +141,21 @@ UI.initUI({
     UI.nachtUebergang(() => { UI.zeige(null); neuerTag(); steuerung.aktualisiere(); });
   },
   weiterMaehen() { UI.zeige(null); weiterMaehen(); steuerung.aktualisiere(); },
-  tagBeenden() { tagBeenden(); },
+  // Schlafen gehen: schwarz („Gute Nacht“), Bilanz auf dem Nachtbild, „Aufstehen“ startet den Morgen
+  tagBeenden() { UI.nachtAn(() => tagBeenden()); },
   kaufen(id, preis) { return kaufen(id, preis); },
   begleiterKaufen(art, rasse, preis) {
     const ok = kaufeBegleiter(art, rasse, preis);
     if (ok) UI.toast(art === 'katze' ? 'Miau! Deine neue Freundin ist dabei.' : 'Wuff! Dein neuer Freund ist dabei.', 3000);
     return ok;
   },
-  bilanzWeiter() { S.phase = 'laden'; UI.zeigeHaus(true); },
+  bilanzWeiter() {
+    if (letzterGrund === 'heim') {
+      // Aufstehen: gleich draußen vor dem Baumstumpf, der Morgen blendet ein
+      UI.zeige(null); neuerTag(); steuerung.aktualisiere();
+      setTimeout(UI.nachtAus, 150);
+    } else { S.phase = 'laden'; UI.zeigeHaus(true); }
+  },
   tuerOeffnen(k) { return oeffneTuer(k); },
   kaempfen(k) {
     UI.zeige(null); betreteKammer(k);
@@ -175,6 +183,11 @@ if (lokal && q.has('begleiter')) { const [art, rasse] = q.get('begleiter').split
 if (lokal && q.has('tierwahl')) { S.geld = Math.max(S.geld, 200); UI.zeigeBegleiterWahl(); }
 else if (lokal && q.has('laden')) { S.phase = 'laden'; UI.zeigeHaus(true); }    // ?laden: Ladenfenster nach dem Tag
 else if (lokal && q.has('wahl')) UI.zeigeFigur('start');                    // ?wahl: Figur-Auswahl
+else if (lokal && q.has('schlafen')) {                                       // ?schlafen: Nacht-Bilanz nach dem Schlafengehen
+  document.getElementById('nacht').style.transition = 'none';   // Headless-Chrome lässt CSS-Übergänge stehen
+  UI.zeige(null); neuerTag(); S.heute.gemaeht = 37; S.heute.steine = [12, 6, 1, 0, 0]; S.heute.wert = 62;
+  UI.nachtAn(() => tagBeenden());
+}
 else if (lokal && (q.has('kammer') || q.has('hoehle') || q.has('eingang'))) {
   UI.zeige(null); neuerTag();
   if (q.has('kammer')) betreteKammer(Math.max(1, Math.min(5, parseInt(q.get('kammer'), 10) || 1)));

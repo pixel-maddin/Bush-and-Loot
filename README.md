@@ -61,7 +61,9 @@ wird daraus „Stick“ (linke Hälfte ziehen = laufen, rechte Hälfte tippen = 
   Diamanten von heute ist weg. 15 Sekunden vorher zeigt ein gelber Pfeil am
   Bildrand den Weg nach Hause.
 - Läufst du in die Tür des Baumstumpfs, kannst du mitten am Tag einkaufen
-  (die Zeit steht dann still) oder schlafen gehen.
+  (die Zeit steht dann still) oder schlafen gehen. Beim Schlafengehen wird es
+  dunkel („Gute Nacht“), du siehst, was du heute gesammelt hast, und mit
+  „Aufstehen“ geht es am nächsten Morgen direkt draußen weiter.
 - Wirst du so oft getroffen, dass alle Herzen weg sind, kippst du um: Die Hälfte
   der Diamanten von diesem Tag ist weg.
 - Jeden Morgen wächst das Gras neu. Zwischen zwei Tagen wird es kurz dunkel

@@ -409,6 +409,11 @@ export function zeigeBilanz({ grund, heute, verlust, tag, kammer, liegen }) {
     ${grund === 'abend' ? '<p class="hilfe">Nächstes Mal vor Sonnenuntergang in den Baumstumpf und „Schlafen gehen“ – dann bleibt alles.</p>' : ''}
     ${kammer ? '<p class="hilfe">Die Tür bleibt offen – morgen kannst du es noch mal versuchen. Vielleicht mit einer besseren Klinge?</p>' : ''}
   `;
+  // Nach „Schlafen gehen“ steht die Bilanz auf dem schwarzen Nachtbild, und es geht direkt in den Morgen
+  const nachts = grund === 'heim';
+  $('bilanz').classList.toggle('nachts', nachts);
+  $('btnBilanz').textContent = nachts ? 'Aufstehen ☀' : 'Ab in den Baumstumpf';
+  if (nachts) { $('nacht').querySelector('span').textContent = ''; $('toast').classList.remove('an'); }
   zeige('bilanz');
   setTimeout(() => $('btnBilanz').focus({ preventScroll: true }), 50);
 }
@@ -418,15 +423,18 @@ export function zeigePause() { tonKnopf(); zeige('pauseSchicht'); }
 // ---------- Nacht: kurz schwarz, in der Mitte passiert der Tageswechsel ----------
 let nachtLaeuft = false;
 export function nachtUebergang(mitte) {
+  nachtAn(() => { mitte(); setTimeout(nachtAus, 450); });
+}
+// Einzeln: schwarz werden (mit „Gute Nacht“), dann mitte(); später nachtAus() blendet wieder auf
+export function nachtAn(mitte) {
   if (nachtLaeuft) return;
   nachtLaeuft = true;
   const n = $('nacht');
+  n.querySelector('span').textContent = '☾ Gute Nacht …';
   n.classList.add('an');
-  setTimeout(() => {
-    mitte();
-    setTimeout(() => { n.classList.remove('an'); nachtLaeuft = false; }, 450);
-  }, 650);
+  setTimeout(mitte, 650);
 }
+export function nachtAus() { $('nacht').classList.remove('an'); nachtLaeuft = false; }
 
 // ---------- Kurze Hinweise ----------
 let toastT = null;

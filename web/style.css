@@ -308,3 +308,7 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 #nacht.an { opacity: 1; pointer-events: auto; transition-duration: .6s; }
 #nacht span { color: #d8dcff; font-weight: 800; font-size: 20px; letter-spacing: 1px; opacity: .85; }
 #toast { z-index: 60; white-space: pre-line; }
+
+/* Bilanz nach dem Schlafengehen: liegt über dem schwarzen Nachtbild */
+#bilanz.nachts { z-index: 57; background: transparent; }
+#bilanz.nachts .panel { box-shadow: 0 6px 0 var(--tinte), 0 0 40px rgba(140, 150, 255, .25); }
