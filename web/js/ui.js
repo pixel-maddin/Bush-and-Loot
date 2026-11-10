@@ -176,7 +176,7 @@ let stubeUhr = null;
 function stubeStarten(nacht) {
   const cv = $('stubeBild'), g = cv.getContext('2d');
   const tier = S.begleiter ? tierSchlafend(S.begleiter.art, S.begleiter.rasse) : null;
-  const bilder = stubenBilder(tier, nacht);
+  const bilder = stubenBilder(tier, nacht, G.kind.unten[0]);
   let i = 0;
   const malen = () => { g.clearRect(0, 0, cv.width, cv.height); g.drawImage(bilder[i], 0, 0); i = (i + 1) % bilder.length; };
   malen();
@@ -414,6 +414,19 @@ export function zeigeBilanz({ grund, heute, verlust, tag, kammer, liegen }) {
 }
 
 export function zeigePause() { tonKnopf(); zeige('pauseSchicht'); }
+
+// ---------- Nacht: kurz schwarz, in der Mitte passiert der Tageswechsel ----------
+let nachtLaeuft = false;
+export function nachtUebergang(mitte) {
+  if (nachtLaeuft) return;
+  nachtLaeuft = true;
+  const n = $('nacht');
+  n.classList.add('an');
+  setTimeout(() => {
+    mitte();
+    setTimeout(() => { n.classList.remove('an'); nachtLaeuft = false; }, 450);
+  }, 650);
+}
 
 // ---------- Kurze Hinweise ----------
 let toastT = null;

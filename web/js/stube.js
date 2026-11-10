@@ -1,6 +1,7 @@
 // stube.js – Das gemütliche Innere des Baumstumpfs, als kleines Pixelbild oben im Laden.
-// Kamin mit flackerndem Feuer, rundes Fenster, Bett mit Flickendecke, Regal, Laterne, Teppich –
-// und wer einen Begleiter hat, findet ihn auf dem Teppich. Drei Bilder fürs Feuerflackern.
+// Kamin mit flackerndem Feuer, rundes Fenster, Bett mit Flickendecke, Regal, Laterne, Teppich.
+// Die Spielfigur sitzt im Ohrensessel am Kamin, daneben dampft der Tee; der Begleiter schläft
+// auf dem Teppich. Drei Bilder fürs Feuerflackern.
 
 import { leinwand } from './hilfe.js';
 
@@ -8,7 +9,7 @@ export const STUBE_B = 160, STUBE_H = 84;
 
 function rechteck(g, x, y, w, h, f) { g.fillStyle = f; g.fillRect(x, y, w, h); }
 
-function stubeMalen(bild, tier, nacht) {
+function stubeMalen(bild, tier, nacht, held) {
   const c = leinwand(STUBE_B, STUBE_H), g = c.getContext('2d');
   const B = STUBE_B, H = STUBE_H;
 
@@ -74,10 +75,6 @@ function stubeMalen(bild, tier, nacht) {
   rechteck(g, 8, 29, 2, 5, '#f4ece0'); rechteck(g, 8, 27, 2, 2, bild === 1 ? '#ffd23f' : '#ff9a2a');
   rechteck(g, 30, 30, 5, 2, '#d8443c'); rechteck(g, 31, 30, 1, 1, '#fff3e0'); rechteck(g, 32, 32, 1, 2, '#f3dfc0');
   rechteck(g, 36, 30, 4, 4, '#3d5fa8'); rechteck(g, 40, 31, 1, 2, '#3d5fa8');
-  // Holzstapel neben dem Kamin
-  for (const [x, y] of [[43, 58], [49, 58], [46, 53]]) {
-    rechteck(g, x, y, 6, 5, '#6b4220'); rechteck(g, x + 1, y + 1, 4, 3, '#c08a52'); rechteck(g, x + 2, y + 2, 2, 1, '#8c5a2c');
-  }
 
   // Rundes Fenster in der Mitte
   const fx = 80, fy = 26, fr = 13;
@@ -94,8 +91,8 @@ function stubeMalen(bild, tier, nacht) {
   rechteck(g, fx - 1, fy - fr, 2, fr * 2, '#6b4220'); rechteck(g, fx - fr, fy - 1, fr * 2, 2, '#6b4220');
   // Fensterbank mit Blume und Diamantenglas
   rechteck(g, fx - 18, fy + fr + 3, 36, 3, '#6b4220'); rechteck(g, fx - 18, fy + fr + 3, 36, 1, '#a8703c');
-  rechteck(g, fx - 14, fy + fr - 1, 6, 4, '#c0603a'); rechteck(g, fx - 12, fy + fr - 5, 1, 4, '#3f8a37');
-  rechteck(g, fx - 14, fy + fr - 7, 2, 2, '#ff9bd0'); rechteck(g, fx - 11, fy + fr - 8, 2, 2, '#ff9bd0'); rechteck(g, fx - 12, fy + fr - 7, 1, 1, '#ffd23f');
+  rechteck(g, fx - 8, fy + fr - 1, 6, 4, '#c0603a'); rechteck(g, fx - 6, fy + fr - 5, 1, 4, '#3f8a37');
+  rechteck(g, fx - 8, fy + fr - 7, 2, 2, '#ff9bd0'); rechteck(g, fx - 5, fy + fr - 8, 2, 2, '#ff9bd0'); rechteck(g, fx - 6, fy + fr - 7, 1, 1, '#ffd23f');
   rechteck(g, fx + 7, fy + fr - 6, 8, 9, '#cfe8f0'); rechteck(g, fx + 7, fy + fr - 7, 8, 1, '#8c5a2c');
   for (const [x, y, f] of [[9, -3, '#5fd35a'], [12, -2, '#4aa3f5'], [10, 0, '#f04f5a'], [13, 1, '#bb62ee'], [8, 1, '#ffd23f']]) rechteck(g, fx + x, fy + fr + y, 2, 2, f);
   if (bild === 2) rechteck(g, fx + 13, fy + fr - 4, 1, 1, '#ffffff');
@@ -120,10 +117,28 @@ function stubeMalen(bild, tier, nacht) {
   for (let x = 128; x < 154; x += 2) rechteck(g, x, 59, 1, 1, '#f4ece0');
   rechteck(g, 116, 64, 2, 2, '#4a2e14'); rechteck(g, 152, 64, 2, 2, '#4a2e14');
 
-  // Hocker mit Becher
-  rechteck(g, 96, 58, 10, 2, '#8c5a2c'); rechteck(g, 97, 60, 2, 6, '#6b4220'); rechteck(g, 103, 60, 2, 6, '#6b4220');
-  rechteck(g, 99, 54, 4, 4, '#f4ece0'); rechteck(g, 103, 55, 1, 2, '#f4ece0');
-  if (bild !== 1) rechteck(g, 100, 51 - bild, 1, 2, 'rgba(240,235,225,0.6)');
+  // Ohrensessel am Kamin, darin die Spielfigur
+  const stoff = ['#7a2622', '#a83a32', '#c4544a'];
+  for (let y = 36; y < 60; y++) {                               // Rückenlehne, oben gerundet
+    const ein = y === 36 ? 4 : y === 37 ? 2 : y === 38 ? 1 : 0;
+    rechteck(g, 47 + ein, y, 21 - ein * 2, 1, y === 36 + Math.min(ein, 0) ? stoff[0] : stoff[1]);
+  }
+  rechteck(g, 47, 36, 1, 24, stoff[0]); rechteck(g, 67, 36, 1, 24, stoff[0]);
+  for (let y = 40; y < 56; y += 5) rechteck(g, 52, y, 11, 1, stoff[0]);   // Steppnähte
+  if (held) g.drawImage(held, 0, 0, 16, 12, 49, 41, 16, 12);   // Kopf und Oberkörper, der Rest steckt im Sessel
+  rechteck(g, 49, 53, 17, 6, stoff[2]); rechteck(g, 49, 53, 17, 1, '#e07a6a');      // Sitzkissen
+  rechteck(g, 53, 55, 3, 4, '#6d4423'); rechteck(g, 59, 55, 3, 4, '#6d4423');       // Beine
+  rechteck(g, 53, 59, 3, 2, '#2b1d16'); rechteck(g, 59, 59, 3, 2, '#2b1d16');       // Schuhe baumeln
+  for (const ax of [44, 64]) {                                  // Armlehnen
+    rechteck(g, ax, 47, 7, 14, stoff[1]); rechteck(g, ax, 47, 7, 2, stoff[2]); rechteck(g, ax + 1, 46, 5, 1, stoff[2]);
+    rechteck(g, ax, 60, 7, 1, stoff[0]);
+  }
+  rechteck(g, 46, 61, 2, 5, '#4a2e14'); rechteck(g, 67, 61, 2, 5, '#4a2e14');       // Füße
+  // Hocker mit dampfendem Tee neben dem Sessel
+  rechteck(g, 72, 58, 10, 2, '#8c5a2c'); rechteck(g, 73, 60, 2, 6, '#6b4220'); rechteck(g, 79, 60, 2, 6, '#6b4220');
+  rechteck(g, 74, 54, 5, 4, '#f4ece0'); rechteck(g, 79, 55, 1, 2, '#f4ece0'); rechteck(g, 74, 54, 5, 1, '#c0603a');
+  const dampfT = [[76, 51 - bild], [75 + (bild % 2), 48 - bild], [77, 45 - bild]];
+  dampfT.forEach(([x, y], i) => { if ((i + bild) % 3 !== 1) rechteck(g, x, y, 1, 2, 'rgba(240,235,225,0.65)'); });
 
   // Laterne an der Decke
   rechteck(g, 104, 0, 1, 9, '#2b1d16');
@@ -132,7 +147,7 @@ function stubeMalen(bild, tier, nacht) {
 
   // Begleiter schläft auf dem Teppich, kleine „z“ steigen auf
   if (tier) {
-    const tx = 84 - Math.round(tier.width / 2), ty = 78 - tier.height;
+    const tx = 98 - Math.round(tier.width / 2), ty = 78 - tier.height;
     g.drawImage(tier, tx, ty);
     const zs = [[0, 0], [3, -5], [7, -10]];
     zs.forEach(([zx, zy], i) => {
@@ -169,8 +184,10 @@ function stubeMalen(bild, tier, nacht) {
 }
 
 // Drei Bilder, je nach Begleiter und Tageszeit; neu gemalt nur, wenn sich davon etwas ändert
-let vorrat = { tier: undefined, nacht: undefined, bilder: [] };
-export function stubenBilder(tier, nacht) {
-  if (vorrat.tier !== tier || vorrat.nacht !== nacht) vorrat = { tier, nacht, bilder: [0, 1, 2].map(i => stubeMalen(i, tier, nacht)) };
+let vorrat = { tier: undefined, nacht: undefined, held: undefined, bilder: [] };
+export function stubenBilder(tier, nacht, held) {
+  if (vorrat.tier !== tier || vorrat.nacht !== nacht || vorrat.held !== held) {
+    vorrat = { tier, nacht, held, bilder: [0, 1, 2].map(i => stubeMalen(i, tier, nacht, held)) };
+  }
   return vorrat.bilder;
 }

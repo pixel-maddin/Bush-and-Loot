@@ -64,7 +64,9 @@ wird daraus „Stick“ (linke Hälfte ziehen = laufen, rechte Hälfte tippen = 
   (die Zeit steht dann still) oder schlafen gehen.
 - Wirst du so oft getroffen, dass alle Herzen weg sind, kippst du um: Die Hälfte
   der Diamanten von diesem Tag ist weg.
-- Jeden Morgen wächst das Gras neu.
+- Jeden Morgen wächst das Gras neu. Zwischen zwei Tagen wird es kurz dunkel
+  („Gute Nacht …“), und am Morgen erzählt ein kleiner Text, wie es weitergeht –
+  von Tag 2 bis 6 eine Mini-Geschichte, danach wechselnde Morgen-Sprüche.
 
 ## Diamanten
 
@@ -135,7 +137,8 @@ draußen.
 ## Laden im Baumstumpf
 
 Der Laden sieht aus wie das Innere des Stamms: oben ein Blick in die
-gemütliche Stube (Kamin, Fenster, Bett – und dein Begleiter auf dem Teppich).
+gemütliche Stube: Du sitzt im Ohrensessel am Kamin, daneben dampft der Tee,
+und dein Begleiter schläft auf dem Teppich.
 
 Klinge (Holzschwert → Kurzschwert → Eisenschwert → Breitschwert → Mondsichel →
 Sternenklinge), Schwungkraft, Flinke Stiefel, Herzbeere, Elsternfeder (Diamanten

@@ -8,6 +8,41 @@ import {
   kaufen, update, zeichne, setzeHooks, oeffneTuer, kaufeBegleiter, betreteKammer, verlasseKammer, HEIM_WARNUNG,
 } from './spiel.js';
 import { KAMMERN } from './config.js';
+import { RASSEN } from './begleiter.js';
+
+// Morgens nach dem Schlafen: Von Tag 2 bis 6 erzählt der Text eine kleine Geschichte,
+// danach gibt es wechselnde Morgen-Sprüche. Die Spieltipps der ersten Tage stehen darunter.
+const GESCHICHTE = [
+  'Gestern war das Gras ganz schön dicht. Hoffentlich wird es heute leichter für dich!',
+  'Heute Nacht hat es oben am Fels geglitzert. Ob da wohl etwas versteckt ist?',
+  'Der alte Baumstumpf knarzt zufrieden. Er mag es, wenn du abends heimkommst.',
+  'Die Vögel zwitschern von Wächtern tief in der Höhle. Ganz schön mutig, wer da hingeht …',
+  'Der Wald sieht schon viel ordentlicher aus als früher. Alle Tiere sagen Danke!',
+];
+const MORGEN = [
+  'Ein neuer Morgen. Der Tau glitzert fast wie Diamanten.',
+  'Über Nacht ist alles wieder zugewachsen. Typisch Wald!',
+  'Der Tee war heute besonders lecker. Auf geht’s!',
+  'Die Sonne lacht – heute wird ein guter Tag.',
+  'Die Schnecken haben die ganze Nacht gefeiert. Pass bloß auf!',
+  'Ein Eichhörnchen winkt dir vom Baum zu.',
+];
+let letzterSpruch = -1;
+function morgenText() {
+  if (S.tag >= 2 && S.tag <= 6) return GESCHICHTE[S.tag - 2];
+  if (S.tag < 2) return '';
+  const pool = MORGEN.slice();
+  if (S.begleiter) pool.push(`${RASSEN[S.begleiter.art][S.begleiter.rasse].name} hat heute Nacht ganz leise geschnarcht.`);
+  let i; do i = Math.floor(Math.random() * pool.length); while (i === letzterSpruch && pool.length > 1);
+  letzterSpruch = i;
+  return pool[i];
+}
+const TIPPS = {
+  2: 'Brummhummeln sind unterwegs. Die nerven!',
+  3: 'Blütenbüsche sind zäh, aber da steckt mehr drin.',
+  4: 'Hüpfpilze! Weiter draußen wächst das bessere Zeug.',
+  5: 'Dornenbüsche: am zähesten, aber oft mit Gold.',
+};
 import * as UI from './ui.js';
 import { initEingabe, eingabe } from './eingabe.js';
 import { tonStart, tonSchlafen } from './ton.js';
@@ -76,10 +111,10 @@ setzeHooks({
   tagBeginnt: () => {
     UI.hudNeu();
     if (S.tag === 1) UI.toast('Hau das Gras weg – manchmal steckt ein Diamant drin!', 4000);
-    else if (S.tag === 2) UI.toast('Brummhummeln sind unterwegs. Die nerven!', 3500);
-    else if (S.tag === 3) UI.toast(S.st.tueren ? 'Blütenbüsche sind zäh, aber da steckt mehr drin.' : 'Blütenbüsche sind zäh – und oben im Fels gibt es eine Höhle …', 3800);
-    else if (S.tag === 4) UI.toast('Hüpfpilze! Weiter draußen wächst das bessere Zeug.', 3500);
-    else if (S.tag === 5) UI.toast('Dornenbüsche: am zähesten, aber oft mit Gold.', 3500);
+    else {
+      const text = [morgenText(), TIPPS[S.tag]].filter(Boolean).join('\n');
+      if (text) UI.toast(text, TIPPS[S.tag] ? 6000 : 4500);
+    }
     steuerung.aktualisiere();
   },
 });
@@ -99,7 +134,11 @@ UI.initUI({
     UI.hudNeu();
     if (zweck === 'start') this.start(); else UI.zeigeTitel(hatSpielstand());
   },
-  neuerTag() { tonStart(); UI.zeige(null); neuerTag(); },
+  // Nach dem Schlafen: kurz schwarz, dann blendet der neue Morgen ein
+  neuerTag() {
+    tonStart();
+    UI.nachtUebergang(() => { UI.zeige(null); neuerTag(); steuerung.aktualisiere(); });
+  },
   weiterMaehen() { UI.zeige(null); weiterMaehen(); steuerung.aktualisiere(); },
   tagBeenden() { tagBeenden(); },
   kaufen(id, preis) { return kaufen(id, preis); },

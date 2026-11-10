@@ -1,0 +1,14 @@
+<!DOCTYPE html><html><body style="margin:0;background:#e8d2a8"><canvas id="c" width="900" height="620" style="image-rendering:pixelated"></canvas>
+<script type="module">
+import { initGrafik, G } from './js/grafik.js';
+import { tierBilder, RASSEN } from './js/begleiter.js';
+initGrafik();
+const g = document.getElementById('c').getContext('2d'); g.imageSmoothingEnabled = false;
+let y = 10;
+for (const art of ['hund', 'katze']) for (const rasse of Object.keys(RASSEN[art])) {
+  const s = tierBilder(art, rasse); let x = 10;
+  for (const p of ['steh', 'lauf0', 'sitz', 'buddel0', 'schlaf']) { const b = s.l[p]; g.drawImage(b, x, y + (65 - b.height * 5), b.width * 5, b.height * 5); x += 100; }
+  const k = G.kind.unten[0]; g.drawImage(k, x + 10, y + 65 - 80, 80, 80);   // Held zum Größenvergleich
+  y += 100;
+}
+</script></body></html>

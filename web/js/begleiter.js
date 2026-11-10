@@ -25,88 +25,85 @@ export const RASSEN = {
   },
 };
 
-// ---------- Bilder (Kawaii: großer Kopf, große Glanzaugen, Bäckchen, winziger Körper) ----------
-// Blick nach links. Posen: steh, lauf0, lauf1, sitz, buddel0, buddel1, schlaf. Größe 22 × 18.
-const W = 22, H = 18;
+// ---------- Bilder (Kawaii, klein: großer Kopf, Glanzaugen, Bäckchen, winziger Körper) ----------
+// Blick nach links. Posen: steh, lauf0, lauf1, sitz, buddel0, buddel1, schlaf. Größe 16 × 13 –
+// deutlich kleiner als der Held (16 × 16), damit sie wie kleine Begleiter wirken.
+const W = 16, H = 13;
 const ROSA = '#ff9ab4', AUGE = '#1e1b30', MUND = '#4a2a2a';
 
 function kopf(pb, art, r, hx, hy, augenZu) {
   const katze = art === 'katze';
-  // Ohren hinter dem Kopf
-  if (katze) {
-    for (const ox of [-3, 2]) {
-      for (let j = 0; j < 4; j++) for (let i = 0; i <= 3 - j; i++) pb.set(hx + ox + i + (ox < 0 ? 0 : j > 0 ? 0 : 0), hy - 5 - j + 1, j === 0 || i === 0 || i === 3 - j ? r.a : '#f4a0b8');
+  // Spitze Ohren (Katzen, Spitz, Schäferhund) hinter dem Kopf
+  if (katze || r.ohr === 'spitz') {
+    for (const ox of [-3, 1]) {
+      pb.set(hx + ox, hy - 3, r.a); pb.set(hx + ox + 1, hy - 3, r.a); pb.set(hx + ox + 2, hy - 3, r.a);
+      pb.set(hx + ox + (ox < 0 ? 0 : 2), hy - 4, r.a); pb.set(hx + ox + 1, hy - 4, katze ? '#f4a0b8' : r.A);
+      pb.set(hx + ox + (ox < 0 ? 0 : 2), hy - 5, r.A);
     }
-  } else if (r.ohr === 'spitz') {
-    for (const ox of [-3, 2]) for (let j = 0; j < 3; j++) for (let i = 0; i <= 2 - j; i++) pb.set(hx + ox + i, hy - 4 - j, j === 2 ? r.A : r.a);
   }
   // runder Kopf
-  pb.kreis(hx, hy, 5, (x, y, nx, ny) => (ny > 0.35 && Math.abs(nx) < 0.55 ? r.w : nx + ny < -0.7 ? r.hell || r.a : r.a));
-  if (r.streifen) for (const [x, y] of [[hx - 1, hy - 4], [hx, hy - 4], [hx + 1, hy - 4], [hx - 1, hy - 3], [hx + 1, hy - 3]]) if ((x + y) % 2 === 0) pb.set(x, y, r.A);
-  if (r.flecken) pb.kreis(hx + 2, hy - 3, 1.6, '#e8913a');
-  // Schlappohren seitlich am Kopf
-  if (!katze && r.ohr === 'schlapp') {
-    for (const ox of [-5, 4]) for (let j = 0; j < 5; j++) { pb.set(hx + ox, hy - 2 + j, r.A); pb.set(hx + ox + 1, hy - 2 + j, j < 4 ? r.A : null); }
-  }
-  // Augen: groß, mit Lichtpunkt – oder zufrieden geschlossen (‿ ‿)
-  for (const ax of [hx - 3, hx + 1]) {
-    if (augenZu) { pb.set(ax, hy, AUGE); pb.set(ax + 1, hy + 1, AUGE); pb.set(ax + 2, hy, AUGE); continue; }
-    pb.rechteck(ax, hy - 1, 2, 3, r.augen || AUGE);
+  pb.kreis(hx, hy, 3.7, (x, y, nx, ny) => (ny > 0.35 && Math.abs(nx) < 0.6 ? r.w : nx + ny < -0.7 ? r.hell || r.a : r.a));
+  if (r.streifen) { pb.set(hx - 1, hy - 3, r.A); pb.set(hx + 1, hy - 3, r.A); pb.set(hx, hy - 2, r.A); }
+  if (r.flecken) { pb.set(hx + 1, hy - 3, '#e8913a'); pb.set(hx + 2, hy - 2, '#e8913a'); pb.set(hx + 1, hy - 2, '#e8913a'); }
+  // Schlappohren seitlich
+  if (!katze && r.ohr === 'schlapp') for (const ox of [-4, 3]) for (let j = 0; j < 4; j++) pb.set(hx + ox + (ox > 0 ? 0 : 0), hy - 2 + j, r.A);
+  // Augen: 2 × 2 mit Lichtpunkt – oder zufrieden geschlossen
+  for (const ax of [hx - 3, hx]) {
+    if (augenZu) { pb.set(ax, hy, AUGE); pb.set(ax + 1, hy, AUGE); continue; }
+    pb.rechteck(ax, hy - 1, 2, 2, r.augen || AUGE);
     pb.set(ax, hy - 1, '#ffffff');
     if (r.augen) pb.set(ax + 1, hy, AUGE);
   }
   // Bäckchen
-  pb.set(hx - 4, hy + 2, ROSA); pb.set(hx + 3, hy + 2, ROSA);
-  // Nase und Mäulchen (ω)
-  if (katze) { pb.set(hx - 1, hy + 2, '#e8828a'); pb.set(hx - 2, hy + 3, MUND); pb.set(hx - 1, hy + 4, MUND); pb.set(hx, hy + 3, MUND); }
-  else { pb.rechteck(hx - 2, hy + 1, 2, 1, '#2b1d16'); pb.set(hx - 2, hy + 3, MUND); pb.set(hx - 1, hy + 3, MUND); }
+  pb.set(hx - 3, hy + 1, ROSA); pb.set(hx + 2, hy + 1, ROSA);
+  // Nase / Mäulchen
+  if (katze) { pb.set(hx - 1, hy + 1, '#e8828a'); pb.set(hx - 1, hy + 2, MUND); }
+  else { pb.set(hx - 2, hy + 1, '#2b1d16'); pb.set(hx - 1, hy + 1, '#2b1d16'); pb.set(hx - 1, hy + 2, MUND); }
 }
 
 function schwanz(pb, art, r, sx, sy, wedel) {
   if (art === 'katze') {
-    const punkte = [[0, 0], [1, -1], [2, -2], [2, -3], [2, -4], [1, -5]];
-    punkte.forEach(([x, y], i) => { pb.set(sx + x + (i > 2 ? wedel : 0), sy + y, r.streifen && i % 2 ? r.A : r.a); pb.set(sx + x + 1 + (i > 2 ? wedel : 0), sy + y, r.a); });
-  } else if (r.schwanz === 'ringel') { pb.kreis(sx + 1.5, sy - 2, 2.2, r.a); pb.set(sx + 1, sy - 2, r.w); }
-  else if (r.schwanz === 'kurz') { pb.set(sx, sy, r.a); pb.set(sx + 1, sy - 1 + wedel, r.a); }
-  else { for (let i = 0; i < 4; i++) { pb.set(sx + Math.min(i, 2), sy - i + (i > 1 ? wedel : 0), r.a); pb.set(sx + Math.min(i, 2) + 1, sy - i + (i > 1 ? wedel : 0), r.a); } }
+    [[0, 0], [1, -1], [1, -2], [1, -3], [0, -4]].forEach(([x, y], i) => pb.set(sx + x + (i > 1 ? wedel : 0), sy + y, r.streifen && i % 2 ? r.A : r.a));
+  } else if (r.schwanz === 'ringel') { pb.kreis(sx + 1, sy - 1.5, 1.6, r.a); pb.set(sx + 1, sy - 2, r.w); }
+  else if (r.schwanz === 'kurz') { pb.set(sx, sy - wedel, r.a); }
+  else { pb.set(sx, sy, r.a); pb.set(sx + 1, sy - 1, r.a); pb.set(sx + 1 + wedel, sy - 2, r.a); }
 }
 
 function tierBild(art, r, pose) {
   if (pose === 'schlaf') return schlafBild(art, r);
   const pb = new PB(W, H);
-  const lang = r.lang ? 2 : 0;
+  const lang = r.lang ? 1 : 0;
   const sitz = pose === 'sitz', buddel = pose.startsWith('buddel');
   // Körper: klein und rund, hinter dem Kopf
-  const kx = 11, ky = sitz ? 13 : 12;
-  for (let x = kx; x <= kx + 3 + lang; x++) pb.kreis(x, ky, sitz ? 3.6 : 3.2, (xx, yy, nx, ny) => (ny > 0.4 ? r.w : r.a));
-  if (r.sattel) for (let x = kx; x <= kx + 3; x++) { pb.set(x, ky - 3, r.A); pb.set(x, ky - 2, r.A); }
-  if (r.streifen) for (const x of [kx + 1, kx + 3]) for (let y = ky - 3; y <= ky - 1; y++) pb.set(x, y, r.A);
-  if (r.flecken) pb.kreis(kx + 2, ky - 2, 1.5, '#34313c');
-  schwanz(pb, art, r, kx + 4 + lang, ky - 2, pose === 'lauf0' ? 1 : 0);
-  // Stummelbeinchen
-  const bein = (x, h = 2) => pb.rechteck(x, H - 1 - h, 2, h, r.A === '#2a2220' ? r.a : r.a);
-  if (sitz) { bein(9, 3); bein(14 + lang, 2); }
+  const kx = 8, ky = sitz ? 9.5 : 9;
+  for (let x = kx; x <= kx + 2 + lang; x++) pb.kreis(x, ky, sitz ? 2.8 : 2.4, (xx, yy, nx, ny) => (ny > 0.4 ? r.w : r.a));
+  if (r.sattel) for (let x = kx; x <= kx + 2; x++) pb.set(x, ky - 2, r.A);
+  if (r.streifen) { pb.set(kx + 1, ky - 2, r.A); pb.set(kx + 1, ky - 1, r.A); pb.set(kx + 3, ky - 2, r.A); }
+  if (r.flecken) { pb.set(kx + 2, ky - 2, '#34313c'); pb.set(kx + 3, ky - 1, '#34313c'); }
+  schwanz(pb, art, r, kx + 3 + lang, ky - 1, pose === 'lauf0' ? 1 : 0);
+  // Stummelbeinchen (1 × 2)
+  const bein = (x) => { pb.set(x, H - 2, r.a); pb.set(x, H - 1, r.A === '#2a2220' ? '#5a4030' : r.A); };
+  if (sitz) { bein(6); bein(7); bein(10 + lang); }
   else {
     const l = pose === 'lauf0' ? [-1, 1] : pose === 'lauf1' ? [1, -1] : buddel ? (pose === 'buddel0' ? [-1, 0] : [1, 0]) : [0, 0];
-    bein(8 + l[0]); bein(10 - l[0]); bein(13 + lang + l[1]); bein(15 + lang - l[1]);
+    bein(6 + l[0]); bein(8 - l[0]); bein(10 + lang + l[1]); bein(11 + lang - l[1]);
   }
-  for (let x = 0; x < W; x++) if (pb.get(x, H - 1)) pb.set(x, H - 1, r.A === '#2a2220' ? '#5a4030' : r.A);   // Pfötchen etwas dunkler
   // Kopf (beim Buddeln tiefer und nach vorn)
-  kopf(pb, art, r, buddel ? 5 : 6, buddel ? 9 : 7, false);
+  kopf(pb, art, r, buddel ? 4 : 5, buddel ? 7 : 5.5, false);
   return pb.umriss('#2b1d16').bild();
 }
 
-// Eingerollt schlafend (für die Stube): Kopf auf den Pfoten, Augen zu (‿ ‿), Schwanz um den Körper
+// Eingerollt schlafend (für die Stube): Kopf auf den Pfoten, Augen zu, Schwanz um den Körper
 function schlafBild(art, r) {
-  const pb = new PB(W, 16);                       // 16 hoch, damit die Ohren nicht abgeschnitten werden
-  const lang = r.lang ? 2 : 0;
-  for (let x = 9; x <= 15 + lang; x++) pb.kreis(x, 10.5, 3.6, (xx, yy, nx, ny) => (ny > 0.45 ? r.w : r.a));
-  if (r.sattel) for (let x = 10; x <= 15; x++) { pb.set(x, 7, r.A); pb.set(x, 8, r.A); }
-  if (r.streifen) for (const x of [11, 13, 15]) for (let y = 7; y <= 9; y++) pb.set(x, y, r.A);
-  if (r.flecken) { pb.kreis(14, 8.5, 1.8, '#e8913a'); pb.kreis(11, 8.5, 1.3, '#34313c'); }
-  for (let x = 7; x <= 17 + lang; x++) pb.set(x, 14, r.streifen && x % 3 === 0 ? r.A : r.a);      // Schwanz vorne herum
-  pb.rechteck(2, 13, 6, 2, r.w);                                                                   // Pfoten
-  kopf(pb, art, r, 6, 9, true);
+  const pb = new PB(W, 12);
+  const lang = r.lang ? 1 : 0;
+  for (let x = 7; x <= 11 + lang; x++) pb.kreis(x, 8, 2.7, (xx, yy, nx, ny) => (ny > 0.45 ? r.w : r.a));
+  if (r.sattel) for (let x = 8; x <= 11; x++) pb.set(x, 6, r.A);
+  if (r.streifen) { pb.set(9, 6, r.A); pb.set(11, 6, r.A); }
+  if (r.flecken) { pb.set(10, 6, '#e8913a'); pb.set(8, 6, '#34313c'); }
+  for (let x = 6; x <= 13 + lang; x++) pb.set(x, 11, r.streifen && x % 3 === 0 ? r.A : r.a);      // Schwanz vorne herum
+  pb.rechteck(1, 10, 4, 1, r.w);                                                                   // Pfoten
+  kopf(pb, art, r, 4, 7, true);
   return pb.umriss('#2b1d16').bild();
 }
 

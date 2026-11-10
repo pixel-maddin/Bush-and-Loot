@@ -239,7 +239,7 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
   background: #fbf1d8; border: 3px solid var(--tinte); border-radius: 10px; padding: 8px 4px 6px;
   display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; box-shadow: 0 3px 0 var(--tinte);
 }
-.tier-karte img { width: 66px; height: 54px; }   /* Bild 22 × 18, dreifach */
+.tier-karte img { width: 64px; height: 52px; }   /* Bild 16 × 13, vierfach */
 .tier-karte.gewaehlt { background: #fff7a8; outline: 3px solid #ffd23f; outline-offset: 2px; }
 .tier-karte.gewaehlt img { animation: huepfen .8s ease-in-out infinite; }
 .ware.begleiter .ware-bild img { width: 52px; height: auto; }
@@ -299,3 +299,12 @@ body.kampf #toast { top: calc(env(safe-area-inset-top) + 104px); }
 
 .tier-karte.dabei { opacity: .55; cursor: default; }
 .tier-karte small { font-size: 11px; color: #6b4220; }
+
+/* ---------- Nacht zwischen zwei Tagen ---------- */
+#nacht {
+  position: fixed; inset: 0; z-index: 55; background: #05060d; opacity: 0; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; transition: opacity .9s ease;
+}
+#nacht.an { opacity: 1; pointer-events: auto; transition-duration: .6s; }
+#nacht span { color: #d8dcff; font-weight: 800; font-size: 20px; letter-spacing: 1px; opacity: .85; }
+#toast { z-index: 60; white-space: pre-line; }
