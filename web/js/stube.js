@@ -121,26 +121,31 @@ function stubeMalen(bild, tier, nacht, held, m = {}) {
   rechteck(g, 116, 64, 2, 2, '#4a2e14'); rechteck(g, 152, 64, 2, 2, '#4a2e14');
 
   // Ohrensessel am Kamin, darin die Spielfigur. Klein gehalten (Lehne 19 × 16), damit der Held
-  // nicht darin versinkt – der Kopf schaut über die Lehne.
+  // nicht darin versinkt – der Kopf schaut über die Lehne. Steht mit kurzen Füßen auf den Dielen
+  // (Fuß bei y 68), sonst wirkte er, als schwebe er vor der Wand.
+  const sy = 4;                                                 // so weit tiefer als früher
   const stoff = ['#7a2622', '#a83a32', '#c4544a'];
-  for (let y = 45; y < 60; y++) {                               // Rückenlehne, oben gerundet
-    const ein = y === 45 ? 3 : y === 46 ? 1 : 0;
-    rechteck(g, 48 + ein, y, 19 - ein * 2, 1, y === 45 ? stoff[2] : stoff[1]);
+  g.fillStyle = 'rgba(30, 15, 5, 0.35)'; g.beginPath(); g.ellipse(57.5, 68.5, 14, 2.2, 0, 0, Math.PI * 2); g.fill();   // Schatten
+  for (let y = 45 + sy; y < 60 + sy; y++) {                     // Rückenlehne, oben gerundet
+    const ein = y === 45 + sy ? 3 : y === 46 + sy ? 1 : 0;
+    rechteck(g, 48 + ein, y, 19 - ein * 2, 1, y === 45 + sy ? stoff[2] : stoff[1]);
   }
-  rechteck(g, 48, 47, 1, 13, stoff[0]); rechteck(g, 66, 47, 1, 13, stoff[0]);
-  if (held) g.drawImage(held, 0, 0, 16, 12, 49, 41, 16, 12);   // Kopf und Oberkörper, der Rest steckt im Sessel
-  rechteck(g, 50, 53, 15, 5, stoff[2]); rechteck(g, 50, 53, 15, 1, '#e07a6a');      // Sitzkissen
-  rechteck(g, 53, 55, 3, 4, '#6d4423'); rechteck(g, 59, 55, 3, 4, '#6d4423');       // Beine
-  rechteck(g, 53, 59, 3, 2, '#2b1d16'); rechteck(g, 59, 59, 3, 2, '#2b1d16');       // Schuhe baumeln
+  rechteck(g, 48, 47 + sy, 1, 13, stoff[0]); rechteck(g, 66, 47 + sy, 1, 13, stoff[0]);
+  if (held) g.drawImage(held, 0, 0, 16, 12, 49, 41 + sy, 16, 12);   // Kopf und Oberkörper, der Rest steckt im Sessel
+  rechteck(g, 50, 53 + sy, 15, 5, stoff[2]); rechteck(g, 50, 53 + sy, 15, 1, '#e07a6a');      // Sitzkissen
+  rechteck(g, 53, 55 + sy, 3, 3, '#6d4423'); rechteck(g, 59, 55 + sy, 3, 3, '#6d4423');       // Beine
+  rechteck(g, 53, 58 + sy, 3, 2, '#2b1d16'); rechteck(g, 59, 58 + sy, 3, 2, '#2b1d16');       // Schuhe baumeln
   for (const ax of [45, 64]) {                                  // Armlehnen
-    rechteck(g, ax, 51, 6, 10, stoff[1]); rechteck(g, ax, 51, 6, 2, stoff[2]); rechteck(g, ax + 1, 50, 4, 1, stoff[2]);
-    rechteck(g, ax, 60, 6, 1, stoff[0]);
+    rechteck(g, ax, 51 + sy, 6, 10, stoff[1]); rechteck(g, ax, 51 + sy, 6, 2, stoff[2]); rechteck(g, ax + 1, 50 + sy, 4, 1, stoff[2]);
+    rechteck(g, ax, 60 + sy, 6, 1, stoff[0]);
   }
-  rechteck(g, 46, 61, 2, 5, '#4a2e14'); rechteck(g, 67, 61, 2, 5, '#4a2e14');       // Füße
-  // Hocker mit dampfendem Tee neben dem Sessel
-  rechteck(g, 72, 58, 10, 2, '#8c5a2c'); rechteck(g, 73, 60, 2, 6, '#6b4220'); rechteck(g, 79, 60, 2, 6, '#6b4220');
-  rechteck(g, 74, 54, 5, 4, '#f4ece0'); rechteck(g, 79, 55, 1, 2, '#f4ece0'); rechteck(g, 74, 54, 5, 1, '#c0603a');
-  const dampfT = [[76, 51 - bild], [75 + (bild % 2), 48 - bild], [77, 45 - bild]];
+  rechteck(g, 46, 61 + sy, 2, 3, '#4a2e14'); rechteck(g, 67, 61 + sy, 2, 3, '#4a2e14');       // kurze Füße
+  // Hocker mit dampfendem Tee neben dem Sessel, ebenfalls auf den Dielen
+  const hy = 3;
+  g.fillStyle = 'rgba(30, 15, 5, 0.3)'; g.fillRect(72, 69, 10, 1);
+  rechteck(g, 72, 58 + hy, 10, 2, '#8c5a2c'); rechteck(g, 73, 60 + hy, 2, 6, '#6b4220'); rechteck(g, 79, 60 + hy, 2, 6, '#6b4220');
+  rechteck(g, 74, 54 + hy, 5, 4, '#f4ece0'); rechteck(g, 79, 55 + hy, 1, 2, '#f4ece0'); rechteck(g, 74, 54 + hy, 5, 1, '#c0603a');
+  const dampfT = [[76, 51 + hy - bild], [75 + (bild % 2), 48 + hy - bild], [77, 45 + hy - bild]];
   dampfT.forEach(([x, y], i) => { if ((i + bild) % 3 !== 1) rechteck(g, x, y, 1, 2, 'rgba(240,235,225,0.65)'); });
 
   if (m.leuchter) {

@@ -593,3 +593,65 @@ export function bildURL(c) {
   if (!urlCache.has(c)) urlCache.set(c, c.toDataURL());
   return urlCache.get(c);
 }
+
+// ---------- Startbildschirm ----------
+// Kleine Szene: der Held steht bis zu den Knien im Gras, vorne wiegen sich ein paar Büschel.
+export const TITEL_B = 52, TITEL_H = 28;
+export function titelSzeneMalen(g, held, t) {
+  g.imageSmoothingEnabled = false;
+  g.clearRect(0, 0, TITEL_B, TITEL_H);
+  const [klein, hoch] = G.bueschel;
+  // hinten: hohes Gras links und rechts
+  g.drawImage(hoch, 5, TITEL_H - hoch.height - 3);
+  g.drawImage(hoch, TITEL_B - hoch.width - 5, TITEL_H - hoch.height - 4);
+  g.fillStyle = 'rgba(20, 50, 20, 0.35)'; g.beginPath(); g.ellipse(26, 21.5, 7, 1.6, 0, 0, Math.PI * 2); g.fill();
+  g.drawImage(held, 18, 6);
+  // vorn: Büschel über den Beinen, leicht schwankend (Scherung wie im Spiel)
+  const vorn = [[0, 15, 0], [12, 14, 1.7], [24, 15, 3.1], [36, 14, 4.4]];
+  for (const [x, y, ph] of vorn) {
+    const s = Math.sin(t * 1.6 + ph) * 0.12;
+    g.save();
+    g.setTransform(1, 0, s, 1, x - s * (y + klein.height), y);
+    g.drawImage(klein, 0, 0);
+    g.restore();
+  }
+}
+
+// ---------- Logo „Bush & Loot“ in Pixelschrift ----------
+// Eigene Buchstaben mit 2 px dicken Strichen, 8 Zeilen hoch (Kleinbuchstaben ab Zeile 2).
+const SCHRIFT = {
+  B: ['######.', '##...##', '##...##', '######.', '##...##', '##...##', '##...##', '######.'],
+  u: ['......', '......', '##..##', '##..##', '##..##', '##..##', '##..##', '.#####'],
+  s: ['......', '......', '.#####', '##....', '.####.', '....##', '....##', '#####.'],
+  h: ['##....', '##....', '##.##.', '###.##', '##..##', '##..##', '##..##', '##..##'],
+  '&': ['.###...', '##.##..', '##.##..', '.###..#', '##.####', '##..##.', '##..###', '.###..#'],
+  L: ['##....', '##....', '##....', '##....', '##....', '##....', '##....', '######'],
+  o: ['......', '......', '.####.', '##..##', '##..##', '##..##', '##..##', '.####.'],
+  t: ['.##..', '.##..', '#####', '.##..', '.##..', '.##..', '.##..', '..###'],
+  ' ': ['...', '...', '...', '...', '...', '...', '...', '...'],
+};
+// Farbverlauf je Zeile: oben hell, unten dunkel – „Bush“ grün wie Gras, „& Loot“ golden wie Beute
+const LOGO_FARBEN = {
+  gruen: ['#c8f59a', '#9be36d', '#7fd35a', '#5fb04a', '#5fb04a', '#4f9a3c', '#3f8a37', '#2f6e2a'],
+  gold: ['#fff6c8', '#ffe680', '#ffd23f', '#ffd23f', '#f5b82a', '#e8a020', '#c27512', '#a05a0c'],
+};
+export function logoBild() {
+  const text = 'Bush & Loot';
+  const farbe = (i) => i < 4 ? 'gruen' : 'gold';
+  let breite = 0;
+  for (const z of text) breite += SCHRIFT[z][0].length + 1;
+  const pb = new PB(breite + 3, 8 + 4);
+  let x = 1;
+  [...text].forEach((z, i) => {
+    const gl = SCHRIFT[z], f = LOGO_FARBEN[farbe(i)];
+    gl.forEach((zeile, y) => { for (let k = 0; k < zeile.length; k++) if (zeile[k] === '#') pb.set(x + k, y + 1, f[y]); });
+    x += gl[0].length + 1;
+  });
+  pb.umriss('#2b1d16');
+  // Schlagschatten: eine Zeile tiefer, dunkel
+  const c = leinwand(pb.w, pb.h + 1), g = c.getContext('2d');
+  const b = pb.bild();
+  g.globalAlpha = 0.9; g.filter = 'brightness(0)'; g.drawImage(b, 1, 1);
+  g.globalAlpha = 1; g.filter = 'none'; g.drawImage(b, 0, 0);
+  return c;
+}

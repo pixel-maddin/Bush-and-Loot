@@ -1,6 +1,6 @@
 // ui.js – Alles, was als HTML über dem Spielbild liegt: Anzeige oben, Titel, Laden, Tagesbilanz, Pause.
 
-import { G, bildURL, KLEIDER, FIGUREN, figurVorschau } from './grafik.js';
+import { G, bildURL, KLEIDER, FIGUREN, figurVorschau, titelSzeneMalen, logoBild } from './grafik.js';
 import { AUFRUESTUNGEN, STEINE, KAMMERN, SPEZIAL, EINRICHTUNG, HUETE, KLEIDERSCHRANK_AB, STUBE_AB } from './config.js';
 import { S, liegenGeblieben } from './spiel.js';
 import { RASSEN, tierIcon, tierSchlafend, BEGLEITER_PREIS, TAUSCH_PREIS, LECKERLI_KOSTEN, NAMEN, tierName, nameSauber } from './begleiter.js';
@@ -83,9 +83,24 @@ export function zeigeTitel(hatStand) {
   $('btnStart').textContent = hatStand ? `Weiter – Tag ${S.tag}` : "Los geht's!";
   $('btnNeu').classList.toggle('versteckt', !hatStand);
   $('btnFigur').classList.toggle('versteckt', !S.figur);
-  $('titelHeld').src = bildURL(G.kind.unten[0]);
+  if (!G.logo) G.logo = logoBild();
+  $('logo').src = bildURL(G.logo);
+  titelSzeneStarten();
   steuerHilfe();
   zeige('titel');
+}
+
+// Held im Gras auf dem Startbildschirm; die vorderen Büschel wiegen sich langsam
+let titelUhr = null;
+function titelSzeneStarten() {
+  const g = $('titelSzene').getContext('2d');
+  const malen = () => titelSzeneMalen(g, G.kind.unten[0], performance.now() / 1000);
+  malen();
+  clearInterval(titelUhr);
+  titelUhr = setInterval(() => {
+    if ($('titel').classList.contains('versteckt')) { clearInterval(titelUhr); return; }
+    malen();
+  }, 120);
 }
 
 // ---------- Figur wählen ----------
